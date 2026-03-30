@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratedge | Employee Timesheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#4169E1', // Royal Blue
+                        'brand-orange': '#FFA500', // Orange
+                        'brand-orange-hover': '#e69500',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-brand-blue text-white shadow-md z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+                    Employee Portal
+                </div>
+                <button onclick="logout()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Left Side: User Profile -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-8">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="h-20 w-20 bg-brand-blue text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-inner mb-4" id="profileInitials">
+                            --
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900" id="profileName">Loading...</h2>
+                        <span class="bg-brand-orange/10 text-brand-orange-hover px-3 py-1 rounded-full text-xs font-bold mt-2 border border-brand-orange/20" id="profileId">Emp ID: ---</span>
+                        <p class="text-sm text-gray-500 mt-3" id="profileEmail">loading@email.com</p>
+                    </div>
+
+                    <div class="mt-8 border-t border-gray-100 pt-6">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-2">Instructions</h3>
+                        <ul class="text-sm text-gray-600 space-y-2 list-disc pl-4">
+                            <li>Log a maximum of 8 hours per day.</li>
+                            <li>Target compliance is 48 hours per week (Mon-Sat).</li>
+                            <li>Select appropriate leave types if not working.</li>
+                            <li>Justification required if total hours deviate from 48.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Timesheet Form -->
+            <div class="lg:col-span-3">
+                
+                <!-- Week Selector & Status -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-1">Weekly Timesheet</h2>
+                        <p class="text-sm text-gray-500">Select a week to view or submit hours.</p>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <label for="weekSelector" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Select Week</label>
+                        <input type="week" id="weekSelector" 
+                            class="w-full sm:w-auto px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all font-medium text-gray-700">
+                    </div>
+                </div>
+
+                <!-- Pre-fill Warning (Hidden by default) -->
+                <div id="prefillWarning" class="hidden bg-orange-50 border-l-4 border-brand-orange p-4 mb-6 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-brand-orange" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-orange-800">Caution: Prefilling Time</h3>
+                            <p class="text-sm text-orange-700 mt-1">You are submitting this timesheet before Friday of the selected week. Please ensure you are logging anticipated accurate time.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Already Submitted Banner (Hidden by default) -->
+                <div id="submittedBanner" class="hidden bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center">
+                    <svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h3 class="text-lg font-bold text-green-800">Timesheet Submitted</h3>
+                    <p class="text-sm text-green-600 mt-1">You have already submitted your hours for this week.</p>
+                </div>
+
+                <form id="timesheetForm">
+                    <!-- Compliance Block -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900">Compliance Tracker</h3>
+                            <div class="text-right">
+                                <span class="text-3xl font-bold text-brand-blue" id="totalHoursDisplay">0.0</span>
+                                <span class="text-gray-500 font-medium">/ 48 hrs</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 mb-1 overflow-hidden">
+                            <div id="progressBar" class="bg-brand-blue h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p id="progressText" class="text-xs text-gray-500 text-right">0% of weekly target</p>
+                    </div>
+
+                    <!-- Time Entry Table -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Day & Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Hours Worked</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Category / Leave Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="timesheetBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Rows generated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Justification Block (Hidden if hours == 48) -->
+                    <div id="justificationBlock" class="hidden bg-white p-6 rounded-xl shadow-sm border border-red-200 mb-6">
+                        <label for="justification" class="block text-sm font-semibold text-red-700 mb-2">
+                            Justification Required
+                        </label>
+                        <p class="text-xs text-red-600 mb-3">Your total hours deviate from the standard 48 hours. Please provide a brief explanation.</p>
+                        <textarea id="justification" rows="3" class="w-full px-4 py-3 bg-red-50/30 border border-red-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition-all text-sm" placeholder="e.g. Took half day on Wednesday for doctor appointment..."></textarea>
+                    </div>
+
+                    <!-- Declaration & Submit -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex items-start mb-6">
+                            <div class="flex items-center h-5">
+                                <input id="declaration" type="checkbox" required class="w-5 h-5 text-brand-blue bg-gray-100 border-gray-300 rounded focus:ring-brand-blue focus:ring-2">
+                            </div>
+                            <label for="declaration" class="ml-3 text-sm font-medium text-gray-700">
+                                I declare that the time logged above is accurate and filled to the best of my knowledge. I understand this timesheet may be audited for internal Stratedge strategy and payroll purposes.
+                            </label>
+                        </div>
+
+                        <button type="submit" id="submitBtn" 
+                            class="w-full bg-brand-blue hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center">
+                            <span>Submit Weekly Timesheet</span>
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification System -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
+        <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
+        <div id="toastMessage" class="ml-3 text-sm font-normal">Message here.</div>
+        <button type="button" onclick="hideToast()" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" aria-label="Close">
+            <span class="sr-only">Close</span>
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+    </div>
+
+    <!-- Firebase Implementation & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // ⚠️ PASTE YOUR FIREBASE CONFIGURATION HERE ⚠️
+        // ==========================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+          authDomain: "stratedge-time.firebaseapp.com",
+          projectId: "stratedge-time",
+          storageBucket: "stratedge-time.firebasestorage.app",
+          messagingSenderId: "550779977682",
+          appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+        };
+        const appId = 'stratedge-time-recorder';
+        // ==========================================
+
+        // Session Validation & Logout
+        const userDataStr = sessionStorage.getItem('stratedge_active_user');
+        if (!userDataStr) {
+            window.location.href = 'index.html'; // Redirect if not logged in
+        }
+        const activeUser = JSON.parse(userDataStr);
+
+        window.logout = () => {
+            sessionStorage.removeItem('stratedge_active_user');
+            window.location.href = 'index.html';
+        };
+
+        // UI Toast Setup
+        window.hideToast = () => {
+            const toast = document.getElementById('toast');
+            toast.classList.add('translate-y-full', 'opacity-0');
+        };
+
+        const showToast = (message, type = 'success') => {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMessage');
+            const iconEl = document.getElementById('toastIcon');
+            
+            msgEl.textContent = message;
+            if (type === 'success') {
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg';
+            } else {
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
+            }
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(window.hideToast, 4000);
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let fbUser = null;
+
+        // Days configuration
+        const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const categories = [
+            'Regular Work', 
+            'Sick Leave (SL)', 
+            'Casual Leave (CL)', 
+            'Earned Leave (EL)', 
+            'Public Holiday (PH)'
+        ];
+
+        // Populate Profile
+        document.getElementById('profileName').textContent = activeUser.name;
+        document.getElementById('profileId').textContent = `Emp ID: ${activeUser.empId}`;
+        document.getElementById('profileEmail').textContent = activeUser.email;
+        
+        // Initials Logic
+        const nameParts = activeUser.name.split(' ');
+        let initials = nameParts[0].charAt(0);
+        if(nameParts.length > 1) initials += nameParts[nameParts.length-1].charAt(0);
+        document.getElementById('profileInitials').textContent = initials.toUpperCase();
+
+        // Date Utilities
+        const getDatesFromWeek = (yearWeek) => {
+            const [yearStr, weekStr] = yearWeek.split('-W');
+            const year = parseInt(yearStr);
+            const week = parseInt(weekStr);
+            
+            // Calculate Monday of the ISO week
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dow = simple.getDay();
+            const ISOweekStart = simple;
+            if (dow <= 4)
+                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else
+                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+
+            const dates = [];
+            for(let i=0; i<6; i++) { // Mon-Sat
+                const d = new Date(ISOweekStart);
+                d.setDate(d.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        };
+
+        const formatDate = (dateObj) => {
+            return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        };
+
+        // Setup Current Week as default
+        const setInitialWeek = () => {
+            const now = new Date();
+            const tempDate = new Date(now.valueOf());
+            const dayn = (now.getDay() + 6) % 7;
+            tempDate.setDate(tempDate.getDate() - dayn + 3);
+            const firstThursday = tempDate.valueOf();
+            tempDate.setMonth(0, 1);
+            if (tempDate.getDay() !== 4) {
+                tempDate.setMonth(0, 1 + ((4 - tempDate.getDay()) + 7) % 7);
+            }
+            const weekNum = 1 + Math.ceil((firstThursday - tempDate) / 604800000);
+            const weekStr = `${now.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
+            
+            const weekSelector = document.getElementById('weekSelector');
+            weekSelector.value = weekStr;
+            renderTimesheetGrid(weekStr);
+        };
+
+        // Render Timesheet Grid & Check Firebase
+        const renderTimesheetGrid = async (weekStr) => {
+            if (!weekStr) return;
+            const dates = getDatesFromWeek(weekStr);
+            const tbody = document.getElementById('timesheetBody');
+            tbody.innerHTML = ''; // Clear existing
+
+            daysOfWeek.forEach((day, index) => {
+                const tr = document.createElement('tr');
+                const dateStr = formatDate(dates[index]);
+                
+                let selectOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-900">${day}</div>
+                        <div class="text-xs text-gray-500">${dateStr}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="number" id="hours-${index}" name="hours-${index}" min="0" max="8" step="0.5" value="8" required
+                            class="hours-input w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-center">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <select id="type-${index}" name="type-${index}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-sm text-gray-700">
+                            ${selectOptions}
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Add event listeners to inputs to recalculate totals
+                document.getElementById(`hours-${index}`).addEventListener('input', calculateTotals);
+            });
+
+            // Evaluate Date Logic (Prefill Warning)
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const fridayOfSelectedWeek = new Date(dates[4]); // Index 4 is Friday
+            fridayOfSelectedWeek.setHours(0,0,0,0);
+
+            if (today < fridayOfSelectedWeek) {
+                document.getElementById('prefillWarning').classList.remove('hidden');
+            } else {
+                document.getElementById('prefillWarning').classList.add('hidden');
+            }
+
+            // Check Firebase if already submitted
+            await checkSubmissionStatus(weekStr);
+            calculateTotals();
+        };
+
+        // Check if DB already has entry
+        const checkSubmissionStatus = async (weekStr) => {
+            if (!fbUser) return; // Wait for auth
+            
+            const form = document.getElementById('timesheetForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const banner = document.getElementById('submittedBanner');
+            
+            // Generate a predictable document ID: SE-1001_2026-W14
+            const docId = `${activeUser.empId}_${weekStr}`;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId);
+            
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    // Already submitted!
+                    const data = docSnap.data();
+                    
+                    banner.classList.remove('hidden');
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = "Already Submitted";
+                    document.getElementById('declaration').disabled = true;
+                    document.getElementById('declaration').checked = true;
+
+                    // Populate existing data and lock inputs
+                    daysOfWeek.forEach((day, index) => {
+                        const hInput = document.getElementById(`hours-${index}`);
+                        const tInput = document.getElementById(`type-${index}`);
+                        
+                        if(data.entries && data.entries[day]) {
+                            hInput.value = data.entries[day].hours;
+                            tInput.value = data.entries[day].type;
+                        }
+                        
+                        hInput.disabled = true;
+                        tInput.disabled = true;
+                    });
+
+                    // Handle Justification
+                    const justBox = document.getElementById('justification');
+                    if (data.justification) {
+                        justBox.value = data.justification;
+                    }
+                    justBox.disabled = true;
+                } else {
+                    // Not submitted
+                    banner.classList.add('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = "<span>Submit Weekly Timesheet</span>";
+                    document.getElementById('declaration').disabled = false;
+                    document.getElementById('declaration').checked = false;
+                    document.getElementById('justification').disabled = false;
+                    document.getElementById('justification').value = '';
+                }
+            } catch (error) {
+                console.error("Error checking submission:", error);
+                showToast("Failed to verify submission status", "error");
+            }
+        };
+
+        // Calculate Totals & Compliance
+        const calculateTotals = () => {
+            let total = 0;
+            const inputs = document.querySelectorAll('.hours-input');
+            inputs.forEach(input => {
+                total += parseFloat(input.value || 0);
+            });
+
+            // Update UI
+            document.getElementById('totalHoursDisplay').textContent = total.toFixed(1);
+            
+            // Progress Bar
+            let percent = (total / 48) * 100;
+            if (percent > 100) percent = 100;
+            
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = `${percent}%`;
+            
+            // Color logic for progress bar
+            if (total === 48) {
+                progressBar.className = 'bg-green-500 h-3 rounded-full transition-all duration-500';
+                document.getElementById('progressText').textContent = "100% - Target met!";
+            } else if (total > 48) {
+                progressBar.className = 'bg-orange-500 h-3 rounded-full transition-all duration-500';
+                document.getElementById('progressText').textContent = `Overtime: +${(total-48).toFixed(1)} hrs`;
+            } else {
+                progressBar.className = 'bg-brand-blue h-3 rounded-full transition-all duration-500';
+                document.getElementById('progressText').textContent = `${Math.round(percent)}% of weekly target`;
+            }
+
+            // Justification Box Logic
+            const justificationBlock = document.getElementById('justificationBlock');
+            const justificationInput = document.getElementById('justification');
+            
+            if (total !== 48) {
+                justificationBlock.classList.remove('hidden');
+                justificationInput.required = true;
+            } else {
+                justificationBlock.classList.add('hidden');
+                justificationInput.required = false;
+                justificationInput.value = ''; // clear it
+            }
+        };
+
+        // Form Submission
+        document.getElementById('timesheetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!fbUser) {
+                showToast("Connection to database lost. Please refresh.", "error");
+                return;
+            }
+
+            const weekStr = document.getElementById('weekSelector').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnHtml = submitBtn.innerHTML;
+
+            // Gather Data
+            let totalHours = 0;
+            let entries = {};
+            
+            daysOfWeek.forEach((day, index) => {
+                const hours = parseFloat(document.getElementById(`hours-${index}`).value || 0);
+                const type = document.getElementById(`type-${index}`).value;
+                entries[day] = { hours, type };
+                totalHours += hours;
+            });
+
+            const justification = document.getElementById('justification').value.trim();
+
+            if (totalHours !== 48 && justification === "") {
+                showToast("Please provide a justification for deviating from 48 hours.", "error");
+                document.getElementById('justification').focus();
+                return;
+            }
+
+            // Lock UI during submission
+            submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Submitting...</span>`;
+            submitBtn.disabled = true;
+
+            const docId = `${activeUser.empId}_${weekStr}`;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId);
+
+            const payload = {
+                empId: activeUser.empId,
+                name: activeUser.name,
+                week: weekStr,
+                entries: entries,
+                totalHours: totalHours,
+                justification: justification,
+                submittedAt: Date.now(),
+                status: "Submitted"
+            };
+
+            try {
+                await setDoc(docRef, payload);
+                showToast("Timesheet submitted successfully!", "success");
+                
+                // Re-trigger check to lock the form
+                await checkSubmissionStatus(weekStr);
+                
+            } catch (error) {
+                console.error("Submit Error:", error);
+                showToast("Error submitting timesheet: " + error.message, "error");
+                submitBtn.innerHTML = originalBtnHtml;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Event Listeners
+        document.getElementById('weekSelector').addEventListener('change', (e) => {
+            renderTimesheetGrid(e.target.value);
+        });
+
+        // Firebase Initialization
+        const initAuth = async () => {
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                showToast("Authentication Error. Check database connection.", "error");
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            fbUser = user;
+            if (user) {
+                // Now that we are auth'd, run initial load
+                setInitialWeek();
+            }
+        });
+
+        initAuth();
+
+    </script>
+</body>
+</html>
