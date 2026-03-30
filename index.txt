@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratedge Time</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #F8FAFC; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .main-layout { display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background-color: #0f172a; flex-shrink: 0; display: flex; flex-direction: column; color: white; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 2rem; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- BUILT-IN SVG ICON COMPONENT (Prevents Error #130) ---
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            const icons = {
+                shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+                user: <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>,
+                layout: <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>,
+                users: <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>,
+                book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>,
+                logout: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>,
+                plus: <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>,
+                palm: <path d="M13 8c.6 0 1 0 1 0s4 2 4 6-4 6-4 6H10s-4-2-4-6 4-6 4-6z"/><path d="M12 22V12"/>,
+                clock: <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>,
+                send: <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>,
+                trash: <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>,
+                edit: <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>,
+                check: <polyline points="20 6 9 17 4 12"/>,
+                x: <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>,
+                help: <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>,
+                chevronLeft: <polyline points="15 18 9 12 15 6"/>,
+                chevronRight: <polyline points="9 18 15 12 9 6"/>,
+                filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>,
+                chart: <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>,
+                userPlus: <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>,
+                userMinus: <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="22" y1="11" x2="16" y2="11"/>
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || <circle cx="12" cy="12" r="10" />}
+                </svg>
+            );
+        };
+
+        // --- FIREBASE CONFIGURATION (REPLACE WITH YOUR KEYS) ---
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+  authDomain: "stratedge-time.firebaseapp.com",
+  projectId: "stratedge-time",
+  storageBucket: "stratedge-time.firebasestorage.app",
+  messagingSenderId: "550779977682",
+  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+        const isConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
+        if (isConfigured) { firebase.initializeApp(firebaseConfig); }
+        const db = isConfigured ? firebase.firestore() : null;
+        const auth = isConfigured ? firebase.auth() : null;
+        const APP_ID = 'stratedge-time-prod-v1';
+
+        const App = () => {
+            const LEAVE_TYPES = ['Casual Leave', 'Earned Leave', 'Public Holiday', 'Sick Leave'];
+            const MAX_DAILY_HOURS = 8;
+            const STANDARD_WEEKLY_HOURS = 48;
+
+            const [currentUser, setCurrentUser] = React.useState(null); 
+            const [view, setView] = React.useState('dashboard'); 
+            const [adminTab, setAdminTab] = React.useState('ledger');
+            const [allUsers, setAllUsers] = React.useState([]);
+            const [entries, setEntries] = React.useState([]);
+            const [submissions, setSubmissions] = React.useState([]);
+
+            const [selectedDate, setSelectedDate] = React.useState(new Date());
+            const [calendarViewDate, setCalendarViewDate] = React.useState(new Date()); 
+            const [isAddingEntry, setIsAddingEntry] = React.useState(false);
+            const [activeDateForEntry, setActiveDateForEntry] = React.useState(null);
+            const [modalType, setModalType] = React.useState('work'); 
+            const [isReasoningRequired, setIsReasoningRequired] = React.useState(false);
+            const [isConsentRequired, setIsConsentRequired] = React.useState(false);
+            const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);
+            const [isLndModalOpen, setIsLndModalOpen] = React.useState(false);
+            const [isQuestionModalOpen, setIsQuestionModalOpen] = React.useState(false);
+            const [isAddUserModalOpen, setIsAddUserModalOpen] = React.useState(false);
+            
+            const [newEntry, setNewEntry] = React.useState({ project: '', hours: '', description: '', leaveType: LEAVE_TYPES[0] });
+            const [newUser, setNewUser] = React.useState({ name: '', email: '', designation: '', department: '' });
+            const [editingEntryId, setEditingEntryId] = React.useState(null);
+            const [activeEntryForQuestion, setActiveEntryForQuestion] = React.useState(null);
+            const [adminQuestion, setAdminQuestion] = React.useState('');
+            const [submissionReason, setSubmissionReason] = React.useState('');
+            const [error, setError] = React.useState('');
+            const [loginError, setLoginError] = React.useState('');
+
+            React.useEffect(() => {
+                if (!isConfigured) return;
+                auth.signInAnonymously();
+                const base = db.collection('artifacts').doc(APP_ID).collection('public').doc('data');
+                base.collection('users').onSnapshot(s => setAllUsers(s.docs.map(d => ({ dbId: d.id, ...d.data() }))));
+                base.collection('entries').onSnapshot(s => setEntries(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+                base.collection('submissions').onSnapshot(s => setSubmissions(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+            }, []);
+
+            const getWeekRange = (date) => {
+                const start = new Date(date);
+                start.setHours(0,0,0,0);
+                start.setDate(start.getDate() - start.getDay());
+                const end = new Date(start);
+                end.setDate(start.getDate() + 6);
+                return { start, end };
+            };
+            const getWeekId = (date) => {
+                const { start } = getWeekRange(date);
+                return `${start.getFullYear()}-W${Math.ceil((start.getDate() + 1) / 7)}`;
+            };
+            const isSunday = (date) => date.getDay() === 0;
+            const isWeekSubmitted = (date, userId = currentUser?.id) => submissions.some(s => s.weekId === getWeekId(date) && s.userId === userId);
+
+            const weekDays = React.useMemo(() => {
+                const { start } = getWeekRange(selectedDate);
+                return [1,2,3,4,5,6].map(i => {
+                    const d = new Date(start); d.setDate(start.getDate() + i); return d;
+                });
+            }, [selectedDate]);
+
+            const filteredEntries = React.useMemo(() => {
+                const { start, end } = getWeekRange(selectedDate);
+                return entries.filter(e => {
+                    const d = new Date(e.date);
+                    return d >= start && d <= end && (view === 'admin' || e.userId === currentUser?.id);
+                });
+            }, [entries, selectedDate, currentUser, view]);
+
+            const stats = React.useMemo(() => {
+                const uEntries = filteredEntries.filter(e => e.userId === currentUser?.id);
+                return {
+                    total: uEntries.reduce((s, e) => s + e.hours, 0),
+                    work: uEntries.filter(e => e.type === 'work').reduce((s, e) => s + e.hours, 0),
+                    leave: uEntries.filter(e => e.type === 'leave').reduce((s, e) => s + e.hours, 0)
+                };
+            }, [filteredEntries, currentUser]);
+
+            const submitted = isWeekSubmitted(selectedDate);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const email = e.target.email.value.toLowerCase().trim();
+                if (email === 'admin@stratedge.com') {
+                    setCurrentUser({ id: 'ADM-MASTER', name: 'Executive Admin', designation: 'System Controller', role: 'admin', email: 'admin@stratedge.com', department: 'Executive Board', joinDate: 'System Init' });
+                    setView('admin');
+                } else {
+                    const found = allUsers.find(u => u.email.toLowerCase() === email);
+                    if (found) { setCurrentUser(found); setView('dashboard'); }
+                    else setLoginError('Login failure: Account not found.');
+                }
+            };
+
+            const saveEntry = async () => {
+                const hours = parseFloat(newEntry.hours);
+                if (hours > MAX_DAILY_HOURS) { setError(`Daily Max: ${MAX_DAILY_HOURS}h`); return; }
+                const payload = {
+                    userId: currentUser.id, userName: currentUser.name, type: modalType,
+                    project: modalType === 'work' ? newEntry.project : null,
+                    leaveType: modalType === 'leave' ? newEntry.leaveType : null,
+                    hours: hours, date: activeDateForEntry.toISOString(),
+                    description: newEntry.description, status: 'pending'
+                };
+                const base = db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries');
+                if (editingEntryId) await base.doc(editingEntryId).update(payload);
+                else await base.add(payload);
+                setIsAddingEntry(false);
+                setEditingEntryId(null);
+            };
+
+            if (!isConfigured) return (
+                <div className="min-h-screen flex items-center justify-center p-6 bg-orange-50">
+                    <div className="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-md border-2 border-orange-200">
+                        <Icon name="help" className="w-16 h-16 text-orange-500 mx-auto mb-6" />
+                        <h2 className="text-2xl font-black mb-4 text-slate-900">Setup Required</h2>
+                        <p className="text-slate-500 mb-8 leading-relaxed">You must paste your <b>Firebase Config</b> keys into the <code>index.html</code> file before the website can start.</p>
+                    </div>
+                </div>
+            );
+
+            if (!currentUser) return (
+                <div className="min-h-screen flex items-center justify-center p-6 bg-blue-50">
+                    <div className="bg-white border p-12 rounded-[3.5rem] shadow-2xl text-center max-w-md w-full animate-in">
+                        <div className="bg-blue-600 p-6 rounded-[2.5rem] inline-block mb-6 shadow-xl"><Icon name="shield" className="text-white w-12 h-12" /></div>
+                        <h2 className="text-3xl font-black mb-8 text-slate-900 tracking-tighter">Stratedge Time</h2>
+                        <form onSubmit={handleLogin} className="space-y-4 text-left">
+                            {loginError && <p className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold text-center border border-red-100">{loginError}</p>}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email</label>
+                                <input name="email" type="email" placeholder="admin@stratedge.com" className="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100" required />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Security Key</label>
+                                <input name="password" type="password" placeholder="••••••••" className="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100" required />
+                            </div>
+                            <button className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl shadow-blue-200 active:scale-95 transition-all mt-4">Initialize Session</button>
+                        </form>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="main-layout font-sans">
+                    <div className="sidebar shadow-2xl">
+                        <div className="p-8 border-b border-blue-900/40 flex items-center gap-3">
+                            <Icon name="shield" className="text-orange-400 w-8 h-8" />
+                            <h1 className="text-xl font-black italic tracking-tighter">STRATEDGE</h1>
+                        </div>
+                        <button onClick={() => setIsProfileModalOpen(true)} className="p-8 border-b border-blue-900/40 bg-blue-900/20 text-left hover:bg-blue-900/40 transition-all group">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"><Icon name="user" className="text-white w-6 h-6" /></div>
+                                <div className="overflow-hidden">
+                                    <p className="font-black text-white text-sm truncate">{currentUser.name}</p>
+                                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">View Profile</p>
+                                </div>
+                            </div>
+                        </button>
+                        <nav className="flex-1 p-4 space-y-2">
+                            <button onClick={()=>setView('dashboard')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold transition-all ${view==='dashboard'?'bg-blue-600 shadow-xl':'text-blue-300 hover:bg-blue-900/50'}`}><Icon name="layout" className="w-5 h-5" /> Dashboard</button>
+                            {currentUser.role==='admin' && <button onClick={()=>setView('admin')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold transition-all ${view==='admin'?'bg-blue-600 shadow-xl':'text-blue-300 hover:bg-blue-900/50'}`}><Icon name="users" className="w-5 h-5" /> Admin Oversight</button>}
+                            <button onClick={()=>setIsLndModalOpen(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-300 hover:bg-blue-900/50 transition-all"><Icon name="book" className="w-5 h-5" /> L & D Module</button>
+                            <button onClick={()=>{setCurrentUser(null); setView('dashboard');}} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-400 mt-auto hover:text-orange-400 transition-all"><Icon name="logout" className="w-5 h-5" /> Logout</button>
+                        </nav>
+                    </div>
+
+                    <main className="main-content custom-scrollbar">
+                        <header className="flex justify-between items-end mb-10 flex-wrap gap-4 animate-in">
+                            <div>
+                                <h2 className="text-3xl font-black text-slate-900">Stratedge Time: <span className="text-blue-600 italic underline decoration-orange-400 underline-offset-8">{currentUser.name}</span></h2>
+                                <p className="text-slate-400 font-bold uppercase text-[9px] tracking-widest mt-3">Strategic Performance Terminal</p>
+                            </div>
+                            {view==='dashboard' && (
+                                <div className="bg-white px-8 py-4 rounded-[2.5rem] border border-slate-200 shadow-sm flex items-center gap-8">
+                                    <div className="text-center">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Weekly Commitment</p>
+                                        <p className={`text-2xl font-black ${stats.total===STANDARD_WEEKLY_HOURS?'text-green-600':'text-orange-500'}`}>{stats.total}h / {STANDARD_WEEKLY_HOURS}h</p>
+                                    </div>
+                                    {!submitted ? (
+                                        <button onClick={()=>setIsConsentRequired(true)} className="bg-orange-500 text-white px-10 py-5 rounded-3xl font-black text-xs shadow-2xl hover:bg-orange-600 transition-all"><Icon name="send" className="w-4 h-4 inline mr-2" /> Submit Timesheet for the Week</button>
+                                    ) : (
+                                        <div className="bg-green-50 text-green-700 px-6 py-4 rounded-3xl text-xs font-black uppercase border border-green-200">Timesheet Submitted</div>
+                                    )}
+                                </div>
+                            )}
+                        </header>
+
+                        {view === 'dashboard' ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 pb-20">
+                                {weekDays.map((day, idx) => {
+                                    const dEntries = filteredEntries.filter(e => e.userId === currentUser.id && new Date(e.date).toDateString() === day.toDateString());
+                                    const dayTotal = dEntries.reduce((s, e) => s + e.hours, 0);
+                                    const isToday = day.toDateString() === new Date().toDateString();
+                                    return (
+                                        <div key={idx} className={`bg-white rounded-[2rem] border flex flex-col min-h-[450px] shadow-sm animate-in ${isToday ? 'border-blue-400 ring-4 ring-blue-50' : 'border-slate-200'}`}>
+                                            <div className="px-5 py-5 border-b border-slate-100">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div><span className="text-[10px] font-black uppercase text-slate-400">{new Intl.DateTimeFormat('en-US',{weekday:'long'}).format(day)}</span><h4 className="text-xs font-black mt-1">{new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric'}).format(day)}</h4></div>
+                                                    {!submitted && (
+                                                        <div className="flex gap-1">
+                                                            <button onClick={()=>{setModalType('work'); setActiveDateForEntry(day); setIsAddingEntry(true);}} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"><Icon name="plus" className="w-4 h-4"/></button>
+                                                            <button onClick={()=>{setModalType('leave'); setActiveDateForEntry(day); setIsAddingEntry(true);}} className="p-1.5 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100"><Icon name="palm" className="w-4 h-4"/></button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner"><div className={`h-full transition-all duration-500 ${dayTotal > 8 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${(dayTotal / 8) * 100}%` }} /></div>
+                                                    <span className="text-[10px] font-black">{dayTotal}h</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 p-4 space-y-2 bg-slate-50/20 overflow-y-auto custom-scrollbar">
+                                                {dEntries.map(e => (
+                                                    <div key={e.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative group animate-in">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <div className={`p-2 rounded-xl shrink-0 ${e.type === 'leave' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}><Icon name="clock" className="w-4 h-4" /></div>
+                                                            <div><p className="font-black text-slate-900 text-[11px] truncate">{e.type === 'work' ? e.project : e.leaveType}</p><p className="text-[10px] text-blue-600 font-black">{e.hours}h Logged</p></div>
+                                                        </div>
+                                                        {!submitted && (
+                                                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                                <button onClick={()=>{setEditingEntryId(e.id); setModalType(e.type); setActiveDateForEntry(new Date(e.date)); setNewEntry({project:e.project||'', hours:e.hours.toString(), description:e.description||'', leaveType:e.leaveType||LEAVE_TYPES[0]}); setIsAddingEntry(true);}} className="bg-white border p-1.5 rounded-lg text-blue-400 hover:text-blue-600 shadow-lg"><Icon name="edit" className="w-3 h-3" /></button>
+                                                                <button onClick={() => db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries').doc(e.id).delete()} className="bg-white border p-1.5 rounded-lg text-red-400 hover:text-red-600 shadow-lg"><Icon name="trash" className="w-3 h-3" /></button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            /* Admin Management View */
+                            <div className="space-y-6 animate-in">
+                                <div className="flex gap-4 mb-10">
+                                    <button onClick={() => setAdminTab('ledger')} className={`px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${adminTab === 'ledger' ? 'bg-blue-600 text-white shadow-xl shadow-blue-100' : 'bg-white text-slate-400 border border-slate-200'}`}>Ledger Oversight</button>
+                                    <button onClick={() => setAdminTab('personnel')} className={`px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${adminTab === 'personnel' ? 'bg-blue-600 text-white shadow-xl shadow-blue-100' : 'bg-white text-slate-400 border border-slate-200'}`}>Personnel Management</button>
+                                </div>
+                                <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden p-8">
+                                    <div className="flex justify-between items-center mb-8 border-b pb-8">
+                                        <h3 className="text-xl font-black text-slate-900">{adminTab === 'personnel' ? 'Strategic Personnel' : 'Organization Ledger'}</h3>
+                                        {adminTab === 'personnel' && <button onClick={() => setIsAddUserModalOpen(true)} className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-lg flex items-center gap-2 active:scale-95"><Icon name="userPlus" className="w-4 h-4" /> Add Associate</button>}
+                                    </div>
+                                    <table className="w-full text-left">
+                                        <thead><tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest"><th className="p-4">Name / ID</th><th className="p-4 text-center">Status</th></tr></thead>
+                                        <tbody className="divide-y">
+                                            {adminTab === 'personnel' ? (
+                                                allUsers.map(u => (
+                                                    <tr key={u.dbId} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="p-4 font-black text-slate-900">{u.name} <span className="text-[9px] text-slate-400 block">{u.email}</span></td>
+                                                        <td className="p-4 text-center"><button onClick={() => db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('users').doc(u.dbId).delete()} className="text-slate-300 hover:text-red-600"><Icon name="userMinus" /></button></td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                entries.map(e => (
+                                                    <tr key={e.id} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="p-4 font-black text-slate-900">{e.userName} <span className="text-[9px] text-slate-400 block">{e.project || e.leaveType} • {e.hours}h</span></td>
+                                                        <td className="p-4 text-center">
+                                                            <div className="flex justify-center gap-2">
+                                                                <button onClick={() => db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries').doc(e.id).update({status:'approved'})} className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all"><Icon name="check" /></button>
+                                                                <button onClick={() => db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries').doc(e.id).update({status:'declined'})} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"><Icon name="x" /></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* MODAL WRAPPERS (Shared logic) */}
+                    {isAddingEntry && (
+                        <div className="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-[200] flex items-center justify-center p-6 animate-in">
+                            <div className="bg-white w-full max-w-sm rounded-[3.5rem] shadow-2xl overflow-hidden">
+                                <div className="bg-blue-950 p-10 text-white"><h3 className="text-2xl font-black">{editingEntryId ? 'Update Log' : 'Add Log'}</h3></div>
+                                <div className="p-10 space-y-6">
+                                    {modalType === 'work' ? <input placeholder="Project" className="w-full p-4 bg-slate-50 border rounded-2xl outline-none" value={newEntry.project} onChange={e=>setNewEntry({...newEntry, project:e.target.value})} /> : <select className="w-full p-4 bg-slate-50 border rounded-2xl outline-none" value={newEntry.leaveType} onChange={e=>setNewEntry({...newEntry, leaveType:e.target.value})}>{LEAVE_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select>}
+                                    <input type="number" placeholder="Hours" className="w-full p-4 bg-slate-50 border rounded-2xl outline-none" value={newEntry.hours} onChange={e=>setNewEntry({...newEntry, hours:e.target.value})} />
+                                    <textarea placeholder="Description" className="w-full p-4 bg-slate-50 border rounded-2xl outline-none h-24" value={newEntry.description} onChange={e=>setNewEntry({...newEntry, description:e.target.value})} />
+                                    <div className="flex gap-4"><button onClick={()=>setIsAddingEntry(false)} className="flex-1 py-4 font-black text-slate-400">Cancel</button><button onClick={saveEntry} className="flex-1 py-4 bg-blue-600 text-white rounded-3xl font-black shadow-xl">Commit</button></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {isAddUserModalOpen && (
+                        <div className="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-[300] flex items-center justify-center p-6 animate-in">
+                            <div className="bg-white w-full max-w-md rounded-[3.5rem] shadow-2xl p-12">
+                                <h3 className="text-3xl font-black text-slate-900 mb-8">Enroll Associate</h3>
+                                <div className="space-y-4">
+                                    <input placeholder="Name" className="w-full p-5 bg-slate-50 border rounded-3xl" value={newUser.name} onChange={e=>setNewUser({...newUser, name:e.target.value})} />
+                                    <input placeholder="Email" className="w-full p-5 bg-slate-50 border rounded-3xl" value={newUser.email} onChange={e=>setNewUser({...newUser, email:e.target.value})} />
+                                    <input placeholder="Designation" className="w-full p-5 bg-slate-50 border rounded-3xl" value={newUser.designation} onChange={e=>setNewUser({...newUser, designation:e.target.value})} />
+                                    <input placeholder="Department" className="w-full p-5 bg-slate-50 border rounded-3xl" value={newUser.department} onChange={e=>setNewUser({...newUser, department:e.target.value})} />
+                                </div>
+                                <div className="flex gap-4 mt-10"><button onClick={()=>setIsAddUserModalOpen(false)} className="flex-1 py-5 font-black text-slate-400">Cancel</button><button onClick={async ()=>{if(!newUser.name)return; await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('users').add({...newUser, id:`STR-${Math.floor(1000+Math.random()*9000)}`, role:'user'}); setIsAddUserModalOpen(false); setNewUser({name:'',email:'',designation:'',department:''});}} className="flex-1 py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl">Enroll</button></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Simple Profile Modal */}
+                    {isProfileModalOpen && (
+                        <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in">
+                            <div className="bg-white w-full max-w-lg rounded-[3.5rem] shadow-2xl p-10">
+                                <div className="text-center mb-10">
+                                    <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl"><Icon name="user" className="text-white w-10 h-10" /></div>
+                                    <h3 className="text-3xl font-black text-slate-900">{currentUser.name}</h3>
+                                    <p className="text-slate-400 font-bold uppercase mt-2">{currentUser.designation}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mb-10 text-left">
+                                    <div className="bg-slate-50 p-6 rounded-3xl"><p className="text-[10px] font-black text-slate-400 uppercase">Corporate ID</p><p className="font-black text-slate-900">{currentUser.id}</p></div>
+                                    <div className="bg-slate-50 p-6 rounded-3xl"><p className="text-[10px] font-black text-slate-400 uppercase">Department</p><p className="font-black text-slate-900">{currentUser.department || 'N/A'}</p></div>
+                                </div>
+                                <button onClick={()=>setIsProfileModalOpen(false)} className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl shadow-blue-100">Close Profile</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Coming Soon Modal */}
+                    {isLndModalOpen && (
+                        <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[110] flex items-center justify-center p-6 text-center animate-in">
+                            <div className="bg-white w-full max-w-md rounded-[3.5rem] p-16 shadow-2xl relative">
+                                <Icon name="layout" className="w-20 h-20 text-blue-600 mx-auto mb-10" />
+                                <h3 className="text-3xl font-black text-slate-900 mb-4">Strategic Upskilling</h3>
+                                <div className="bg-slate-50 p-8 rounded-3xl font-black text-slate-600 uppercase tracking-widest text-lg">COMING SOON</div>
+                                <button onClick={()=>setIsLndModalOpen(false)} className="w-full mt-10 py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl">Understood</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Consent Modal */}
+                    {isConsentRequired && (
+                        <div className="fixed inset-0 bg-blue-950/95 backdrop-blur-xl z-[400] flex items-center justify-center p-6 text-center animate-in">
+                            <div className="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl">
+                                <h3 className="text-3xl font-black text-slate-900 mb-6">Strategic Consent</h3>
+                                <p className="text-slate-600 text-sm italic mb-10 leading-relaxed">"I declare that this timesheet is accurate to the best of my knowledge. I acknowledge it is subject to periodic audit."</p>
+                                <div className="flex gap-4"><button onClick={()=>setIsConsentRequired(false)} className="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-slate-400">Decline</button><button onClick={async () => { if (stats.total !== STANDARD_WEEKLY_HOURS) setIsReasoningRequired(true); else { await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('submissions').add({userId: currentUser.id, weekId: getWeekId(selectedDate), reason:'Standard week'}); setIsConsentRequired(false); } }} className="flex-1 py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl">Accept</button></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {isReasoningRequired && (
+                        <div className="fixed inset-0 bg-blue-950/95 backdrop-blur-md z-[500] flex items-center justify-center p-6 text-center animate-in">
+                            <div className="bg-white w-full max-w-sm rounded-[3rem] p-12 shadow-2xl">
+                                <h3 className="text-2xl font-black text-slate-900 mb-4">Quota Deviation</h3>
+                                <p className="text-slate-500 text-xs mb-8">Total ({stats.total}h) deviates from 48h. Provide context.</p>
+                                <textarea rows="4" value={submissionReason} onChange={e=>setSubmissionReason(e.target.value)} placeholder="Provide strategic justification..." className="w-full p-6 bg-slate-50 border rounded-3xl outline-none font-medium text-xs mb-8" />
+                                <div className="flex gap-4"><button onClick={()=>setIsReasoningRequired(false)} className="flex-1 py-5 border rounded-3xl font-black text-slate-400">Back</button><button disabled={!submissionReason.trim()} onClick={async () => { await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('submissions').add({userId: currentUser.id, weekId: getWeekId(selectedDate), reason: submissionReason}); setIsReasoningRequired(false); setIsConsentRequired(false); }} className="flex-1 py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl">Submit</button></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
