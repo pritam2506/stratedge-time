@@ -82,42 +82,58 @@
 
             <!-- Employee Login Form (Hidden by default) -->
             <form id="employeeForm" class="space-y-5 hidden">
-                <div>
-                    <label for="empId" class="block text-sm font-medium text-gray-700 mb-1">Employee ID or Email</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <input type="text" id="empId" required placeholder="e.g. SE-1001" 
-                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
-                    </div>
-                </div>
-                <div>
-                    <label for="empPass" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <input type="password" id="empPass" required placeholder="••••••••" 
-                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">Note: Password is not required for first-time access in this version.</p>
-                </div>
                 
-                <button type="submit" id="empSubmitBtn"
-                    class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-2 flex justify-center items-center">
-                    <span>Access Timesheet</span>
-                </button>
+                <!-- STEP 1: Employee ID Input -->
+                <div id="otpStep1">
+                    <div>
+                        <label for="empId" class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="empId" placeholder="e.g. SE-1001" 
+                                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="getOtpBtn"
+                        class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-6 flex justify-center items-center">
+                        <span>Send OTP</span>
+                    </button>
+                </div>
+
+                <!-- STEP 2: Enter OTP Input -->
+                <div id="otpStep2" class="hidden">
+                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg mb-4 text-center">
+                        <p class="text-sm text-gray-600" id="otpMessage">OTP sent to your registered number</p>
+                    </div>
+
+                    <div>
+                        <label for="empOtp" class="block text-sm font-medium text-gray-700 mb-1 text-center">Enter 4-Digit OTP</label>
+                        <input type="text" id="empOtp" maxlength="4" placeholder="••••" pattern="\d{4}" 
+                            class="w-full text-center tracking-[0.5em] text-3xl py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
+                    </div>
+                    
+                    <button type="submit" id="empSubmitBtn"
+                        class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-6 flex justify-center items-center">
+                        <span>Access Timesheet</span>
+                    </button>
+
+                    <div class="text-center mt-4">
+                        <button type="button" id="backToIdBtn" class="text-xs font-semibold text-gray-500 hover:text-brand-blue transition-colors">
+                            &larr; Change Employee ID
+                        </button>
+                    </div>
+                </div>
+
             </form>
         </div>
     </div>
 
     <!-- Toast Notification System -->
-    <div id="toast" class="fixed top-4 right-4 transform -translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
+    <div id="toast" class="fixed top-4 right-4 transform -translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200 max-w-sm" role="alert">
         <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
         <div id="toastMessage" class="ml-3 text-sm font-normal">Message here.</div>
         <button type="button" onclick="hideToast()" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" aria-label="Close">
@@ -136,13 +152,13 @@
         // ⚠️ PASTE YOUR FIREBASE CONFIGURATION HERE ⚠️
         // ==========================================
         const firebaseConfig = {
-          apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
-          authDomain: "stratedge-time.firebaseapp.com",
-          projectId: "stratedge-time",
-          storageBucket: "stratedge-time.firebasestorage.app",
-          messagingSenderId: "550779977682",
-          appId: "1:550779977682:web:d4b4983b62876655b3d20b"
-        };
+  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+  authDomain: "stratedge-time.firebaseapp.com",
+  projectId: "stratedge-time",
+  storageBucket: "stratedge-time.firebasestorage.app",
+  messagingSenderId: "550779977682",
+  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+};
         const appId = 'stratedge-time-recorder';
         // ==========================================
 
@@ -153,12 +169,14 @@
         let currentUser = null;
 
         // Toast utility functions
+        let toastTimeout;
         window.hideToast = () => {
             const toast = document.getElementById('toast');
             toast.classList.add('-translate-y-full', 'opacity-0');
+            clearTimeout(toastTimeout);
         };
 
-        const showToast = (message, type = 'error') => {
+        const showToast = (message, type = 'error', duration = 4000) => {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toastMessage');
             const iconEl = document.getElementById('toastIcon');
@@ -177,7 +195,8 @@
             }
 
             toast.classList.remove('-translate-y-full', 'opacity-0');
-            setTimeout(window.hideToast, 4000);
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(window.hideToast, duration);
         };
 
         // UI Tabs Logic
@@ -220,21 +239,26 @@
             }
         });
 
-        // Form Submit: EMPLOYEE (Connected to Firebase)
-        employeeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        // --- OTP LOGIC STATE ---
+        let generatedOtp = null;
+        let pendingUser = null;
+
+        // Step 1: Request OTP
+        document.getElementById('getOtpBtn').addEventListener('click', async () => {
             if (!currentUser) {
-                showToast('Still connecting to the database. Please try again in a moment.', 'info');
+                showToast('Still connecting to the database. Please wait.', 'info');
                 return;
             }
 
             const empIdInput = document.getElementById('empId').value.trim();
-            const btn = document.getElementById('empSubmitBtn');
+            if (!empIdInput) {
+                showToast('Please enter your Employee ID first.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('getOtpBtn');
             const originalText = btn.innerHTML;
-            
-            // Loading State
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Verifying...</span>`;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Searching...</span>`;
             btn.disabled = true;
 
             try {
@@ -242,26 +266,39 @@
                 const snapshot = await getDocs(employeesRef);
                 
                 let foundEmployee = null;
-                
-                // Search for employee in memory
                 snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data.empId === empIdInput || data.email === empIdInput) {
-                        foundEmployee = { id: docSnap.id, ...data };
+                    if (docSnap.data().empId === empIdInput) {
+                        foundEmployee = { id: docSnap.id, ...docSnap.data() };
                     }
                 });
 
                 if (foundEmployee) {
-                    showToast(`Welcome back, ${foundEmployee.name}! Redirecting...`, 'success');
+                    if (!foundEmployee.phone) {
+                        showToast('No phone number is registered for this Employee ID. Please contact your Admin.', 'error', 6000);
+                        return;
+                    }
+
+                    pendingUser = foundEmployee;
                     
-                    // Save employee data locally to use on the timesheet page
-                    sessionStorage.setItem('stratedge_active_user', JSON.stringify(foundEmployee));
+                    // Generate a random 4-digit OTP
+                    generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
                     
-                    setTimeout(() => {
-                        window.location.href = 'timesheet.html';
-                    }, 1500);
+                    // Mask the phone number for display
+                    const phone = foundEmployee.phone;
+                    const maskedPhone = phone.length > 4 ? '*'.repeat(phone.length - 4) + phone.slice(-4) : '****';
+                    
+                    document.getElementById('otpMessage').innerHTML = `OTP sent securely to <span class="font-bold text-gray-800">${maskedPhone}</span>`;
+                    
+                    // Switch UI steps
+                    document.getElementById('otpStep1').classList.add('hidden');
+                    document.getElementById('otpStep2').classList.remove('hidden');
+                    document.getElementById('empOtp').focus();
+
+                    // 🚨 DEMO MODE NOTIFICATION 🚨
+                    showToast(`[DEMO] Your 4-digit OTP is: ${generatedOtp}`, 'info', 10000);
+
                 } else {
-                    showToast('Employee ID or Email not found. Please contact your administrator.', 'error');
+                    showToast('Employee ID not found. Check with your administrator.', 'error');
                 }
                 
             } catch (error) {
@@ -270,6 +307,40 @@
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
+            }
+        });
+
+        // Go Back to Step 1
+        document.getElementById('backToIdBtn').addEventListener('click', () => {
+            document.getElementById('otpStep2').classList.add('hidden');
+            document.getElementById('otpStep1').classList.remove('hidden');
+            document.getElementById('empOtp').value = '';
+            generatedOtp = null;
+            pendingUser = null;
+        });
+
+        // Step 2: Validate OTP & Login
+        employeeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const enteredOtp = document.getElementById('empOtp').value.trim();
+            const btn = document.getElementById('empSubmitBtn');
+
+            if (enteredOtp === generatedOtp) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Verifying...</span>`;
+                btn.disabled = true;
+
+                showToast(`Welcome back, ${pendingUser.name}! Redirecting...`, 'success');
+                
+                // Save employee data locally to use on the timesheet page
+                sessionStorage.setItem('stratedge_active_user', JSON.stringify(pendingUser));
+                
+                setTimeout(() => {
+                    window.location.href = 'timesheet.html';
+                }, 1500);
+            } else {
+                showToast('Invalid OTP. Please check the code and try again.', 'error');
             }
         });
 
