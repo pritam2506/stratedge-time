@@ -102,6 +102,8 @@
                         class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-6 flex justify-center items-center">
                         <span>Send OTP</span>
                     </button>
+                    <!-- Invisible Recaptcha Container -->
+                    <div id="recaptcha-container"></div>
                 </div>
 
                 <!-- STEP 2: Enter OTP Input -->
@@ -111,8 +113,8 @@
                     </div>
 
                     <div>
-                        <label for="empOtp" class="block text-sm font-medium text-gray-700 mb-1 text-center">Enter 4-Digit OTP</label>
-                        <input type="text" id="empOtp" maxlength="4" placeholder="••••" pattern="\d{4}" 
+                        <label for="empOtp" class="block text-sm font-medium text-gray-700 mb-1 text-center">Enter 6-Digit SMS Code</label>
+                        <input type="text" id="empOtp" maxlength="6" placeholder="••••••" pattern="\d{6}" 
                             class="w-full text-center tracking-[0.5em] text-3xl py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
                     </div>
                     
@@ -145,7 +147,7 @@
     <!-- UI Logic & Firebase Backend Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
@@ -240,8 +242,9 @@
         });
 
         // --- OTP LOGIC STATE ---
-        let generatedOtp = null;
+        let confirmationResult = null;
         let pendingUser = null;
+        let appVerifier = null;
 
         // Step 1: Request OTP
         document.getElementById('getOtpBtn').addEventListener('click', async () => {
@@ -258,7 +261,7 @@
 
             const btn = document.getElementById('getOtpBtn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Searching...</span>`;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Sending SMS...</span>`;
             btn.disabled = true;
 
             try {
@@ -275,35 +278,50 @@
                 if (foundEmployee) {
                     if (!foundEmployee.phone) {
                         showToast('No phone number is registered for this Employee ID. Please contact your Admin.', 'error', 6000);
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
                         return;
                     }
 
                     pendingUser = foundEmployee;
                     
-                    // Generate a random 4-digit OTP
-                    generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+                    // Format phone number (remove spaces)
+                    const formattedPhone = foundEmployee.phone.replace(/\s+/g, '');
+                    
+                    // Initialize Recaptcha if not already done
+                    if (!appVerifier) {
+                        appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                            'size': 'invisible'
+                        });
+                    }
+
+                    // Trigger Firebase Phone Auth
+                    confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
                     
                     // Mask the phone number for display
-                    const phone = foundEmployee.phone;
+                    const phone = formattedPhone;
                     const maskedPhone = phone.length > 4 ? '*'.repeat(phone.length - 4) + phone.slice(-4) : '****';
                     
-                    document.getElementById('otpMessage').innerHTML = `OTP sent securely to <span class="font-bold text-gray-800">${maskedPhone}</span>`;
+                    document.getElementById('otpMessage').innerHTML = `SMS sent securely to <span class="font-bold text-gray-800">${maskedPhone}</span>`;
                     
                     // Switch UI steps
                     document.getElementById('otpStep1').classList.add('hidden');
                     document.getElementById('otpStep2').classList.remove('hidden');
                     document.getElementById('empOtp').focus();
 
-                    // 🚨 DEMO MODE NOTIFICATION 🚨
-                    showToast(`[DEMO] Your 4-digit OTP is: ${generatedOtp}`, 'info', 10000);
-
                 } else {
                     showToast('Employee ID not found. Check with your administrator.', 'error');
                 }
                 
             } catch (error) {
-                showToast('Database error: ' + error.message, 'error');
                 console.error(error);
+                // If ReCaptcha fails, reset it so the user can try again
+                if (appVerifier) {
+                    appVerifier.render().then(widgetId => {
+                        window.grecaptcha.reset(widgetId);
+                    });
+                }
+                showToast('Failed to send SMS. Ensure your phone number includes country code (e.g., +1).', 'error', 6000);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -315,7 +333,7 @@
             document.getElementById('otpStep2').classList.add('hidden');
             document.getElementById('otpStep1').classList.remove('hidden');
             document.getElementById('empOtp').value = '';
-            generatedOtp = null;
+            confirmationResult = null;
             pendingUser = null;
         });
 
@@ -325,12 +343,16 @@
             
             const enteredOtp = document.getElementById('empOtp').value.trim();
             const btn = document.getElementById('empSubmitBtn');
+            const originalText = btn.innerHTML;
 
-            if (enteredOtp === generatedOtp) {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Verifying...</span>`;
-                btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Verifying...</span>`;
+            btn.disabled = true;
 
+            try {
+                // Verify the code with Firebase
+                const result = await confirmationResult.confirm(enteredOtp);
+                // User signed in successfully via Firebase Phone Auth
+                
                 showToast(`Welcome back, ${pendingUser.name}! Redirecting...`, 'success');
                 
                 // Save employee data locally to use on the timesheet page
@@ -339,8 +361,12 @@
                 setTimeout(() => {
                     window.location.href = 'timesheet.html';
                 }, 1500);
-            } else {
-                showToast('Invalid OTP. Please check the code and try again.', 'error');
+
+            } catch (error) {
+                console.error("OTP Error:", error);
+                showToast('Invalid SMS Code. Please check the code and try again.', 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         });
 
