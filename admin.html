@@ -22,7 +22,7 @@
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
     <!-- Header -->
-    <header class="bg-brand-blue text-white shadow-md">
+    <header class="bg-brand-blue text-white shadow-md z-20 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -47,16 +47,30 @@
     <!-- Main Content -->
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         
-        <div class="mb-8 border-b pb-4">
-            <h2 class="text-3xl font-bold text-gray-900">Employee Management</h2>
-            <p class="text-gray-600 mt-1">Add new employees to the database so they can access the timesheet portal.</p>
+        <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
+                <p class="text-gray-600 mt-1">Manage users, view statistics, and approve timesheets.</p>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex bg-gray-200 p-1 rounded-lg">
+                <button id="tab-btn-employees" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm" onclick="switchTab('employees')">
+                    Employees
+                </button>
+                <button id="tab-btn-timesheets" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="switchTab('timesheets')">
+                    Timesheet Approvals
+                </button>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+        <!-- ============================== -->
+        <!-- TAB 1: EMPLOYEE MANAGEMENT     -->
+        <!-- ============================== -->
+        <div id="tab-employees" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Add User Form -->
             <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
-                <h3 class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2">
+                <h3 class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                     Add New User
                 </h3>
@@ -76,6 +90,23 @@
                         <input type="email" id="userEmail" required placeholder="john.doe@stratedge.com" 
                             class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
                     </div>
+                    <div>
+                        <label for="userDesig" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                        <input type="text" id="userDesig" required placeholder="e.g. Software Engineer" 
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="userDept" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select id="userDept" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                            <option value="" disabled selected>Select Department...</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Product">Product</option>
+                            <option value="Design">Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="HR">HR & Operations</option>
+                            <option value="Finance">Finance</option>
+                        </select>
+                    </div>
                     
                     <button type="submit" id="submitBtn" 
                         class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center mt-6">
@@ -94,26 +125,49 @@
                     <span id="userCount" class="bg-blue-100 text-brand-blue text-xs font-bold px-3 py-1.5 rounded-full">0 Employees</span>
                 </div>
                 
-                <div class="overflow-hidden border border-gray-200 rounded-lg">
+                <div class="overflow-x-auto border border-gray-200 rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Emp ID</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Email</th>
-                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role & Dept</th>
+                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="usersList" class="bg-white divide-y divide-gray-200">
-                            <!-- Users will be populated here -->
+                            <!-- Populated by JS -->
+                            <tr><td colspan="3" class="px-4 py-12 text-center text-gray-500">Connecting to database...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================== -->
+        <!-- TAB 2: TIMESHEET APPROVALS     -->
+        <!-- ============================== -->
+        <div id="tab-timesheets" class="hidden">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        Timesheet Submissions
+                    </h3>
+                </div>
+                
+                <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <td colspan="4" class="px-4 py-12 text-center text-sm text-gray-500">
-                                    <div class="flex flex-col items-center justify-center space-y-3">
-                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue"></div>
-                                        <span>Connecting to database...</span>
-                                    </div>
-                                </td>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Week</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
+                        </thead>
+                        <tbody id="timesheetsList" class="bg-white divide-y divide-gray-200">
+                            <!-- Populated by JS -->
                         </tbody>
                     </table>
                 </div>
@@ -121,11 +175,124 @@
         </div>
     </main>
 
+    <!-- Modal: Employee Stats -->
+    <div id="statsModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900" id="statsModalTitle">Employee Statistics</h3>
+                <button onclick="closeModal('statsModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                
+                <!-- Current Month Stats -->
+                <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsMonthLabel">Current Month</h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <div class="text-xs text-blue-500 font-bold uppercase">Work Hours</div>
+                        <div class="text-2xl font-black text-brand-blue" id="stat-m-work">0.0</div>
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                        <div class="text-xs text-orange-600 font-bold uppercase">Sick Leave</div>
+                        <div class="text-2xl font-black text-brand-orange" id="stat-m-sl">0.0</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg border border-green-100">
+                        <div class="text-xs text-green-600 font-bold uppercase">Casual Leave</div>
+                        <div class="text-2xl font-black text-green-600" id="stat-m-cl">0.0</div>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                        <div class="text-xs text-purple-600 font-bold uppercase">Earned Leave</div>
+                        <div class="text-2xl font-black text-purple-600" id="stat-m-el">0.0</div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div class="text-xs text-gray-600 font-bold uppercase">Public Holiday</div>
+                        <div class="text-2xl font-black text-gray-700" id="stat-m-ph">0.0</div>
+                    </div>
+                </div>
+
+                <!-- YTD Stats -->
+                <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsYtdLabel">Year To Date</h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <div class="text-xs text-blue-500 font-bold uppercase">Work Hours</div>
+                        <div class="text-2xl font-black text-brand-blue" id="stat-y-work">0.0</div>
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                        <div class="text-xs text-orange-600 font-bold uppercase">Sick Leave</div>
+                        <div class="text-2xl font-black text-brand-orange" id="stat-y-sl">0.0</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg border border-green-100">
+                        <div class="text-xs text-green-600 font-bold uppercase">Casual Leave</div>
+                        <div class="text-2xl font-black text-green-600" id="stat-y-cl">0.0</div>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                        <div class="text-xs text-purple-600 font-bold uppercase">Earned Leave</div>
+                        <div class="text-2xl font-black text-purple-600" id="stat-y-el">0.0</div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div class="text-xs text-gray-600 font-bold uppercase">Public Holiday</div>
+                        <div class="text-2xl font-black text-gray-700" id="stat-y-ph">0.0</div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 text-right text-xs text-gray-500">
+                * Progress statistics are calculated from timesheets currently in the system.
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Timesheet Review -->
+    <div id="reviewModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900" id="reviewModalTitle">Review Timesheet</h3>
+                <button onclick="closeModal('reviewModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <p class="text-sm text-gray-500" id="reviewEmpDetails">Emp ID</p>
+                        <p class="text-2xl font-bold text-brand-blue" id="reviewTotalHours">48.0 <span class="text-lg font-normal text-gray-500">hrs logged</span></p>
+                    </div>
+                    <div id="reviewStatusBadge" class="px-3 py-1 rounded-full text-sm font-bold">Status</div>
+                </div>
+
+                <div id="reviewJustificationBlock" class="bg-red-50 border border-red-200 p-4 rounded-lg mb-6 hidden">
+                    <h4 class="text-sm font-bold text-red-800 mb-1">Justification Provided:</h4>
+                    <p class="text-sm text-red-700 italic" id="reviewJustificationText"></p>
+                </div>
+
+                <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Day</th>
+                            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
+                            <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Hours</th>
+                            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewTableBody" class="bg-white divide-y divide-gray-100">
+                        <!-- Entries populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3" id="reviewActions">
+                <button onclick="closeModal('reviewModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors">Close</button>
+                <button id="btnReject" class="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors">Reject</button>
+                <button id="btnApprove" class="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors">Approve</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification System -->
-    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-[100] flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
         <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
         <div id="toastMessage" class="ml-3 text-sm font-normal">Message here.</div>
-        <button type="button" onclick="hideToast()" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" aria-label="Close">
+        <button type="button" onclick="hideToast()" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8">
             <span class="sr-only">Close</span>
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
@@ -135,43 +302,44 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // ⚠️ PASTE YOUR FIREBASE CONFIGURATION HERE ⚠️
         // ==========================================
         const firebaseConfig = {
-        apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
-        authDomain: "stratedge-time.firebaseapp.com",
-        projectId: "stratedge-time",
-        storageBucket: "stratedge-time.firebasestorage.app",
-        messagingSenderId: "550779977682",
-        appId: "1:550779977682:web:d4b4983b62876655b3d20b"
-      };
+  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+  authDomain: "stratedge-time.firebaseapp.com",
+  projectId: "stratedge-time",
+  storageBucket: "stratedge-time.firebasestorage.app",
+  messagingSenderId: "550779977682",
+  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+};
         const appId = 'stratedge-time-recorder';
         // ==========================================
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         let currentUser = null;
-        let unsubscribeSnapshot = null;
+        let unsubscribeEmps = null;
+        let unsubscribeTimesheets = null;
+        
+        // Memory state to avoid complex queries
+        let allEmployees = [];
+        let allTimesheets = [];
+        let currentReviewDocId = null;
 
-        // UI Utility Functions
-        window.hideToast = () => {
-            const toast = document.getElementById('toast');
-            toast.classList.add('translate-y-full', 'opacity-0');
-        };
+        const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+        // --- UI UTILS ---
+        window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
         const showToast = (message, type = 'success') => {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toastMessage');
             const iconEl = document.getElementById('toastIcon');
-            
             msgEl.textContent = message;
-            
             if (type === 'success') {
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg';
@@ -179,91 +347,305 @@
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
             }
-
             toast.classList.remove('translate-y-full', 'opacity-0');
             setTimeout(window.hideToast, 4000);
         };
 
-        // Make delete globally available for inline onclick
+        window.switchTab = (tabName) => {
+            const btnEmp = document.getElementById('tab-btn-employees');
+            const btnTime = document.getElementById('tab-btn-timesheets');
+            const tabEmp = document.getElementById('tab-employees');
+            const tabTime = document.getElementById('tab-timesheets');
+
+            if (tabName === 'employees') {
+                btnEmp.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm";
+                btnTime.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900";
+                tabEmp.classList.remove('hidden');
+                tabEmp.classList.add('grid');
+                tabTime.classList.add('hidden');
+            } else {
+                btnTime.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm";
+                btnEmp.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900";
+                tabTime.classList.remove('hidden');
+                tabEmp.classList.remove('grid');
+                tabEmp.classList.add('hidden');
+            }
+        };
+
+        window.closeModal = (modalId) => {
+            document.getElementById(modalId).classList.add('hidden');
+        };
+
+        // --- DATE UTILS (For Stats) ---
+        const getDatesFromWeek = (yearWeek) => {
+            const [yearStr, weekStr] = yearWeek.split('-W');
+            const year = parseInt(yearStr);
+            const week = parseInt(weekStr);
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dow = simple.getDay();
+            const ISOweekStart = simple;
+            if (dow <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+            
+            const dates = [];
+            for(let i=0; i<6; i++) {
+                const d = new Date(ISOweekStart);
+                d.setDate(d.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        };
+
+        // --- STATS LOGIC ---
+        window.openStats = (empId, empName) => {
+            document.getElementById('statsModalTitle').textContent = `Statistics: ${empName} (${empId})`;
+            
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('statsMonthLabel').textContent = `Current Month (${monthNames[currentMonth]} ${currentYear})`;
+            document.getElementById('statsYtdLabel').textContent = `Year To Date (${currentYear})`;
+
+            let ytd = { work: 0, SL: 0, CL: 0, EL: 0, PH: 0 };
+            let monthly = { work: 0, SL: 0, CL: 0, EL: 0, PH: 0 };
+
+            // Filter all timesheets for this user
+            const userTimesheets = allTimesheets.filter(ts => ts.empId === empId);
+
+            userTimesheets.forEach(ts => {
+                const dates = getDatesFromWeek(ts.week);
+                
+                daysOfWeek.forEach((day, idx) => {
+                    const dayDate = dates[idx];
+                    const isCurrentYear = dayDate.getFullYear() === currentYear;
+                    const isCurrentMonth = isCurrentYear && dayDate.getMonth() === currentMonth;
+
+                    if (ts.entries && ts.entries[day]) {
+                        // Handle both old single format and new array format
+                        const entriesArray = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                        
+                        entriesArray.forEach(entry => {
+                            const hrs = parseFloat(entry.hours || 0);
+                            const type = entry.type;
+
+                            if (isCurrentYear) {
+                                if (type.includes('Work')) ytd.work += hrs;
+                                else if (type.includes('SL')) ytd.SL += hrs;
+                                else if (type.includes('CL')) ytd.CL += hrs;
+                                else if (type.includes('EL')) ytd.EL += hrs;
+                                else if (type.includes('PH')) ytd.PH += hrs;
+                            }
+                            if (isCurrentMonth) {
+                                if (type.includes('Work')) monthly.work += hrs;
+                                else if (type.includes('SL')) monthly.SL += hrs;
+                                else if (type.includes('CL')) monthly.CL += hrs;
+                                else if (type.includes('EL')) monthly.EL += hrs;
+                                else if (type.includes('PH')) monthly.PH += hrs;
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Update UI
+            document.getElementById('stat-m-work').textContent = monthly.work.toFixed(1);
+            document.getElementById('stat-m-sl').textContent = monthly.SL.toFixed(1);
+            document.getElementById('stat-m-cl').textContent = monthly.CL.toFixed(1);
+            document.getElementById('stat-m-el').textContent = monthly.EL.toFixed(1);
+            document.getElementById('stat-m-ph').textContent = monthly.PH.toFixed(1);
+
+            document.getElementById('stat-y-work').textContent = ytd.work.toFixed(1);
+            document.getElementById('stat-y-sl').textContent = ytd.SL.toFixed(1);
+            document.getElementById('stat-y-cl').textContent = ytd.CL.toFixed(1);
+            document.getElementById('stat-y-el').textContent = ytd.EL.toFixed(1);
+            document.getElementById('stat-y-ph').textContent = ytd.PH.toFixed(1);
+
+            document.getElementById('statsModal').classList.remove('hidden');
+        };
+
+        // --- TIMESHEET APPROVAL LOGIC ---
+        const renderTimesheets = () => {
+            const tbody = document.getElementById('timesheetsList');
+            tbody.innerHTML = '';
+
+            if (allTimesheets.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No timesheets submitted yet.</td></tr>`;
+                return;
+            }
+
+            // Sort by latest submission
+            allTimesheets.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+
+            allTimesheets.forEach(ts => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                
+                let statusClass = "bg-yellow-100 text-yellow-800"; // Pending / Submitted
+                let statusText = ts.status || "Pending";
+                if (statusText === 'Approved') statusClass = "bg-green-100 text-green-800";
+                if (statusText === 'Rejected') statusClass = "bg-red-100 text-red-800";
+                if (statusText === 'Submitted') statusText = "Pending";
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">${ts.week}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${ts.name}</div>
+                        <div class="text-xs text-gray-500">${ts.empId}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-gray-900">${ts.totalHours}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <span class="px-2.5 py-1 text-xs font-bold rounded-full ${statusClass}">${statusText}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="reviewTimesheet('${ts.id}')" class="text-brand-blue hover:text-blue-800 border border-blue-200 bg-blue-50 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors">Review</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.reviewTimesheet = (docId) => {
+            const ts = allTimesheets.find(t => t.id === docId);
+            if (!ts) return;
+            
+            currentReviewDocId = docId;
+            document.getElementById('reviewModalTitle').textContent = `Review Timesheet: ${ts.week}`;
+            document.getElementById('reviewEmpDetails').textContent = `${ts.name} (${ts.empId})`;
+            document.getElementById('reviewTotalHours').innerHTML = `${ts.totalHours} <span class="text-lg font-normal text-gray-500">hrs logged</span>`;
+
+            // Status Badge
+            const badge = document.getElementById('reviewStatusBadge');
+            let statusText = ts.status === 'Submitted' ? 'Pending' : ts.status;
+            badge.textContent = statusText;
+            if (statusText === 'Approved') badge.className = "px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800";
+            else if (statusText === 'Rejected') badge.className = "px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800";
+            else badge.className = "px-3 py-1 rounded-full text-sm font-bold bg-yellow-100 text-yellow-800";
+
+            // Justification
+            const justBlock = document.getElementById('reviewJustificationBlock');
+            if (ts.justification && ts.justification.trim() !== '') {
+                justBlock.classList.remove('hidden');
+                document.getElementById('reviewJustificationText').textContent = ts.justification;
+            } else {
+                justBlock.classList.add('hidden');
+            }
+
+            // Table Entries
+            const tbody = document.getElementById('reviewTableBody');
+            tbody.innerHTML = '';
+            
+            daysOfWeek.forEach(day => {
+                if (ts.entries && ts.entries[day]) {
+                    const entriesArr = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                    
+                    entriesArr.forEach((entry, idx) => {
+                        if (parseFloat(entry.hours) === 0) return; // Skip zero hour days for clean review
+                        
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${idx === 0 ? day : ''}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.project || '-'}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-center text-sm font-bold text-brand-blue">${entry.hours}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">${entry.type}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            });
+
+            if (tbody.children.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-sm text-gray-500">No hours logged.</td></tr>`;
+            }
+
+            // Show/Hide Action Buttons
+            const btnApprove = document.getElementById('btnApprove');
+            const btnReject = document.getElementById('btnReject');
+            if (statusText === 'Approved' || statusText === 'Rejected') {
+                btnApprove.classList.add('hidden');
+                btnReject.classList.add('hidden');
+            } else {
+                btnApprove.classList.remove('hidden');
+                btnReject.classList.remove('hidden');
+            }
+
+            document.getElementById('reviewModal').classList.remove('hidden');
+        };
+
+        const updateTimesheetStatus = async (status) => {
+            if (!currentReviewDocId || !currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', currentReviewDocId);
+                await updateDoc(docRef, { status: status });
+                showToast(`Timesheet ${status} successfully!`, 'success');
+                closeModal('reviewModal');
+            } catch (error) {
+                showToast("Action failed: " + error.message, 'error');
+            }
+        };
+
+        document.getElementById('btnApprove').addEventListener('click', () => updateTimesheetStatus('Approved'));
+        document.getElementById('btnReject').addEventListener('click', () => updateTimesheetStatus('Rejected'));
+
+        // --- EMPLOYEE MANAGEMENT LOGIC ---
         window.deleteUser = async (docId) => {
             if (!currentUser) return;
-            
-            // Simple visual confirmation before deleting
             const btn = document.getElementById(`del-btn-${docId}`);
             if (btn.innerText === "Delete") {
                 btn.innerText = "Sure?";
-                btn.classList.add('bg-red-600', 'text-white', 'px-2', 'py-1', 'rounded');
-                btn.classList.remove('text-red-500', 'hover:text-red-700');
-                
-                // Reset button after 3 seconds if not clicked again
+                btn.className = "bg-red-600 text-white px-2 py-1 rounded text-xs font-bold";
                 setTimeout(() => {
                     if(btn && btn.innerText === "Sure?") { 
                         btn.innerText = "Delete"; 
-                        btn.classList.remove('bg-red-600', 'text-white', 'px-2', 'py-1', 'rounded');
-                        btn.classList.add('text-red-500', 'hover:text-red-700');
+                        btn.className = "text-red-500 hover:text-red-700 font-medium transition-colors";
                     }
                 }, 3000);
                 return;
             }
-
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId);
                 await deleteDoc(docRef);
                 showToast("Employee removed successfully");
             } catch (error) {
-                showToast("Failed to remove employee: " + error.message, 'error');
+                showToast("Failed to remove employee", 'error');
             }
         };
 
-        // Real-time listener for Employees
-        const loadEmployees = () => {
-            if (!currentUser) return;
-            
+        const renderEmployees = () => {
             const tbody = document.getElementById('usersList');
             const countSpan = document.getElementById('userCount');
+            tbody.innerHTML = '';
             
-            // Reference to the exact same collection checked by the login page
-            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
-            
-            // Listen for real-time updates
-            unsubscribeSnapshot = onSnapshot(employeesRef, (snapshot) => {
-                tbody.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500">No employees added yet. Use the form to add one.</td></tr>`;
-                    countSpan.textContent = "0 Employees";
-                    return;
-                }
+            if (allEmployees.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-sm text-gray-500">No employees added yet.</td></tr>`;
+                countSpan.textContent = "0 Employees";
+                return;
+            }
 
-                // Render each employee manually (No complex queries used, sorting in memory)
-                const employees = [];
-                snapshot.forEach(docSnap => {
-                    employees.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                
-                // Sort locally by creation date (newest first)
-                employees.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            // Sort newest first
+            allEmployees.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-                employees.forEach(emp => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${emp.empId}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${emp.name}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">${emp.email}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                            <button id="del-btn-${emp.id}" onclick="deleteUser('${emp.id}')" class="text-red-500 hover:text-red-700 font-medium transition-colors">Delete</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-                
-                countSpan.textContent = `${employees.length} Employee${employees.length !== 1 ? 's' : ''}`;
-                
-            }, (error) => {
-                showToast("Database error: " + error.message, 'error');
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-red-500">Error loading data. Check your Firebase config.</td></tr>`;
+            allEmployees.forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-900">${emp.name}</div>
+                        <div class="text-xs text-gray-500">${emp.empId} &bull; ${emp.email}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="text-sm text-gray-800">${emp.designation || '-'}</div>
+                        <div class="text-xs text-gray-500 bg-gray-100 inline-block px-2 py-0.5 rounded mt-0.5">${emp.department || '-'}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="openStats('${emp.empId}', '${emp.name}')" class="text-brand-orange hover:text-orange-700 mr-3 font-medium transition-colors">Stats</button>
+                        <button id="del-btn-${emp.id}" onclick="deleteUser('${emp.id}')" class="text-red-500 hover:text-red-700 font-medium transition-colors">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             });
+            countSpan.textContent = `${allEmployees.length} Employee${allEmployees.length !== 1 ? 's' : ''}`;
         };
 
         // Form Submit Handler (Add Employee)
@@ -276,24 +658,22 @@
 
             const btn = document.getElementById('submitBtn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
+            btn.innerHTML = `Saving...`;
             btn.disabled = true;
 
             const name = document.getElementById('userName').value.trim();
             const email = document.getElementById('userEmail').value.trim();
             const empId = document.getElementById('empId').value.trim();
+            const designation = document.getElementById('userDesig').value.trim();
+            const department = document.getElementById('userDept').value;
 
             try {
                 const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
                 await addDoc(employeesRef, {
-                    name,
-                    email,
-                    empId,
-                    createdAt: Date.now()
+                    name, email, empId, designation, department, createdAt: Date.now()
                 });
-                
                 showToast("Employee added successfully!");
-                e.target.reset(); // Clear the form
+                e.target.reset();
             } catch (error) {
                 showToast("Failed to add employee: " + error.message, 'error');
             } finally {
@@ -302,29 +682,39 @@
             }
         });
 
-        // Initialize Authentication
-        const initAuth = async () => {
-            try {
-                await signInAnonymously(auth);
-            } catch (error) {
-                document.getElementById('usersList').innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-sm text-red-500">Authentication failed. Check Firebase config.</td></tr>`;
-                showToast("Auth Error: Could not connect to database.", 'error');
-            }
+        // --- INIT DATA LISTENERS ---
+        const startDataListeners = () => {
+            if (!currentUser) return;
+            
+            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+            unsubscribeEmps = onSnapshot(employeesRef, (snapshot) => {
+                allEmployees = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                renderEmployees();
+            }, (error) => showToast("Database error: " + error.message, 'error'));
+
+            const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
+            unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
+                allTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                renderTimesheets();
+            }, (error) => console.error("Timesheet error:", error));
         };
 
-        // Listen for Auth State Changes
+        // Initialize Authentication
+        const initAuth = async () => {
+            try { await signInAnonymously(auth); } 
+            catch (error) { showToast("Auth Error: Could not connect to database.", 'error'); }
+        };
+
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
             if (user) {
-                loadEmployees();
+                startDataListeners();
             } else {
-                if (unsubscribeSnapshot) {
-                    unsubscribeSnapshot();
-                }
+                if (unsubscribeEmps) unsubscribeEmps();
+                if (unsubscribeTimesheets) unsubscribeTimesheets();
             }
         });
 
-        // Start App
         initAuth();
     </script>
 </body>
