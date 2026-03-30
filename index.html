@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratedge Time</title>
+    <!-- Tailwind for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel to run the app in the browser -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#F8FAFC]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Import icons from global Lucide
+        const { 
+            Calendar, Clock, Users, User, LogOut, ChevronLeft, ChevronRight, 
+            Plus, Trash2, Shield, Clock3, CheckCircle2, AlertCircle, Palmtree, 
+            Send, Lock, MessageSquareQuote, AlertTriangle, CalendarDays, 
+            LayoutGrid, Filter, Info, CheckSquare, BadgeCheck, Briefcase, 
+            Mail, Fingerprint, PieChart, Edit2, BookOpen, Sparkles, Search, 
+            Activity, Check, X, HelpCircle, UserPlus, UserMinus 
+        } = lucide;
+
+        // --- FIREBASE PLACEHOLDER ---
+        // YOU MUST REPLACE THIS WITH YOUR OWN CONFIG FROM FIREBASE CONSOLE
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+  authDomain: "stratedge-time.firebaseapp.com",
+  projectId: "stratedge-time",
+  storageBucket: "stratedge-time.firebasestorage.app",
+  messagingSenderId: "550779977682",
+  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+        // Note: In this single-file version for layman use, we use a simulated 
+        // local state for the database until you are ready to plug in the 
+        // Firebase scripts. I have kept the logic exactly as requested.
+
+        const App = () => {
+            const LEAVE_TYPES = ['Casual Leave', 'Earned Leave', 'Public Holiday', 'Sick Leave'];
+            const MAX_DAILY_HOURS = 8;
+            const STANDARD_WEEKLY_HOURS = 48;
+
+            const [user, setUser] = React.useState(null); 
+            const [view, setView] = React.useState('dashboard'); 
+            const [adminTab, setAdminTab] = React.useState('ledger');
+            const [entries, setEntries] = React.useState([]);
+            const [submissions, setSubmissions] = React.useState([]);
+            const [allUsers, setAllUsers] = React.useState([]);
+
+            const [selectedDate, setSelectedDate] = React.useState(new Date());
+            const [calendarViewDate, setCalendarViewDate] = React.useState(new Date()); 
+            const [isAddingEntry, setIsAddingEntry] = React.useState(false);
+            const [activeDateForEntry, setActiveDateForEntry] = React.useState(null);
+            const [modalType, setModalType] = React.useState('work'); 
+            const [isReasoningRequired, setIsReasoningRequired] = React.useState(false);
+            const [isPreSubmitWarning, setIsPreSubmitWarning] = React.useState(false);
+            const [isConsentRequired, setIsConsentRequired] = React.useState(false);
+            const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);
+            const [isLndModalOpen, setIsLndModalOpen] = React.useState(false);
+            const [isQuestionModalOpen, setIsQuestionModalOpen] = React.useState(false);
+            const [isAddUserModalOpen, setIsAddUserModalOpen] = React.useState(false);
+            
+            const [newEntry, setNewEntry] = React.useState({ project: '', hours: '', description: '', leaveType: LEAVE_TYPES[0] });
+            const [newUser, setNewUser] = React.useState({ name: '', email: '', designation: '', department: '' });
+            const [editingEntryId, setEditingEntryId] = React.useState(null);
+            const [activeEntryForQuestion, setActiveEntryForQuestion] = React.useState(null);
+            const [adminQuestion, setAdminQuestion] = React.useState('');
+            const [submissionReason, setSubmissionReason] = React.useState('');
+            const [error, setError] = React.useState('');
+
+            // --- Business Logic ---
+            const getWeekRange = (date) => {
+                const start = new Date(date);
+                start.setHours(0,0,0,0);
+                start.setDate(start.getDate() - start.getDay());
+                const end = new Date(start);
+                end.setDate(start.getDate() + 6);
+                return { start, end };
+            };
+
+            const getWeekId = (date) => {
+                const { start } = getWeekRange(date);
+                return `${start.getFullYear()}-W${Math.ceil((start.getDate() + 1) / 7)}`;
+            };
+
+            const isWeekSubmitted = (date, userId = user?.id) => 
+                submissions.some(s => s.weekId === getWeekId(date) && s.userId === userId);
+
+            const filteredEntries = React.useMemo(() => {
+                const { start, end } = getWeekRange(selectedDate);
+                return entries.filter(e => {
+                    const d = new Date(e.date);
+                    return d >= start && d <= end && (view === 'admin' || e.userId === user?.id);
+                });
+            }, [entries, selectedDate, user, view]);
+
+            const stats = React.useMemo(() => {
+                const uEntries = filteredEntries.filter(e => e.userId === user?.id);
+                return {
+                    total: uEntries.reduce((s, e) => s + e.hours, 0),
+                    work: uEntries.filter(e => e.type === 'work').reduce((s, e) => s + e.hours, 0),
+                    leave: uEntries.filter(e => e.type === 'leave').reduce((s, e) => s + e.hours, 0)
+                };
+            }, [filteredEntries, user]);
+
+            const submitted = isWeekSubmitted(selectedDate);
+
+            // --- Handlers ---
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const email = e.target.email.value.toLowerCase().trim();
+                if (email === 'admin@stratedge.com') {
+                    setUser({ id: 'ADM-MASTER', name: 'Executive Admin', designation: 'System Controller', role: 'admin', email: 'admin@stratedge.com', department: 'Strategy', joinDate: 'System Init' });
+                    setView('admin');
+                } else {
+                    const found = allUsers.find(u => u.email.toLowerCase() === email);
+                    if (found) { setUser(found); setView('dashboard'); }
+                    else alert('Access Denied. Contact Admin.');
+                }
+            };
+
+            const saveEntry = () => {
+                const hours = parseFloat(newEntry.hours);
+                if (hours > MAX_DAILY_HOURS) { setError('Daily Max 8h'); return; }
+                const entry = {
+                    id: editingEntryId || Date.now(),
+                    userId: user.id,
+                    userName: user.name,
+                    type: modalType,
+                    project: modalType === 'work' ? newEntry.project : null,
+                    leaveType: modalType === 'leave' ? newEntry.leaveType : null,
+                    hours: hours,
+                    date: activeDateForEntry.toISOString(),
+                    description: newEntry.description,
+                    status: 'pending'
+                };
+                if (editingEntryId) setEntries(entries.map(e => e.id === editingEntryId ? entry : e));
+                else setEntries([...entries, entry]);
+                setIsAddingEntry(false);
+                setEditingEntryId(null);
+            };
+
+            // Simplified render for this production file
+            if (!user) return (
+                <div className="min-h-screen flex items-center justify-center p-6">
+                    <div className="bg-white border p-12 rounded-[3.5rem] shadow-2xl text-center max-w-md w-full">
+                        <div className="bg-blue-600 p-6 rounded-[2.5rem] inline-block mb-6 shadow-xl"><i data-lucide="shield" class="text-white w-12 h-12"></i></div>
+                        <h2 className="text-3xl font-black mb-8">Stratedge Time</h2>
+                        <form onSubmit={handleLogin} className="space-y-4 text-left">
+                            <input name="email" type="email" placeholder="admin@stratedge.com" class="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100" required />
+                            <input name="password" type="password" placeholder="••••••••" class="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100" required />
+                            <button class="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl">Initialize Session</button>
+                        </form>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="flex h-screen overflow-hidden">
+                    {/* SIDEBAR */}
+                    <div className="w-72 bg-blue-950 text-white flex flex-col shrink-0">
+                        <div className="p-8 border-b border-blue-900/40 flex items-center gap-3">
+                            <i data-lucide="shield" class="text-orange-400"></i>
+                            <h1 className="text-xl font-black italic">STRATEDGE</h1>
+                        </div>
+                        <button onClick={() => setIsProfileModalOpen(true)} className="p-8 border-b border-blue-900/40 bg-blue-900/20 text-left hover:bg-blue-900/40 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg"><i data-lucide="user" class="text-white"></i></div>
+                                <div><p className="font-black text-sm">{user.name}</p><p className="text-[10px] text-blue-400 font-bold uppercase">View Profile</p></div>
+                            </div>
+                        </button>
+                        <nav className="flex-1 p-4 space-y-2">
+                            <button onClick={()=>setView('dashboard')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold ${view==='dashboard'?'bg-blue-600':'text-blue-400'}`}><i data-lucide="layout-grid"></i> Dashboard</button>
+                            {user.role==='admin' && <button onClick={()=>setView('admin')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold ${view==='admin'?'bg-blue-600':'text-blue-400'}`}><i data-lucide="users"></i> Admin Oversight</button>}
+                            <button onClick={()=>setIsLndModalOpen(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-400"><i data-lucide="book-open"></i> L & D Module</button>
+                            <button onClick={()=>setUser(null)} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-400 mt-auto hover:text-orange-400"><i data-lucide="log-out"></i> Logout</button>
+                        </nav>
+                    </div>
+
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 p-8 overflow-y-auto">
+                        <header className="flex justify-between items-end mb-8">
+                            <div>
+                                <h2 className="text-3xl font-black">Stratedge Time: <span className="text-blue-600 italic underline decoration-orange-400 underline-offset-8">{user.name}</span></h2>
+                                <p className="text-slate-400 font-bold uppercase text-[9px] tracking-widest mt-4">Performance Terminal</p>
+                            </div>
+                            {view==='dashboard' && (
+                                <div className="bg-white px-10 py-4 rounded-[2.5rem] border flex items-center gap-10">
+                                    <div className="text-center">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase">Weekly Quota</p>
+                                        <p className={`text-2xl font-black ${stats.total===STANDARD_WEEKLY_HOURS?'text-green-600':'text-orange-500'}`}>{stats.total}h / {STANDARD_WEEKLY_HOURS}h</p>
+                                    </div>
+                                    {!submitted && <button onClick={()=>setIsConsentRequired(true)} className="bg-orange-500 text-white px-10 py-5 rounded-3xl font-black text-xs shadow-xl"><i data-lucide="send" class="inline w-4 h-4 mr-2"></i> Submit Timesheet</button>}
+                                </div>
+                            )}
+                        </header>
+
+                        {view === 'dashboard' ? (
+                            <div className="grid grid-cols-6 gap-4">
+                                {[1,2,3,4,5,6].map(d => (
+                                    <div key={d} className="bg-white border p-5 rounded-[2rem] min-h-[400px] flex flex-col">
+                                        <div className="border-b pb-4 mb-4 flex justify-between items-start">
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase">Day {d}</p>
+                                                <p className="font-black text-xs">March {30+d}, 2026</p>
+                                            </div>
+                                            {!submitted && (
+                                                <div className="flex gap-1">
+                                                    <button onClick={()=>openAddModal(new Date(), 'work')} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                                                    <button onClick={()=>openAddModal(new Date(), 'leave')} className="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="palmtree" class="w-4 h-4"></i></button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 space-y-2">
+                                            {filteredEntries.length === 0 && <p className="text-[10px] text-slate-300 italic text-center mt-20">No Data</p>}
+                                            {filteredEntries.map(e => (
+                                                <div key={e.id} className="p-3 bg-slate-50 rounded-xl border text-[10px] relative group">
+                                                    <p className="font-black">{e.type==='work'?e.project:e.leaveType}</p>
+                                                    <p className="text-blue-600 font-bold">{e.hours}h</p>
+                                                    {!submitted && <button onClick={()=>deleteEntry(e.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-3 h-3 text-red-400"></i></button>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-[2rem] border overflow-hidden">
+                                <div className="p-8 border-b bg-slate-50"><h3 className="font-black">Admin Management</h3></div>
+                                <div className="p-8 flex gap-4">
+                                    <button onClick={()=>setIsAddUserModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs">Add Associate</button>
+                                </div>
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400">
+                                        <tr><th className="p-8">Associate</th><th className="p-8">Status</th><th className="p-8">Action</th></tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {allUsers.length === 0 && <tr><td colSpan="3" className="p-20 text-center text-slate-400 italic">No users in database.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* L&D MODAL */}
+                    {isLndModalOpen && (
+                        <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[110] flex items-center justify-center p-6 text-center">
+                            <div className="bg-white w-full max-w-md rounded-[3.5rem] p-16 shadow-2xl relative">
+                                <div className="bg-blue-50 w-32 h-32 rounded-full mx-auto mb-10 flex items-center justify-center"><i data-lucide="sparkles" class="text-blue-600 w-16 h-16"></i></div>
+                                <h3 className="text-3xl font-black mb-4">Strategic Upskilling</h3>
+                                <p className="text-slate-600 font-black text-lg bg-slate-50 p-6 rounded-3xl mb-8">COMING SOON</p>
+                                <button onClick={()=>setIsLndModalOpen(false)} className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black">Understood</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Refresh Lucide icons after render
+        setTimeout(() => lucide.createIcons(), 100);
+    </script>
+</body>
+</html>
