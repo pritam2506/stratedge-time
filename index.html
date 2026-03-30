@@ -100,34 +100,28 @@
                     
                     <button type="button" id="getOtpBtn"
                         class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-6 flex justify-center items-center">
-                        <span>Send OTP</span>
+                        <span>Send Login Link</span>
                     </button>
-                    <!-- Invisible Recaptcha Container -->
-                    <div id="recaptcha-container"></div>
                 </div>
 
-                <!-- STEP 2: Enter OTP Input -->
-                <div id="otpStep2" class="hidden">
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg mb-4 text-center">
-                        <p class="text-sm text-gray-600" id="otpMessage">OTP sent to your registered number</p>
+                <!-- STEP 2: Magic Link Sent (Replaces OTP Input) -->
+                <div id="magicLinkStep2" class="hidden text-center py-4">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                     </div>
-
-                    <div>
-                        <label for="empOtp" class="block text-sm font-medium text-gray-700 mb-1 text-center">Enter 6-Digit SMS Code</label>
-                        <input type="text" id="empOtp" maxlength="6" placeholder="••••••" pattern="\d{6}" 
-                            class="w-full text-center tracking-[0.5em] text-3xl py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
-                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Check your inbox</h3>
+                    <p class="text-sm text-gray-600 mb-6" id="magicLinkMessage">We've sent a magic link to your registered email.</p>
                     
-                    <button type="submit" id="empSubmitBtn"
-                        class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-6 flex justify-center items-center">
-                        <span>Access Timesheet</span>
-                    </button>
-
-                    <div class="text-center mt-4">
-                        <button type="button" id="backToIdBtn" class="text-xs font-semibold text-gray-500 hover:text-brand-blue transition-colors">
-                            &larr; Change Employee ID
-                        </button>
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-left">
+                        <p class="text-sm text-blue-800 font-medium mb-1">Instructions:</p>
+                        <p class="text-xs text-blue-700 leading-relaxed">
+                            Please check your email inbox for a link to login. Click on that secure link to automatically access your timesheet portal. You can now close this window.
+                        </p>
                     </div>
+
+                    <button type="button" id="backToIdBtn" class="mt-6 text-xs font-semibold text-gray-500 hover:text-brand-blue transition-colors">
+                        &larr; Use a different Employee ID
+                    </button>
                 </div>
 
             </form>
@@ -147,7 +141,7 @@
     <!-- UI Logic & Firebase Backend Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
@@ -241,14 +235,12 @@
             }
         });
 
-        // --- OTP LOGIC STATE ---
-        let confirmationResult = null;
+        // --- MAGIC LINK LOGIC ---
         let pendingUser = null;
-        let appVerifier = null;
 
-        // Step 1: Request OTP
+        // Step 1: Request Magic Link
         document.getElementById('getOtpBtn').addEventListener('click', async () => {
-            if (!currentUser) {
+            if (!currentUser && !isSignInWithEmailLink(auth, window.location.href)) {
                 showToast('Still connecting to the database. Please wait.', 'info');
                 return;
             }
@@ -261,7 +253,7 @@
 
             const btn = document.getElementById('getOtpBtn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Sending SMS...</span>`;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Sending Email...</span>`;
             btn.disabled = true;
 
             try {
@@ -276,38 +268,43 @@
                 });
 
                 if (foundEmployee) {
-                    if (!foundEmployee.phone) {
-                        showToast('No phone number is registered for this Employee ID. Please contact your Admin.', 'error', 6000);
+                    if (!foundEmployee.email) {
+                        showToast('No email is registered for this Employee ID. Please contact your Admin.', 'error', 6000);
                         btn.innerHTML = originalText;
                         btn.disabled = false;
                         return;
                     }
 
-                    pendingUser = foundEmployee;
-                    
-                    // Format phone number (remove spaces)
-                    const formattedPhone = foundEmployee.phone.replace(/\s+/g, '');
-                    
-                    // Initialize Recaptcha if not already done
-                    if (!appVerifier) {
-                        appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                            'size': 'invisible'
-                        });
-                    }
+                    // Configuration for the Magic Link
+                    const actionCodeSettings = {
+                        url: window.location.href.split('?')[0], // Redirects back to this exact page
+                        handleCodeInApp: true,
+                    };
 
-                    // Trigger Firebase Phone Auth
-                    confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+                    // Send the email via Firebase
+                    await sendSignInLinkToEmail(auth, foundEmployee.email, actionCodeSettings);
                     
-                    // Mask the phone number for display
-                    const phone = formattedPhone;
-                    const maskedPhone = phone.length > 4 ? '*'.repeat(phone.length - 4) + phone.slice(-4) : '****';
+                    // Save email locally so we don't have to ask for it when they click the link
+                    window.localStorage.setItem('emailForSignIn', foundEmployee.email);
+                    window.localStorage.setItem('pendingEmpData', JSON.stringify(foundEmployee));
                     
-                    document.getElementById('otpMessage').innerHTML = `SMS sent securely to <span class="font-bold text-gray-800">${maskedPhone}</span>`;
+                    // Mask the email for display securely
+                    const emailParts = foundEmployee.email.split('@');
+                    let maskedEmail = foundEmployee.email;
+                    if (emailParts.length === 2) {
+                        const namePart = emailParts[0];
+                        const domainPart = emailParts[1];
+                        const maskedName = namePart.length > 2 
+                            ? namePart[0] + '*'.repeat(namePart.length - 2) + namePart[namePart.length - 1] 
+                            : namePart[0] + '*';
+                        maskedEmail = `${maskedName}@${domainPart}`;
+                    }
+                    
+                    document.getElementById('magicLinkMessage').innerHTML = `Login link sent securely to <br><span class="font-bold text-brand-blue">${maskedEmail}</span>`;
                     
                     // Switch UI steps
                     document.getElementById('otpStep1').classList.add('hidden');
-                    document.getElementById('otpStep2').classList.remove('hidden');
-                    document.getElementById('empOtp').focus();
+                    document.getElementById('magicLinkStep2').classList.remove('hidden');
 
                 } else {
                     showToast('Employee ID not found. Check with your administrator.', 'error');
@@ -315,13 +312,7 @@
                 
             } catch (error) {
                 console.error(error);
-                // If ReCaptcha fails, reset it so the user can try again
-                if (appVerifier) {
-                    appVerifier.render().then(widgetId => {
-                        window.grecaptcha.reset(widgetId);
-                    });
-                }
-                showToast('Failed to send SMS. Ensure your phone number includes country code (e.g., +1).', 'error', 6000);
+                showToast('Failed to send login link. Error: ' + error.message, 'error');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -330,45 +321,70 @@
 
         // Go Back to Step 1
         document.getElementById('backToIdBtn').addEventListener('click', () => {
-            document.getElementById('otpStep2').classList.add('hidden');
+            document.getElementById('magicLinkStep2').classList.add('hidden');
             document.getElementById('otpStep1').classList.remove('hidden');
-            document.getElementById('empOtp').value = '';
-            confirmationResult = null;
-            pendingUser = null;
         });
 
-        // Step 2: Validate OTP & Login
-        employeeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const enteredOtp = document.getElementById('empOtp').value.trim();
-            const btn = document.getElementById('empSubmitBtn');
-            const originalText = btn.innerHTML;
-
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Verifying...</span>`;
-            btn.disabled = true;
-
-            try {
-                // Verify the code with Firebase
-                const result = await confirmationResult.confirm(enteredOtp);
-                // User signed in successfully via Firebase Phone Auth
+        // --- HANDLE INCOMING MAGIC LINK ---
+        const handleIncomingMagicLink = async () => {
+            // Check if the current URL contains a Firebase magic link code
+            if (isSignInWithEmailLink(auth, window.location.href)) {
                 
-                showToast(`Welcome back, ${pendingUser.name}! Redirecting...`, 'success');
-                
-                // Save employee data locally to use on the timesheet page
-                sessionStorage.setItem('stratedge_active_user', JSON.stringify(pendingUser));
-                
-                setTimeout(() => {
-                    window.location.href = 'timesheet.html';
-                }, 1500);
+                // Show a loading state over the page
+                document.body.insertAdjacentHTML('beforeend', `
+                    <div id="magicLinkLoader" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-brand-blue mb-4"></div>
+                        <h2 class="text-xl font-bold text-gray-800">Authenticating...</h2>
+                        <p class="text-gray-500 text-sm mt-2">Securely logging you into your timesheet.</p>
+                    </div>
+                `);
 
-            } catch (error) {
-                console.error("OTP Error:", error);
-                showToast('Invalid SMS Code. Please check the code and try again.', 'error');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                let email = window.localStorage.getItem('emailForSignIn');
+                
+                // If opened on a different device/browser, ask for email to confirm
+                if (!email) {
+                    email = window.prompt('For security, please confirm your email address to log in:');
+                }
+
+                if (email) {
+                    try {
+                        await signInWithEmailLink(auth, email, window.location.href);
+                        window.localStorage.removeItem('emailForSignIn');
+                        
+                        // Retrieve the stored user info
+                        let activeUser = JSON.parse(window.localStorage.getItem('pendingEmpData'));
+                        
+                        // Fallback if data was cleared or cross-device
+                        if (!activeUser) {
+                            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                            const snapshot = await getDocs(employeesRef);
+                            snapshot.forEach(docSnap => {
+                                if (docSnap.data().email === email) {
+                                    activeUser = { id: docSnap.id, ...docSnap.data() };
+                                }
+                            });
+                        }
+
+                        if (activeUser) {
+                            sessionStorage.setItem('stratedge_active_user', JSON.stringify(activeUser));
+                            window.location.href = 'timesheet.html';
+                        } else {
+                            showToast("Could not find employee profile for this email.", "error");
+                            document.getElementById('magicLinkLoader').remove();
+                        }
+                    } catch (error) {
+                        console.error("Magic Link Error", error);
+                        showToast("Link expired or invalid. Please request a new one.", "error", 6000);
+                        document.getElementById('magicLinkLoader').remove();
+                    }
+                } else {
+                    document.getElementById('magicLinkLoader').remove();
+                }
+            } else {
+                // Not a magic link, load normal auth (Anonymous) for looking up users
+                initAuth();
             }
-        });
+        };
 
         // Start Firebase Auth (Required for Firestore access)
         const initAuth = async () => {
@@ -385,7 +401,8 @@
             currentUser = user;
         });
 
-        initAuth();
+        // Run the Magic Link check immediately on page load
+        handleIncomingMagicLink();
     </script>
 </body>
 </html>
