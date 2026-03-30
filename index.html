@@ -1,283 +1,657 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stratedge Time</title>
-    <!-- Tailwind for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel to run the app in the browser -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.4">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000; min-height: 14.0px}
+    span.s1 {font-kerning: none}
+  </style>
 </head>
-<body class="bg-[#F8FAFC]">
-    <div id="root"></div>
-
-    <script type="text/babel">
-        // Import icons from global Lucide
-        const { 
-            Calendar, Clock, Users, User, LogOut, ChevronLeft, ChevronRight, 
-            Plus, Trash2, Shield, Clock3, CheckCircle2, AlertCircle, Palmtree, 
-            Send, Lock, MessageSquareQuote, AlertTriangle, CalendarDays, 
-            LayoutGrid, Filter, Info, CheckSquare, BadgeCheck, Briefcase, 
-            Mail, Fingerprint, PieChart, Edit2, BookOpen, Sparkles, Search, 
-            Activity, Check, X, HelpCircle, UserPlus, UserMinus 
-        } = lucide;
-
-        // --- FIREBASE PLACEHOLDER ---
-        // YOU MUST REPLACE THIS WITH YOUR OWN CONFIG FROM FIREBASE CONSOLE
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
-  authDomain: "stratedge-time.firebaseapp.com",
-  projectId: "stratedge-time",
-  storageBucket: "stratedge-time.firebasestorage.app",
-  messagingSenderId: "550779977682",
-  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-        // Note: In this single-file version for layman use, we use a simulated 
-        // local state for the database until you are ready to plug in the 
-        // Firebase scripts. I have kept the logic exactly as requested.
-
-        const App = () => {
-            const LEAVE_TYPES = ['Casual Leave', 'Earned Leave', 'Public Holiday', 'Sick Leave'];
-            const MAX_DAILY_HOURS = 8;
-            const STANDARD_WEEKLY_HOURS = 48;
-
-            const [user, setUser] = React.useState(null); 
-            const [view, setView] = React.useState('dashboard'); 
-            const [adminTab, setAdminTab] = React.useState('ledger');
-            const [entries, setEntries] = React.useState([]);
-            const [submissions, setSubmissions] = React.useState([]);
-            const [allUsers, setAllUsers] = React.useState([]);
-
-            const [selectedDate, setSelectedDate] = React.useState(new Date());
-            const [calendarViewDate, setCalendarViewDate] = React.useState(new Date()); 
-            const [isAddingEntry, setIsAddingEntry] = React.useState(false);
-            const [activeDateForEntry, setActiveDateForEntry] = React.useState(null);
-            const [modalType, setModalType] = React.useState('work'); 
-            const [isReasoningRequired, setIsReasoningRequired] = React.useState(false);
-            const [isPreSubmitWarning, setIsPreSubmitWarning] = React.useState(false);
-            const [isConsentRequired, setIsConsentRequired] = React.useState(false);
-            const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);
-            const [isLndModalOpen, setIsLndModalOpen] = React.useState(false);
-            const [isQuestionModalOpen, setIsQuestionModalOpen] = React.useState(false);
-            const [isAddUserModalOpen, setIsAddUserModalOpen] = React.useState(false);
-            
-            const [newEntry, setNewEntry] = React.useState({ project: '', hours: '', description: '', leaveType: LEAVE_TYPES[0] });
-            const [newUser, setNewUser] = React.useState({ name: '', email: '', designation: '', department: '' });
-            const [editingEntryId, setEditingEntryId] = React.useState(null);
-            const [activeEntryForQuestion, setActiveEntryForQuestion] = React.useState(null);
-            const [adminQuestion, setAdminQuestion] = React.useState('');
-            const [submissionReason, setSubmissionReason] = React.useState('');
-            const [error, setError] = React.useState('');
-
-            // --- Business Logic ---
-            const getWeekRange = (date) => {
-                const start = new Date(date);
-                start.setHours(0,0,0,0);
-                start.setDate(start.getDate() - start.getDay());
-                const end = new Date(start);
-                end.setDate(start.getDate() + 6);
-                return { start, end };
-            };
-
-            const getWeekId = (date) => {
-                const { start } = getWeekRange(date);
-                return `${start.getFullYear()}-W${Math.ceil((start.getDate() + 1) / 7)}`;
-            };
-
-            const isWeekSubmitted = (date, userId = user?.id) => 
-                submissions.some(s => s.weekId === getWeekId(date) && s.userId === userId);
-
-            const filteredEntries = React.useMemo(() => {
-                const { start, end } = getWeekRange(selectedDate);
-                return entries.filter(e => {
-                    const d = new Date(e.date);
-                    return d >= start && d <= end && (view === 'admin' || e.userId === user?.id);
-                });
-            }, [entries, selectedDate, user, view]);
-
-            const stats = React.useMemo(() => {
-                const uEntries = filteredEntries.filter(e => e.userId === user?.id);
-                return {
-                    total: uEntries.reduce((s, e) => s + e.hours, 0),
-                    work: uEntries.filter(e => e.type === 'work').reduce((s, e) => s + e.hours, 0),
-                    leave: uEntries.filter(e => e.type === 'leave').reduce((s, e) => s + e.hours, 0)
-                };
-            }, [filteredEntries, user]);
-
-            const submitted = isWeekSubmitted(selectedDate);
-
-            // --- Handlers ---
-            const handleLogin = (e) => {
-                e.preventDefault();
-                const email = e.target.email.value.toLowerCase().trim();
-                if (email === 'admin@stratedge.com') {
-                    setUser({ id: 'ADM-MASTER', name: 'Executive Admin', designation: 'System Controller', role: 'admin', email: 'admin@stratedge.com', department: 'Strategy', joinDate: 'System Init' });
-                    setView('admin');
-                } else {
-                    const found = allUsers.find(u => u.email.toLowerCase() === email);
-                    if (found) { setUser(found); setView('dashboard'); }
-                    else alert('Access Denied. Contact Admin.');
-                }
-            };
-
-            const saveEntry = () => {
-                const hours = parseFloat(newEntry.hours);
-                if (hours > MAX_DAILY_HOURS) { setError('Daily Max 8h'); return; }
-                const entry = {
-                    id: editingEntryId || Date.now(),
-                    userId: user.id,
-                    userName: user.name,
-                    type: modalType,
-                    project: modalType === 'work' ? newEntry.project : null,
-                    leaveType: modalType === 'leave' ? newEntry.leaveType : null,
-                    hours: hours,
-                    date: activeDateForEntry.toISOString(),
-                    description: newEntry.description,
-                    status: 'pending'
-                };
-                if (editingEntryId) setEntries(entries.map(e => e.id === editingEntryId ? entry : e));
-                else setEntries([...entries, entry]);
-                setIsAddingEntry(false);
-                setEditingEntryId(null);
-            };
-
-            // Simplified render for this production file
-            if (!user) return (
-                <div className="min-h-screen flex items-center justify-center p-6">
-                    <div className="bg-white border p-12 rounded-[3.5rem] shadow-2xl text-center max-w-md w-full">
-                        <div className="bg-blue-600 p-6 rounded-[2.5rem] inline-block mb-6 shadow-xl"><i data-lucide="shield" class="text-white w-12 h-12"></i></div>
-                        <h2 className="text-3xl font-black mb-8">Stratedge Time</h2>
-                        <form onSubmit={handleLogin} className="space-y-4 text-left">
-                            <input name="email" type="email" placeholder="admin@stratedge.com" class="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100" required />
-                            <input name="password" type="password" placeholder="••••••••" class="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100" required />
-                            <button class="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl">Initialize Session</button>
-                        </form>
-                    </div>
-                </div>
-            );
-
-            return (
-                <div className="flex h-screen overflow-hidden">
-                    {/* SIDEBAR */}
-                    <div className="w-72 bg-blue-950 text-white flex flex-col shrink-0">
-                        <div className="p-8 border-b border-blue-900/40 flex items-center gap-3">
-                            <i data-lucide="shield" class="text-orange-400"></i>
-                            <h1 className="text-xl font-black italic">STRATEDGE</h1>
-                        </div>
-                        <button onClick={() => setIsProfileModalOpen(true)} className="p-8 border-b border-blue-900/40 bg-blue-900/20 text-left hover:bg-blue-900/40 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg"><i data-lucide="user" class="text-white"></i></div>
-                                <div><p className="font-black text-sm">{user.name}</p><p className="text-[10px] text-blue-400 font-bold uppercase">View Profile</p></div>
-                            </div>
-                        </button>
-                        <nav className="flex-1 p-4 space-y-2">
-                            <button onClick={()=>setView('dashboard')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold ${view==='dashboard'?'bg-blue-600':'text-blue-400'}`}><i data-lucide="layout-grid"></i> Dashboard</button>
-                            {user.role==='admin' && <button onClick={()=>setView('admin')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold ${view==='admin'?'bg-blue-600':'text-blue-400'}`}><i data-lucide="users"></i> Admin Oversight</button>}
-                            <button onClick={()=>setIsLndModalOpen(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-400"><i data-lucide="book-open"></i> L & D Module</button>
-                            <button onClick={()=>setUser(null)} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-400 mt-auto hover:text-orange-400"><i data-lucide="log-out"></i> Logout</button>
-                        </nav>
-                    </div>
-
-                    {/* MAIN CONTENT */}
-                    <main className="flex-1 p-8 overflow-y-auto">
-                        <header className="flex justify-between items-end mb-8">
-                            <div>
-                                <h2 className="text-3xl font-black">Stratedge Time: <span className="text-blue-600 italic underline decoration-orange-400 underline-offset-8">{user.name}</span></h2>
-                                <p className="text-slate-400 font-bold uppercase text-[9px] tracking-widest mt-4">Performance Terminal</p>
-                            </div>
-                            {view==='dashboard' && (
-                                <div className="bg-white px-10 py-4 rounded-[2.5rem] border flex items-center gap-10">
-                                    <div className="text-center">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase">Weekly Quota</p>
-                                        <p className={`text-2xl font-black ${stats.total===STANDARD_WEEKLY_HOURS?'text-green-600':'text-orange-500'}`}>{stats.total}h / {STANDARD_WEEKLY_HOURS}h</p>
-                                    </div>
-                                    {!submitted && <button onClick={()=>setIsConsentRequired(true)} className="bg-orange-500 text-white px-10 py-5 rounded-3xl font-black text-xs shadow-xl"><i data-lucide="send" class="inline w-4 h-4 mr-2"></i> Submit Timesheet</button>}
-                                </div>
-                            )}
-                        </header>
-
-                        {view === 'dashboard' ? (
-                            <div className="grid grid-cols-6 gap-4">
-                                {[1,2,3,4,5,6].map(d => (
-                                    <div key={d} className="bg-white border p-5 rounded-[2rem] min-h-[400px] flex flex-col">
-                                        <div className="border-b pb-4 mb-4 flex justify-between items-start">
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase">Day {d}</p>
-                                                <p className="font-black text-xs">March {30+d}, 2026</p>
-                                            </div>
-                                            {!submitted && (
-                                                <div className="flex gap-1">
-                                                    <button onClick={()=>openAddModal(new Date(), 'work')} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="plus" class="w-4 h-4"></i></button>
-                                                    <button onClick={()=>openAddModal(new Date(), 'leave')} className="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="palmtree" class="w-4 h-4"></i></button>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            {filteredEntries.length === 0 && <p className="text-[10px] text-slate-300 italic text-center mt-20">No Data</p>}
-                                            {filteredEntries.map(e => (
-                                                <div key={e.id} className="p-3 bg-slate-50 rounded-xl border text-[10px] relative group">
-                                                    <p className="font-black">{e.type==='work'?e.project:e.leaveType}</p>
-                                                    <p className="text-blue-600 font-bold">{e.hours}h</p>
-                                                    {!submitted && <button onClick={()=>deleteEntry(e.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-3 h-3 text-red-400"></i></button>}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="bg-white rounded-[2rem] border overflow-hidden">
-                                <div className="p-8 border-b bg-slate-50"><h3 className="font-black">Admin Management</h3></div>
-                                <div className="p-8 flex gap-4">
-                                    <button onClick={()=>setIsAddUserModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs">Add Associate</button>
-                                </div>
-                                <table className="w-full text-left">
-                                    <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400">
-                                        <tr><th className="p-8">Associate</th><th className="p-8">Status</th><th className="p-8">Action</th></tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {allUsers.length === 0 && <tr><td colSpan="3" className="p-20 text-center text-slate-400 italic">No users in database.</td></tr>}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </main>
-
-                    {/* L&D MODAL */}
-                    {isLndModalOpen && (
-                        <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[110] flex items-center justify-center p-6 text-center">
-                            <div className="bg-white w-full max-w-md rounded-[3.5rem] p-16 shadow-2xl relative">
-                                <div className="bg-blue-50 w-32 h-32 rounded-full mx-auto mb-10 flex items-center justify-center"><i data-lucide="sparkles" class="text-blue-600 w-16 h-16"></i></div>
-                                <h3 className="text-3xl font-black mb-4">Strategic Upskilling</h3>
-                                <p className="text-slate-600 font-black text-lg bg-slate-50 p-6 rounded-3xl mb-8">COMING SOON</p>
-                                <button onClick={()=>setIsLndModalOpen(false)} className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black">Understood</button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-
-        // Refresh Lucide icons after render
-        setTimeout(() => lucide.createIcons(), 100);
-    </script>
+<body>
+<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
+<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
+<p class="p1"><span class="s1">&lt;head&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;title&gt;Stratedge Time&lt;/title&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- Tailwind for styling --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- React &amp; Babel --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/react@18/umd/react.production.min.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/@babel/standalone/babel.min.js"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- Lucide Icons --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/lucide@latest"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- Firebase SDK (Compat versions for single-file stability) --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;style&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>body { font-family: 'Inter', sans-serif; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.custom-scrollbar::-webkit-scrollbar { width: 6px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p1"><span class="s1">&lt;body class="bg-[#F8FAFC]"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="root"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="min-h-screen flex items-center justify-center text-slate-400"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="text-center"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="mb-4 inline-block animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;p class="text-xs font-black uppercase tracking-widest"&gt;Initialising Stratedge Time...&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script type="text/babel"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>Calendar, Clock, Users, User, LogOut, ChevronLeft, ChevronRight,<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>Plus, Trash2, Shield, Clock3, CheckCircle2, AlertCircle, Palmtree,<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>Send, Lock, MessageSquareQuote, AlertTriangle, CalendarDays,<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>LayoutGrid, Filter, Info, CheckSquare, BadgeCheck, Briefcase,<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>Mail, Fingerprint, PieChart, Edit2, BookOpen, Sparkles, Search,<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>Activity, Check, X, HelpCircle, UserPlus, UserMinus<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>} = lucide;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>// --- 1. REPLACE WITH YOUR ACTUAL FIREBASE CONFIG ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">       </span>// Import the functions you need from the SDKs you need</span></p>
+<p class="p1"><span class="s1">import { initializeApp } from "firebase/app";</span></p>
+<p class="p1"><span class="s1">// TODO: Add SDKs for Firebase products that you want to use</span></p>
+<p class="p1"><span class="s1">// https://firebase.google.com/docs/web/setup#available-libraries</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">// Your web app's Firebase configuration</span></p>
+<p class="p1"><span class="s1">const firebaseConfig = {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>authDomain: "stratedge-time.firebaseapp.com",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>projectId: "stratedge-time",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>storageBucket: "stratedge-time.firebasestorage.app",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>messagingSenderId: "550779977682",</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>appId: "1:550779977682:web:d4b4983b62876655b3d20b"</span></p>
+<p class="p1"><span class="s1">};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">// Initialize Firebase</span></p>
+<p class="p1"><span class="s1">const app = initializeApp(firebaseConfig);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>// Initialize Firebase</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>firebase.initializeApp(firebaseConfig);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const db = firebase.firestore();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const auth = firebase.auth();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const APP_ID = 'stratedge-time-production';</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const App = () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const LEAVE_TYPES = ['Casual Leave', 'Earned Leave', 'Public Holiday', 'Sick Leave'];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const MAX_DAILY_HOURS = 8;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const STANDARD_WEEKLY_HOURS = 48;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// Auth State</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [currentUser, setCurrentUser] = React.useState(null);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [view, setView] = React.useState('dashboard'); // 'dashboard' or 'admin'</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [adminTab, setAdminTab] = React.useState('ledger');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// Database State</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [allUsers, setAllUsers] = React.useState([]);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [entries, setEntries] = React.useState([]);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [submissions, setSubmissions] = React.useState([]);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// UI State</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [selectedDate, setSelectedDate] = React.useState(new Date());</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [calendarViewDate, setCalendarViewDate] = React.useState(new Date());<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isAddingEntry, setIsAddingEntry] = React.useState(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [activeDateForEntry, setActiveDateForEntry] = React.useState(null);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [modalType, setModalType] = React.useState('work');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isReasoningRequired, setIsReasoningRequired] = React.useState(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isPreSubmitWarning, setIsPreSubmitWarning] = React.useState(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isConsentRequired, setIsConsentRequired] = React.useState(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isLndModalOpen, setIsLndModalOpen] = React.useState(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isQuestionModalOpen, setIsQuestionModalOpen] = React.useState(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [isAddUserModalOpen, setIsAddUserModalOpen] = React.useState(false);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// Form State</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [newEntry, setNewEntry] = React.useState({ project: '', hours: '', description: '', leaveType: LEAVE_TYPES[0] });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [newUser, setNewUser] = React.useState({ name: '', email: '', designation: '', department: '' });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [editingEntryId, setEditingEntryId] = React.useState(null);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [activeEntryForQuestion, setActiveEntryForQuestion] = React.useState(null);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [adminQuestion, setAdminQuestion] = React.useState('');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [submissionReason, setSubmissionReason] = React.useState('');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [error, setError] = React.useState('');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const [loginError, setLoginError] = React.useState('');</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// Data Sync</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>React.useEffect(() =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const initAuth = async () =&gt; { await auth.signInAnonymously(); };</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>initAuth();</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const base = db.collection('artifacts').doc(APP_ID).collection('public').doc('data');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const unsubUsers = base.collection('users').onSnapshot(s =&gt;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>setAllUsers(s.docs.map(d =&gt; ({ dbId: d.id, ...d.data() }))));</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const unsubEntries = base.collection('entries').onSnapshot(s =&gt;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>setEntries(s.docs.map(d =&gt; ({ id: d.id, ...d.data() }))));</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const unsubSubs = base.collection('submissions').onSnapshot(s =&gt;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>setSubmissions(s.docs.map(d =&gt; ({ id: d.id, ...d.data() }))));</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return () =&gt; { unsubUsers(); unsubEntries(); unsubSubs(); };</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}, []);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// Helper Logic</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const getWeekRange = (date) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const start = new Date(date);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>start.setHours(0,0,0,0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>start.setDate(start.getDate() - start.getDay());</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const end = new Date(start);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>end.setDate(start.getDate() + 6);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return { start, end };</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const getWeekId = (date) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const { start } = getWeekRange(date);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return `${start.getFullYear()}-W${Math.ceil((start.getDate() + 1) / 7)}`;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const isSunday = (date) =&gt; date.getDay() === 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const isWeekSubmitted = (date, userId = currentUser?.id) =&gt;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>submissions.some(s =&gt; s.weekId === getWeekId(date) &amp;&amp; s.userId === userId);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const weekDays = React.useMemo(() =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const { start } = getWeekRange(selectedDate);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return Array.from({ length: 7 }, (_, i) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const day = new Date(start);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>day.setDate(start.getDate() + i);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return day;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}, [selectedDate]);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const workingDays = React.useMemo(() =&gt; weekDays.filter(d =&gt; !isSunday(d)), [weekDays]);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const filteredEntries = React.useMemo(() =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const { start, end } = getWeekRange(selectedDate);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return entries.filter(e =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const d = new Date(e.date);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const inWeek = d &gt;= start &amp;&amp; d &lt;= end;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return inWeek &amp;&amp; (view === 'admin' || e.userId === currentUser?.id);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}, [entries, selectedDate, currentUser, view]);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const stats = React.useMemo(() =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const uEntries = filteredEntries.filter(e =&gt; e.userId === currentUser?.id);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const total = uEntries.reduce((s, e) =&gt; s + e.hours, 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const work = uEntries.filter(e =&gt; e.type === 'work').reduce((s, e) =&gt; s + e.hours, 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const leave = uEntries.filter(e =&gt; e.type === 'leave').reduce((s, e) =&gt; s + e.hours, 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return { total, work, leave };</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}, [filteredEntries, currentUser]);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const submitted = isWeekSubmitted(selectedDate);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// Handlers</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const handleLogin = (e) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>e.preventDefault();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const email = e.target.email.value.toLowerCase().trim();</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (email === 'admin@stratedge.com') {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>setCurrentUser({ id: 'ADM-MASTER', name: 'Executive Admin', designation: 'System Controller', role: 'admin', email: 'admin@stratedge.com', department: 'Executive Board', joinDate: 'System Init' });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>setView('admin');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const found = allUsers.find(u =&gt; u.email.toLowerCase() === email);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (found) { setCurrentUser(found); setView('dashboard'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>else setLoginError('Account not found in Strategic Personnel database.');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const saveEntry = async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const hours = parseFloat(newEntry.hours);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const currentDayOtherHours = entries</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>.filter(e =&gt; e.userId === currentUser.id &amp;&amp; new Date(e.date).toDateString() === activeDateForEntry.toDateString() &amp;&amp; e.id !== editingEntryId)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>.reduce((s, e) =&gt; s + e.hours, 0);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (currentDayOtherHours + hours &gt; MAX_DAILY_HOURS) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>setError(`Policy limit exceeded: Max ${MAX_DAILY_HOURS}h allowed per day.`);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>return;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const payload = {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>userId: currentUser.id,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>userName: currentUser.name,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>type: modalType,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>project: modalType === 'work' ? newEntry.project : null,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>leaveType: modalType === 'leave' ? newEntry.leaveType : null,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>hours: hours,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>date: activeDateForEntry.toISOString(),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>description: newEntry.description,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>status: 'pending'</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const base = db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (editingEntryId) await base.doc(editingEntryId).update(payload);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>else await base.add(payload);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setIsAddingEntry(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setEditingEntryId(null);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setError('');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const handleTimesheetSubmit = () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const today = new Date();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>today.setHours(0,0,0,0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const { start } = getWeekRange(selectedDate);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const friday = new Date(start);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>friday.setDate(start.getDate() + 5);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (today &lt;= friday) setIsPreSubmitWarning(true);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>else setIsConsentRequired(true);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const proceedToFinalize = async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('submissions').add({</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>userId: currentUser.id,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>weekId: getWeekId(selectedDate),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>reason: stats.total !== STANDARD_WEEKLY_HOURS ? submissionReason : 'Standard week',</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>submittedAt: new Date().toISOString()</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setIsReasoningRequired(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setIsConsentRequired(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const openAddModal = (date, type) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setEditingEntryId(null);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setModalType(type);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setActiveDateForEntry(date);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setNewEntry({ project: '', hours: '', description: '', leaveType: LEAVE_TYPES[0] });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setIsAddingEntry(true);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const openEditModal = (entry) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setEditingEntryId(entry.id);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setModalType(entry.type);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setActiveDateForEntry(new Date(entry.date));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setNewEntry({ project: entry.project || '', hours: entry.hours.toString(), description: entry.description || '', leaveType: entry.leaveType || LEAVE_TYPES[0] });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>setIsAddingEntry(true);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>// Views</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (!currentUser) return (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div className="min-h-screen flex items-center justify-center p-6 bg-blue-50"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div className="bg-white border border-slate-200 p-12 rounded-[3.5rem] shadow-2xl text-center max-w-md w-full animate-fade-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="bg-blue-600 p-6 rounded-[2.5rem] inline-block mb-6 shadow-xl shadow-blue-100"&gt;&lt;Shield className="text-white w-12 h-12" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;h2 className="text-3xl font-black mb-8 text-slate-900 tracking-tighter"&gt;Stratedge Time&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;form onSubmit={handleLogin} className="space-y-4 text-left"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>{loginError &amp;&amp; &lt;p className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold text-center border border-red-100"&gt;{loginError}&lt;/p&gt;}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-1"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1"&gt;Corporate ID&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;input name="email" type="email" placeholder="admin@stratedge.com" className="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100 transition-all" required /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-1"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1"&gt;Security Key&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;input name="password" type="password" placeholder="••••••••" className="w-full bg-slate-50 border p-5 rounded-3xl outline-none focus:ring-4 focus:ring-blue-100 transition-all" required /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;button className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl shadow-xl shadow-blue-200 active:scale-95 transition-all mt-4"&gt;Initialize Session&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/form&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;p className="mt-8 text-[9px] text-slate-400 font-bold uppercase tracking-widest"&gt;Master Admin Access: admin@stratedge.com&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>return (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div className="flex h-screen overflow-hidden bg-[#F8FAFC]"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{/* SIDEBAR */}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div className="w-72 bg-blue-950 text-white flex flex-col shrink-0 shadow-2xl h-full sticky top-0"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="p-8 border-b border-blue-900/40 flex items-center gap-3"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;Shield className="text-orange-400" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;h1 className="text-xl font-black italic tracking-tighter"&gt;STRATEDGE&lt;/h1&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button onClick={() =&gt; setIsProfileModalOpen(true)} className="p-8 border-b border-blue-900/40 bg-blue-900/20 text-left hover:bg-blue-900/40 transition-all group"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="flex items-center gap-4"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform"&gt;&lt;User className="text-white" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="overflow-hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;p className="font-black text-white text-sm truncate"&gt;{currentUser.name}&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest"&gt;View Profile&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;nav className="flex-1 p-4 space-y-2"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;button onClick={()=&gt;setView('dashboard')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold transition-all ${view==='dashboard'?'bg-blue-600 shadow-xl shadow-blue-900/50 text-white':'text-blue-300 hover:bg-blue-900/50 hover:text-white'}`}&gt;&lt;LayoutGrid className="w-5 h-5" /&gt; Dashboard&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>{currentUser.role==='admin' &amp;&amp; &lt;button onClick={()=&gt;setView('admin')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold transition-all ${view==='admin'?'bg-blue-600 shadow-xl shadow-blue-900/50 text-white':'text-blue-300 hover:bg-blue-900/50 hover:text-white'}`}&gt;&lt;Users className="w-5 h-5" /&gt; Admin Oversight&lt;/button&gt;}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;button onClick={()=&gt;setIsLndModalOpen(true)} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-300 hover:bg-blue-900/50 hover:text-white transition-all"&gt;&lt;BookOpen className="w-5 h-5" /&gt; L &amp; D Module&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;button onClick={()=&gt;{setCurrentUser(null); setView('dashboard');}} className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-blue-400 mt-auto hover:text-orange-400 transition-all"&gt;&lt;LogOut className="w-5 h-5" /&gt; Logout&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/nav&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;main className="flex-1 p-8 overflow-y-auto custom-scrollbar"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;header className="flex justify-between items-end mb-10 flex-wrap gap-4"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h2 className="text-3xl font-black text-slate-900"&gt;Stratedge Time: &lt;span className="text-blue-600 italic underline decoration-orange-400 underline-offset-8"&gt;{currentUser.name}&lt;/span&gt;&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.3em] mt-3"&gt;Strategic Performance Hub&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>{view==='dashboard' &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-white px-8 py-4 rounded-[2.5rem] border border-slate-200 shadow-sm flex items-center gap-8"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="text-center"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;p className="text-[9px] font-black text-slate-400 uppercase mb-1"&gt;Weekly Allocation&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;p className={`text-2xl font-black ${stats.total===STANDARD_WEEKLY_HOURS?'text-green-600':'text-orange-500'}`}&gt;{stats.total}h &lt;span className="text-sm font-bold text-slate-300"&gt;/ {STANDARD_WEEKLY_HOURS}h&lt;/span&gt;&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>{!submitted ? (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;button onClick={handleTimesheetSubmit} className="bg-orange-500 text-white px-10 py-5 rounded-3xl font-black text-xs shadow-2xl hover:bg-orange-600 transition-all active:scale-95"&gt;&lt;Send className="w-4 h-4 inline mr-2" /&gt; Submit Timesheet for the Week&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>) : (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="bg-green-50 text-green-700 px-6 py-4 rounded-3xl text-xs font-black uppercase border border-green-200 flex items-center gap-2"&gt;&lt;CheckCircle2 className="w-5 h-5" /&gt; Submitted&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/header&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>{view === 'dashboard' ? (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-8"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>{/* Upper Row: Filter &amp; Stats */}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="grid grid-cols-1 xl:grid-cols-4 gap-6 shrink-0"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm col-span-1"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="flex justify-between items-center mb-5 px-1"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"&gt;&lt;Filter className="w-3 h-3 text-blue-600" /&gt; Week Filter&lt;/h4&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="flex gap-1.5"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;button onClick={() =&gt; {const d = new Date(calendarViewDate); d.setMonth(d.getMonth()-1); setCalendarViewDate(d);}} className="p-1.5 hover:bg-slate-100 rounded-xl text-blue-600"&gt;&lt;ChevronLeft className="w-4 h-4"/&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;button onClick={() =&gt; {const d = new Date(calendarViewDate); d.setMonth(d.getMonth()+1); setCalendarViewDate(d);}} className="p-1.5 hover:bg-slate-100 rounded-xl text-blue-600"&gt;&lt;ChevronRight className="w-4 h-4"/&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="grid grid-cols-7 gap-1"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>{Array.from({length:42},(_,i)=&gt;{</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>const y = calendarViewDate.getFullYear(), m = calendarViewDate.getMonth();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>const d = new Date(y, m, 1); d.setDate(1 - d.getDay() + i);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>const inW = d &gt;= getWeekRange(selectedDate).start &amp;&amp; d &lt;= getWeekRange(selectedDate).end;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>if (d.getMonth() !== m &amp;&amp; !inW) return &lt;div key={i} className="w-8 h-8" /&gt;;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>return &lt;button key={i} onClick={()=&gt;setSelectedDate(d)} className={`w-8 h-8 text-[10px] font-bold rounded-xl transition-all ${inW ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-50 text-slate-400'}`}&gt;{d.getDate()}&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>})}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="xl:col-span-3 bg-blue-950 p-8 rounded-[2.5rem] text-white flex items-center justify-between shadow-2xl relative overflow-hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="relative z-10 flex-1 pr-12"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="flex items-center gap-2 mb-3"&gt;&lt;PieChart className="w-4 h-4 text-orange-400" /&gt;&lt;p className="text-[10px] font-black text-blue-300 uppercase tracking-[0.3em]"&gt;Resource Capacity Index&lt;/p&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="flex items-center gap-8 mb-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;div className="flex-1 h-4 bg-blue-900 rounded-full overflow-hidden p-1 border border-blue-800 shadow-inner relative"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;div className="h-full bg-blue-400 rounded-l-full transition-all duration-1000" style={{ width: `${Math.min((stats.work / STANDARD_WEEKLY_HOURS) * 100, 100)}%` }} /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;div className="h-full bg-orange-400 absolute top-1 left-1 rounded-r-full transition-all duration-1000 border-l border-blue-900/50" style={{ width: `${Math.min((stats.leave / STANDARD_WEEKLY_HOURS) * 100, 100)}%`, left: `${Math.min((stats.work / STANDARD_WEEKLY_HOURS) * 100 + 1, 99)}%` }} /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;span className="text-lg font-black w-16 text-right text-orange-400"&gt;{Math.round((stats.total / STANDARD_WEEKLY_HOURS) * 100)}%&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="flex gap-8 flex-wrap"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;div className="flex items-center gap-3"&gt;&lt;div className="w-3 h-3 rounded bg-blue-400" /&gt;&lt;div&gt;&lt;p className="text-[9px] font-black text-blue-400 uppercase tracking-widest leading-none"&gt;Work&lt;/p&gt;&lt;p className="text-sm font-black text-white"&gt;{stats.work}h&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;div className="flex items-center gap-3"&gt;&lt;div className="w-3 h-3 rounded bg-orange-400" /&gt;&lt;div&gt;&lt;p className="text-[9px] font-black text-orange-300 uppercase tracking-widest leading-none"&gt;Leaves&lt;/p&gt;&lt;p className="text-sm font-black text-orange-400"&gt;{stats.leave}h&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="relative z-10 flex gap-12 px-10 border-l border-blue-900/50"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="text-center"&gt;&lt;p className="text-[10px] text-blue-400 font-black mb-2"&gt;Daily Peak&lt;/p&gt;&lt;p className="text-2xl font-black"&gt;8h&lt;/p&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="text-center"&gt;&lt;p className="text-[10px] text-blue-400 font-black mb-2"&gt;Weekly Standard&lt;/p&gt;&lt;p className="text-2xl font-black text-orange-400"&gt;{STANDARD_WEEKLY_HOURS}h&lt;/p&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;Shield className="absolute -bottom-10 -right-10 w-56 h-56 text-white/5 rotate-12" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>{/* Mon-Sat Grid */}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 pb-20"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>{workingDays.map((day, idx) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>const dEntries = entries.filter(e =&gt; e.userId === currentUser.id &amp;&amp; new Date(e.date).toDateString() === day.toDateString());</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>const dayTotal = dEntries.reduce((s, e) =&gt; s + e.hours, 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>const isToday = day.toDateString() === new Date().toDateString();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>const fullDayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(day);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>const fullDateStr = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(day);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>return (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div key={idx} className={`bg-white rounded-[2rem] border flex flex-col min-h-[450px] transition-all animate-fade-in ${isToday ? 'border-blue-400 ring-4 ring-blue-50 shadow-xl' : 'border-slate-200 shadow-sm hover:shadow-md'}`}&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;div className="px-5 py-5 border-b border-slate-100"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;div className="flex justify-between items-start mb-3"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;span className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-blue-600' : 'text-slate-400'}`}&gt;{fullDayName}&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;h4 className={`text-xs font-black mt-1 ${isToday ? 'text-blue-600' : 'text-slate-900'}`}&gt;{fullDateStr}&lt;/h4&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>{!submitted &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;div className="flex gap-1"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                </span>&lt;button onClick={() =&gt; openAddModal(day, 'work')} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"&gt;&lt;Plus className="w-4 h-4" /&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                </span>&lt;button onClick={() =&gt; openAddModal(day, 'leave')} className="p-1.5 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all"&gt;&lt;Palmtree className="w-4 h-4" /&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;div className="flex items-center gap-3"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner"&gt;&lt;div className={`h-full transition-all duration-500 ${dayTotal &gt; 8 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${(dayTotal / 8) * 100}%` }} /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;span className={`text-[10px] font-black ${dayTotal &gt; 8 ? 'text-red-500' : 'text-slate-500'}`}&gt;{dayTotal}h&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;div className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50/20 custom-scrollbar"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>{dEntries.map(e =&gt; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;div key={e.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative group animate-fade-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;div className="flex items-center gap-3 mb-2"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                </span>&lt;div className={`p-2 rounded-xl shrink-0 ${e.type === 'leave' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}&gt;&lt;Clock className="w-4 h-4" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                </span>&lt;div className="overflow-hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                    </span>&lt;p className="font-black text-slate-900 text-[11px] truncate leading-tight"&gt;{e.type === 'work' ? e.project : e.leaveType}&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                    </span>&lt;p className="text-[10px] text-blue-600 font-black"&gt;{e.hours}h Logged&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;p className="text-[9px] text-slate-400 font-bold px-1 line-clamp-2 italic"&gt;{e.description || 'Stratedge Internal Log'}&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>{!submitted &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                </span>&lt;div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                    </span>&lt;button onClick={() =&gt; openEditModal(e)} className="bg-white border border-slate-200 p-1.5 rounded-xl text-blue-400 hover:text-blue-600 shadow-lg transition-all"&gt;&lt;Edit2 className="w-3.5 h-3.5" /&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                    </span>&lt;button onClick={async () =&gt; { await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries').doc(e.id).delete(); }} className="bg-white border border-slate-200 p-1.5 rounded-xl text-slate-300 hover:text-red-500 shadow-lg transition-all"&gt;&lt;Trash2 className="w-3.5 h-3.5"/&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>{e.status === 'questioned' &amp;&amp; &lt;div className="mt-2 pt-2 border-t border-orange-100"&gt;&lt;p className="text-[9px] font-black text-orange-600 flex items-center gap-1"&gt;&lt;HelpCircle className="w-3 h-3" /&gt; Admin: {e.adminQuestion}&lt;/p&gt;&lt;/div&gt;}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>))}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>{dEntries.length === 0 &amp;&amp; &lt;div className="h-full min-h-[100px] flex items-center justify-center opacity-30 border-2 border-dashed border-slate-200 rounded-3xl"&gt;&lt;span className="text-[10px] font-black text-slate-300 uppercase tracking-widest"&gt;Awaiting Data&lt;/span&gt;&lt;/div&gt;}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>})}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>) : (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>/* Admin View */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-6 pb-20 animate-fade-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="flex gap-4 mb-10"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; setAdminTab('ledger')} className={`px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${adminTab === 'ledger' ? 'bg-blue-600 text-white shadow-xl shadow-blue-100' : 'bg-white text-slate-400 border border-slate-200 hover:border-blue-200'}`}&gt;Ledger Oversight&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; setAdminTab('personnel')} className={`px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${adminTab === 'personnel' ? 'bg-blue-600 text-white shadow-xl shadow-blue-100' : 'bg-white text-slate-400 border border-slate-200 hover:border-blue-200'}`}&gt;Personnel Management&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>{adminTab === 'personnel' ? (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-xl"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="p-8 border-b bg-slate-50/50 flex justify-between items-center"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;h3 className="text-xl font-black text-slate-900 flex items-center gap-3"&gt;&lt;Users className="text-blue-600" /&gt; Strategic Personnel&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;button onClick={() =&gt; setIsAddUserModalOpen(true)} className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-lg flex items-center gap-2 hover:bg-blue-700 transition-all active:scale-95"&gt;&lt;UserPlus className="w-4 h-4" /&gt; Add Associate&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;table className="w-full text-left"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;thead&gt;&lt;tr className="bg-slate-50 border-b border-slate-100"&gt;&lt;th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest"&gt;Employee Associate&lt;/th&gt;&lt;th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest"&gt;Email&lt;/th&gt;&lt;th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center"&gt;Protocol Actions&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;tbody className="divide-y"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>{allUsers.map(u =&gt; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;tr key={u.dbId} className="hover:bg-slate-50 transition-colors"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;td className="p-8"&gt;&lt;div className="flex items-center gap-4"&gt;&lt;div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-black"&gt;{u.name.charAt(0)}&lt;/div&gt;&lt;div&gt;&lt;p className="font-black text-slate-900"&gt;{u.name}&lt;/p&gt;&lt;p className="text-[10px] text-blue-400 font-bold uppercase tracking-tighter"&gt;{u.designation} • {u.id}&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/td&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;td className="p-8 text-sm font-medium text-slate-600"&gt;{u.email}&lt;/td&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;td className="p-8 text-center"&gt;&lt;button onClick={async () =&gt; { await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('users').doc(u.dbId).delete(); }} className="p-3 text-slate-300 hover:text-red-600 transition-colors"&gt;&lt;UserMinus /&gt;&lt;/button&gt;&lt;/td&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;/tr&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>))}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>{allUsers.length === 0 &amp;&amp; &lt;tr&gt;&lt;td colSpan="3" className="p-20 text-center text-slate-300 italic uppercase font-black text-xs"&gt;No associates enrolled in database&lt;/td&gt;&lt;/tr&gt;}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;/tbody&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/table&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>) : (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-xl"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="p-8 border-b bg-slate-50/50 flex justify-between items-center"&gt;&lt;h3 className="text-xl font-black text-slate-900 flex items-center gap-3"&gt;&lt;Activity className="text-blue-600" /&gt; Organizational Activity Ledger&lt;/h3&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;table className="w-full text-left"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;thead&gt;&lt;tr className="bg-slate-50 border-b border-slate-100"&gt;&lt;th className="p-8 text-[10px] font-black text-slate-400 uppercase"&gt;Associate&lt;/th&gt;&lt;th className="p-8 text-[10px] font-black text-slate-400 uppercase"&gt;Log Allocation&lt;/th&gt;&lt;th className="p-8 text-[10px] font-black text-slate-400 uppercase text-right"&gt;Investment&lt;/th&gt;&lt;th className="p-8 text-[10px] font-black text-slate-400 uppercase text-center"&gt;Review Action&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;tbody className="divide-y"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>{entries.map(e =&gt; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;tr key={e.id} className="hover:bg-slate-50 transition-colors"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;td className="p-8"&gt;&lt;div className="flex items-center gap-4"&gt;&lt;div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-black"&gt;{e.userName?.charAt(0)}&lt;/div&gt;&lt;div&gt;&lt;p className="font-black text-slate-900"&gt;{e.userName}&lt;/p&gt;&lt;p className="text-[10px] text-slate-400 font-bold uppercase"&gt;{new Date(e.date).toLocaleDateString()}&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/td&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;td className="p-8"&gt;&lt;p className="font-black text-xs text-slate-700"&gt;{e.type==='work'?e.project:e.leaveType}&lt;/p&gt;&lt;p className="text-[9px] text-slate-400 line-clamp-1 italic"&gt;{e.description}&lt;/p&gt;&lt;/td&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;td className="p-8 text-right font-black text-slate-900"&gt;{e.hours}h&lt;/td&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;td className="p-8"&gt;&lt;div className="flex items-center justify-center gap-3"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;button onClick={async () =&gt; { await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries').doc(e.id).update({status: 'approved'}); }} className={`p-2 rounded-xl transition-all shadow-sm ${e.status==='approved'?'bg-green-600 text-white':'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'}`} title="Approve"&gt;&lt;Check className="w-4 h-4"/&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;button onClick={async () =&gt; { await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('entries').doc(e.id).update({status: 'declined'}); }} className={`p-2 rounded-xl transition-all shadow-sm ${e.status==='declined'?'bg-red-600 text-white':'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white'}`} title="Decline"&gt;&lt;X className="w-4 h-4"/&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                            </span>&lt;button onClick={() =&gt; { setActiveEntryForQuestion(e); setIsQuestionModalOpen(true); }} className={`p-2 rounded-xl transition-all shadow-sm ${e.status==='questioned'?'bg-orange-600 text-white':'bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white'}`} title="Inquire"&gt;&lt;HelpCircle className="w-4 h-4"/&gt;&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                        </span>&lt;/div&gt;&lt;/td&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                    </span>&lt;/tr&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                                </span>))}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;/tbody&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;/table&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/main&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{/* MODALS */}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isProfileModalOpen &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in zoom-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-lg rounded-[3.5rem] shadow-2xl overflow-hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-blue-600 p-10 text-white flex flex-col items-center"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="w-24 h-24 rounded-[2rem] bg-white text-blue-600 flex items-center justify-center shadow-2xl mb-6"&gt;&lt;User className="w-12 h-12" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;h3 className="text-3xl font-black"&gt;{currentUser.name}&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-blue-100 font-bold uppercase text-xs mt-2 tracking-widest"&gt;{currentUser.designation}&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="p-10 space-y-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="grid grid-cols-2 gap-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="bg-slate-50 p-6 rounded-3xl border border-slate-100"&gt;&lt;p className="text-[10px] font-black text-slate-400 uppercase mb-2"&gt;Corporate ID&lt;/p&gt;&lt;p className="font-black text-slate-900"&gt;{currentUser.id}&lt;/p&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="bg-slate-50 p-6 rounded-3xl border border-slate-100"&gt;&lt;p className="text-[10px] font-black text-slate-400 uppercase mb-2"&gt;Join Record&lt;/p&gt;&lt;p className="font-black text-slate-900"&gt;{currentUser.joinDate}&lt;/p&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={()=&gt;setIsProfileModalOpen(false)} className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl"&gt;Close Session Profile&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isAddUserModalOpen &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[200] flex items-center justify-center p-6 animate-in zoom-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-md rounded-[3.5rem] shadow-2xl p-12"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h3 className="text-3xl font-black text-slate-900 mb-8 tracking-tighter"&gt;Enroll Associate&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="space-y-4"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;input placeholder="Legal Full Name" value={newUser.name} onChange={e=&gt;setNewUser({...newUser, name: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none focus:ring-4 focus:ring-blue-50 transition-all font-medium" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;input placeholder="Email Identifier" value={newUser.email} onChange={e=&gt;setNewUser({...newUser, email: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none focus:ring-4 focus:ring-blue-50 transition-all font-medium" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;input placeholder="Operational Designation" value={newUser.designation} onChange={e=&gt;setNewUser({...newUser, designation: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none focus:ring-4 focus:ring-blue-50 transition-all font-medium" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;input placeholder="Strategic Department" value={newUser.department} onChange={e=&gt;setNewUser({...newUser, department: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none focus:ring-4 focus:ring-blue-50 transition-all font-medium" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="flex gap-4 mt-10"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={()=&gt;setIsAddUserModalOpen(false)} className="flex-1 py-5 font-black text-slate-400"&gt;Cancel&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={async () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>if(!newUser.name || !newUser.email) return;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('users').add({</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>...newUser,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>id: `STR-${Math.floor(1000 + Math.random() * 9000)}`,</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>role: 'user',</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>setIsAddUserModalOpen(false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>setNewUser({name: '', email: '', designation: '', department: ''});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>}} className="flex-1 py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl"&gt;Enroll&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isPreSubmitWarning &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[60] flex items-center justify-center p-6 text-center animate-in zoom-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-sm rounded-[3rem] p-12 shadow-2xl"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="w-24 h-24 bg-orange-50 text-orange-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-orange-100"&gt;&lt;AlertTriangle className="w-12 h-12" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tighter"&gt;Submit Timesheet&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed italic"&gt;Early commitment requested. Submitting now will lock the current week for further adjustments. Proceed?&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="flex gap-4"&gt;&lt;button onClick={() =&gt; setIsPreSubmitWarning(false)} className="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-slate-400 hover:bg-slate-50"&gt;Abort&lt;/button&gt;&lt;button onClick={() =&gt; { setIsPreSubmitWarning(false); setIsConsentRequired(true); }} className="flex-1 py-5 bg-orange-500 text-white rounded-3xl font-black shadow-xl"&gt;Confirm&lt;/button&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isConsentRequired &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-blue-950/95 backdrop-blur-xl z-[65] flex items-center justify-center p-6 text-center animate-in zoom-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-50"&gt;&lt;BadgeCheck className="w-12 h-12" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h3 className="text-3xl font-black text-slate-900 mb-6 tracking-tight"&gt;Strategic Consent&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-slate-50 p-8 rounded-3xl text-left border border-slate-100 mb-10"&gt;&lt;div className="flex gap-4 items-start"&gt;&lt;CheckSquare className="w-6 h-6 text-orange-500 shrink-0 mt-1" /&gt;&lt;p className="text-slate-600 text-sm font-medium leading-relaxed italic"&gt;"I hereby declare that this timesheet is accurate to the best of my knowledge and represents my actual contributions. I acknowledge that this submission will be periodically audited."&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="flex gap-4"&gt;&lt;button onClick={() =&gt; setIsConsentRequired(false)} className="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-slate-400 hover:bg-slate-50"&gt;Decline&lt;/button&gt;&lt;button onClick={async () =&gt; { if (stats.total !== STANDARD_WEEKLY_HOURS) setIsReasoningRequired(true); else await proceedToFinalize(); }} className="flex-1 py-5 bg-blue-600 text-white rounded-3xl font-black shadow-2xl shadow-blue-100"&gt;Accept &amp; Commit&lt;/button&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isReasoningRequired &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-blue-950/95 backdrop-blur-md z-[70] flex items-center justify-center p-6 text-center animate-in slide-in-from-bottom-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-sm rounded-[3rem] p-12 shadow-2xl"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="w-20 h-20 bg-red-50 text-red-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8"&gt;&lt;MessageSquareQuote className="w-10 h-10" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h3 className="text-2xl font-black text-slate-900 mb-3"&gt;Quota Deviation&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;p className="text-slate-500 text-xs mb-8 italic tracking-wide"&gt;Total ({stats.total}h) deviates from 48h. Provide context.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;textarea rows="4" value={submissionReason} onChange={(e) =&gt; setSubmissionReason(e.target.value)} placeholder="Provide strategic justification..." className="w-full p-6 bg-slate-50 border border-slate-200 rounded-3xl outline-none font-medium text-xs mb-8 resize-none focus:ring-4 focus:ring-blue-50" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="flex gap-4"&gt;&lt;button onClick={() =&gt; setIsReasoningRequired(false)} className="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-slate-400"&gt;Back&lt;/button&gt;&lt;button disabled={!submissionReason.trim()} onClick={proceedToFinalize} className={`flex-1 py-5 text-white rounded-3xl font-black shadow-xl ${submissionReason.trim() ? 'bg-blue-600' : 'bg-slate-200 cursor-not-allowed'}`}&gt;Submit&lt;/button&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isAddingEntry &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-in zoom-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-sm rounded-[3.5rem] shadow-2xl overflow-hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-blue-950 p-10 text-white shadow-2xl"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="flex items-center gap-3 mb-2"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>{modalType === 'work' ? &lt;Clock className="w-6 h-6 text-blue-400" /&gt; : &lt;Palmtree className="w-6 h-6 text-orange-400" /&gt;}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;h3 className="text-3xl font-black"&gt;{editingEntryId ? 'Update Log' : (modalType === 'work' ? 'Log Work' : 'Apply Leave')}&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-blue-300 font-bold uppercase text-[10px] tracking-widest mt-1.5 underline decoration-orange-400"&gt;{activeDateForEntry?.toDateString()}&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="p-10 space-y-8"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>{error &amp;&amp; &lt;p className="bg-red-50 text-red-600 p-5 rounded-2xl text-[10px] font-black border border-red-100 animate-pulse"&gt;{error}&lt;/p&gt;}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="space-y-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>{modalType === 'work' ? (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="space-y-2"&gt;&lt;label className="text-[10px] font-black text-slate-400 uppercase px-1"&gt;Assignment&lt;/label&gt;&lt;input type="text" value={newEntry.project} onChange={(e) =&gt; setNewEntry({...newEntry, project: e.target.value})} placeholder="Project Name" className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-medium text-xs focus:ring-4 focus:ring-blue-50" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>) : (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                            </span>&lt;div className="space-y-2"&gt;&lt;label className="text-[10px] font-black text-slate-400 uppercase px-1"&gt;Category&lt;/label&gt;&lt;select value={newEntry.leaveType} onChange={(e) =&gt; setNewEntry({...newEntry, leaveType: e.target.value})} className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none font-medium text-xs"&gt;{LEAVE_TYPES.map(t =&gt; &lt;option key={t} value={t}&gt;{t}&lt;/option&gt;)}&lt;/select&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="space-y-2"&gt;&lt;label className="text-[10px] font-black text-slate-400 uppercase px-1"&gt;Hours&lt;/label&gt;&lt;input type="number" step="0.5" value={newEntry.hours} onChange={(e) =&gt; setNewEntry({...newEntry, hours: e.target.value})} placeholder="Max 8h" className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none font-medium text-xs" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                        </span>&lt;div className="space-y-2"&gt;&lt;label className="text-[10px] font-black text-slate-400 uppercase px-1"&gt;Log Narrative&lt;/label&gt;&lt;textarea rows="2" value={newEntry.description} onChange={(e) =&gt; setNewEntry({...newEntry, description: e.target.value})} placeholder="Activity details..." className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl resize-none outline-none font-medium text-xs" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;div className="flex gap-4 pt-6 border-t border-slate-100"&gt;&lt;button onClick={() =&gt; { setIsAddingEntry(false); setEditingEntryId(null); setError(''); }} className="flex-1 py-5 font-black text-slate-400"&gt;Cancel&lt;/button&gt;&lt;button onClick={saveEntry} className={`flex-1 py-5 text-white rounded-3xl font-black shadow-2xl transition-all active:scale-95 ${modalType === 'leave' ? 'bg-orange-500 shadow-orange-100' : 'bg-blue-600 shadow-blue-100'}`}&gt;{editingEntryId ? 'Update' : 'Commit'}&lt;/button&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isQuestionModalOpen &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-blue-950/95 backdrop-blur-xl z-[150] flex items-center justify-center p-6 animate-in zoom-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-md rounded-[3.5rem] shadow-2xl p-12"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="w-20 h-20 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl"&gt;&lt;MessageSquareQuote className="w-10 h-10" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h3 className="text-3xl font-black text-slate-900 text-center mb-2 tracking-tight"&gt;Raise Inquiry&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;textarea rows="4" value={adminQuestion} onChange={(e) =&gt; setAdminQuestion(e.target.value)} placeholder="Type clarification request for this entry..." className="w-full p-6 bg-slate-50 border border-slate-200 rounded-3xl outline-none font-medium text-xs mb-8 resize-none focus:ring-4 focus:ring-orange-100" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="flex gap-4"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; setIsQuestionModalOpen(false)} className="flex-1 py-5 border border-slate-200 rounded-3xl font-black text-slate-400"&gt;Cancel&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                    </span>&lt;button disabled={!adminQuestion.trim()} onClick={() =&gt; { handleUpdateStatus(activeEntryForQuestion.id, 'questioned', adminQuestion); }} className="flex-1 py-5 bg-orange-500 text-white rounded-3xl font-black shadow-xl shadow-orange-100"&gt;Send Inquiry&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>{isLndModalOpen &amp;&amp; (</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[110] flex items-center justify-center p-6 text-center animate-in zoom-in"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div className="bg-white w-full max-w-md rounded-[3.5rem] p-16 shadow-2xl relative overflow-hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-blue-50 w-32 h-32 rounded-full mx-auto mb-10 flex items-center justify-center shadow-inner"&gt;&lt;Sparkles className="w-16 h-16 text-blue-600 animate-pulse" /&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tighter"&gt;Strategic Upskilling&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-slate-50 p-8 rounded-3xl mb-12 border border-slate-100 font-black text-slate-600 tracking-widest text-lg"&gt;COMING SOON&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                                </span>&lt;button onClick={() =&gt; setIsLndModalOpen(false)} className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all"&gt;Understood&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>)}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>};</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const root = ReactDOM.createRoot(document.getElementById('root'));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>root.render(&lt;App /&gt;);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>setTimeout(() =&gt; lucide.createIcons(), 300);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
 </body>
 </html>
