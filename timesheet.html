@@ -411,6 +411,28 @@
             updateDayLabels(tbody);
             
             tr.querySelector('.hours-input').addEventListener('input', calculateTotals);
+
+            // Auto-fill "On Leave" logic
+            const typeSelect = tr.querySelector('.type-input');
+            const projInput = tr.querySelector('.project-input');
+            
+            const applyLeaveLogic = () => {
+                if (typeSelect.value !== 'Regular Work') {
+                    projInput.value = 'On Leave';
+                    projInput.readOnly = true;
+                    projInput.classList.add('bg-gray-100', 'text-gray-500');
+                } else {
+                    if (projInput.value === 'On Leave') projInput.value = '';
+                    if (!isSubmitted) {
+                        projInput.readOnly = false;
+                        projInput.classList.remove('bg-gray-100', 'text-gray-500');
+                    }
+                }
+            };
+
+            typeSelect.addEventListener('change', applyLeaveLogic);
+            applyLeaveLogic(); // Initialize state immediately for loaded rows
+
             calculateTotals();
         };
 
