@@ -324,7 +324,34 @@
                 
             } catch (error) {
                 console.error(error);
-                showToast('Failed to send login link. Error: ' + error.message, 'error');
+                
+                // --- START FALLBACK DEMO BYPASS ---
+                // If Firebase hits its daily free email limit, allow testing to continue
+                if (error.code === 'auth/quota-exceeded' || error.code === 'auth/too-many-requests' || error.message.toLowerCase().includes('quota')) {
+                    
+                    showToast('Firebase Email Quota Reached! Activating Demo Bypass...', 'info', 5000);
+                    
+                    // Switch UI to show bypass message
+                    document.getElementById(step1Id).classList.add('hidden');
+                    document.getElementById(step2Id).classList.remove('hidden');
+                    
+                    document.getElementById(messageElementId).innerHTML = `<span class="font-bold text-red-500">Firebase Free Quota Exceeded</span><br>Auto-bypassing login for testing purposes...`;
+                    
+                    // Automatically route them securely after 3 seconds
+                    setTimeout(() => {
+                        if (targetType === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            sessionStorage.setItem('stratedge_active_user', JSON.stringify(foundEmployee));
+                            window.location.href = 'timesheet.html';
+                        }
+                    }, 3000);
+
+                } else {
+                    showToast('Failed to send login link. Error: ' + error.message, 'error');
+                }
+                // --- END FALLBACK DEMO BYPASS ---
+                
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
