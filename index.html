@@ -161,10 +161,13 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ==========================================
-        // ⚠️ PASTE YOUR FIREBASE CONFIGURATION HERE ⚠️
-        // ==========================================
-        const firebaseConfig = {
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        let firebaseConfig;
+        if (firebaseConfigStr) {
+            firebaseConfig = JSON.parse(firebaseConfigStr);
+        } else {
+            // Fallback config for local testing
+            const firebaseConfig = {
   apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
   authDomain: "stratedge-time.firebaseapp.com",
   projectId: "stratedge-time",
@@ -172,8 +175,8 @@
   messagingSenderId: "550779977682",
   appId: "1:550779977682:web:d4b4983b62876655b3d20b"
 };
-        const appId = 'stratedge-time-recorder';
-        // ==========================================
+        }
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stratedge-time-recorder';
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -268,7 +271,7 @@
             btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Sending Email...</span>`;
             btn.disabled = true;
 
-            // Declare foundEmployee OUTSIDE the try block so the catch block can access it
+            // CRITICAL FIX: Declare foundEmployee OUTSIDE the try block so the catch block can access it
             let foundEmployee = null;
 
             try {
