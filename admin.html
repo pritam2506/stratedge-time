@@ -498,6 +498,58 @@
             return dates;
         };
 
+        // --- EXPORT LOGIC ---
+        window.exportYTD = (empId, empName) => {
+            const userTimesheets = allTimesheets.filter(ts => ts.empId === empId);
+            if(userTimesheets.length === 0) {
+                showToast("No timesheets found for this employee.", "info");
+                return;
+            }
+
+            // Define CSV Headers
+            let csvContent = "Year,Month,Week,Date,Day,Project Name,Category,Hours,Days (Equivalent),Status,Justification\n";
+
+            // Sort chronologically
+            userTimesheets.sort((a,b) => a.week.localeCompare(b.week));
+
+            userTimesheets.forEach(ts => {
+                const dates = getDatesFromWeek(ts.week);
+                const just = ts.justification ? `"${ts.justification.replace(/"/g, '""')}"` : "";
+
+                daysOfWeek.forEach((day, idx) => {
+                    const dateObj = dates[idx];
+                    const year = dateObj.getFullYear();
+                    const month = dateObj.toLocaleDateString('en-US', { month: 'long' });
+                    const dateStr = dateObj.toLocaleDateString('en-US');
+
+                    if (ts.entries && ts.entries[day]) {
+                        const entriesArr = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                        entriesArr.forEach(entry => {
+                            if (parseFloat(entry.hours) > 0) {
+                                const hrs = parseFloat(entry.hours);
+                                const daysEq = (hrs / 8).toFixed(2); // Convert to Days
+                                const project = entry.project ? `"${entry.project.replace(/"/g, '""')}"` : '""';
+                                const category = `"${entry.type}"`;
+                                
+                                csvContent += `${year},${month},${ts.week},${dateStr},${day},${project},${category},${hrs},${daysEq},${ts.status},${just}\n`;
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Trigger Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `YTD_Timesheet_${empName.replace(/\s+/g, '_')}_${new Date().getFullYear()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
         // --- STATS LOGIC ---
         window.openStats = (empId, empName) => {
             document.getElementById('statsModalTitle').textContent = `Statistics: ${empName} (${empId})`;
@@ -552,17 +604,20 @@
                 });
             });
 
-            document.getElementById('stat-m-work').textContent = monthly.work.toFixed(1);
-            document.getElementById('stat-m-sl').textContent = monthly.SL.toFixed(1);
-            document.getElementById('stat-m-cl').textContent = monthly.CL.toFixed(1);
-            document.getElementById('stat-m-el').textContent = monthly.EL.toFixed(1);
-            document.getElementById('stat-m-ph').textContent = monthly.PH.toFixed(1);
+            // Reusable formatter for Days & Hours layout
+            const formatStat = (hrs) => `<div class="flex items-baseline gap-1">${(hrs/8).toFixed(1)} <span class="text-sm font-bold opacity-70 tracking-wide uppercase">days</span></div><div class="text-xs font-semibold opacity-60 mt-0.5">(${hrs.toFixed(1)} hrs)</div>`;
 
-            document.getElementById('stat-y-work').textContent = ytd.work.toFixed(1);
-            document.getElementById('stat-y-sl').textContent = ytd.SL.toFixed(1);
-            document.getElementById('stat-y-cl').textContent = ytd.CL.toFixed(1);
-            document.getElementById('stat-y-el').textContent = ytd.EL.toFixed(1);
-            document.getElementById('stat-y-ph').textContent = ytd.PH.toFixed(1);
+            document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
+            document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
+            document.getElementById('stat-m-cl').innerHTML = formatStat(monthly.CL);
+            document.getElementById('stat-m-el').innerHTML = formatStat(monthly.EL);
+            document.getElementById('stat-m-ph').innerHTML = formatStat(monthly.PH);
+
+            document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
+            document.getElementById('stat-y-sl').innerHTML = formatStat(ytd.SL);
+            document.getElementById('stat-y-cl').innerHTML = formatStat(ytd.CL);
+            document.getElementById('stat-y-el').innerHTML = formatStat(ytd.EL);
+            document.getElementById('stat-y-ph').innerHTML = formatStat(ytd.PH);
 
             document.getElementById('statsModal').classList.remove('hidden');
         };
@@ -644,8 +699,15 @@
                 if (statusText === 'Rejected') statusClass = "bg-red-100 text-red-800";
                 if (statusText === 'Submitted') statusText = "Pending";
 
+                // Generate exact date range for this week's column
+                const dates = getDatesFromWeek(ts.week);
+                const dateRange = `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+
                 tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">${ts.week}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-900">${ts.week}</div>
+                        <div class="text-xs font-semibold text-gray-500 mt-0.5">${dateRange}</div>
+                    </td>
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">${ts.name}</div>
                         <div class="text-xs text-gray-500">${ts.empId}</div>
@@ -872,6 +934,7 @@
                     <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editUser('${emp.id}')" class="text-brand-blue hover:text-blue-700 mr-3 font-medium transition-colors">Edit</button>
                         <button onclick="openStats('${emp.empId}', '${emp.name}')" class="text-brand-orange hover:text-orange-700 mr-3 font-medium transition-colors">Stats</button>
+                        <button onclick="exportYTD('${emp.empId}', '${emp.name}')" class="text-green-600 hover:text-green-800 mr-3 font-medium transition-colors">Export</button>
                         <button id="del-btn-${emp.id}" onclick="deleteUser('${emp.id}')" class="text-red-500 hover:text-red-700 font-medium transition-colors">Delete</button>
                     </td>
                 `;
