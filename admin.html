@@ -34,9 +34,20 @@
             </div>
             <div class="flex items-center gap-4">
                 <!-- Notification Bell -->
-                <div class="relative cursor-pointer mr-2 flex items-center" onclick="switchTab('timesheets')" title="Pending Approvals">
+                <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()" title="Notifications">
                     <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    
+                    <!-- Dropdown Panel -->
+                    <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
+                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <span class="font-bold text-gray-800 text-sm">Notifications</span>
+                            <button onclick="markAllRead()" class="text-xs text-brand-blue hover:text-blue-700 font-semibold transition-colors">Mark all as read</button>
+                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
                 </div>
                 <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">
                     Admin Portal
@@ -144,57 +155,36 @@
                     <span id="userCount" class="bg-blue-100 text-brand-blue text-xs font-bold px-3 py-1.5 rounded-full">0 Employees</span>
                 </div>
                 
-                <div class="overflow-x-auto border border-gray-200 rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role & Dept</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersList" class="bg-white divide-y divide-gray-200">
-                            <!-- Populated by JS -->
-                            <tr><td colspan="5" class="px-4 py-12 text-center text-gray-500">Connecting to database...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================== -->
-        <!-- TAB 2: TIMESHEET APPROVALS     -->
-        <!-- ============================== -->
-        <div id="tab-timesheets" class="hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                        Timesheet Submissions
-                    </h3>
-                </div>
-
-                <!-- Lookup Specific Timesheet Toolbar -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex flex-col sm:flex-row gap-4 items-end">
-                    <div class="w-full sm:w-1/3">
-                        <label for="searchEmp" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Lookup Employee</label>
-                        <select id="searchEmp" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-sm">
-                            <option value="">-- Choose Employee --</option>
+                <!-- Employee Filters -->
+                <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div class="flex-1">
+                        <label for="filterName" class="sr-only">Search Employee</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input type="text" id="filterName" oninput="renderEmployees()" placeholder="Search by name or ID..." class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors">
+                        </div>
+                    </div>
+                    <div class="sm:w-40">
+                        <label for="filterRole" class="sr-only">Filter by Role</label>
+                        <select id="filterRole" onchange="renderEmployees()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors text-gray-700">
+                            <option value="">All Roles</option>
+                            <option value="Employee">Employee</option>
+                            <option value="Admin">Admin</option>
                         </select>
                     </div>
-                    <div class="w-full sm:w-1/3">
-                        <label for="searchWeek" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Select Week</label>
-                        <input type="week" id="searchWeek" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-sm">
-                    </div>
-                    <div class="w-full sm:w-1/3">
-                        <button onclick="openSpecificTimesheet()" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors h-[38px] flex justify-center items-center">
-                            Open Timesheet
-                        </button>
+                    <div class="sm:w-48">
+                        <label for="filterDept" class="sr-only">Filter by Department</label>
+                        <select id="filterDept" onchange="renderEmployees()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors text-gray-700">
+                            <option value="">All Departments</option>
+                            <option value="Design">Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Founder's office">Founder's office</option>
+                        </select>
                     </div>
                 </div>
-                
+
                 <div class="overflow-x-auto border border-gray-200 rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -290,7 +280,7 @@
                 
                 <!-- Current Month Stats -->
                 <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsMonthLabel">Current Month</h4>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
                     <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
                         <div class="text-xs text-blue-500 font-bold uppercase">Work Hours</div>
                         <div class="text-2xl font-black text-brand-blue" id="stat-m-work">0.0</div>
@@ -298,10 +288,6 @@
                     <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
                         <div class="text-xs text-orange-600 font-bold uppercase">Sick Leave</div>
                         <div class="text-2xl font-black text-brand-orange" id="stat-m-sl">0.0</div>
-                    </div>
-                    <div class="bg-green-50 p-3 rounded-lg border border-green-100">
-                        <div class="text-xs text-green-600 font-bold uppercase">Casual Leave</div>
-                        <div class="text-2xl font-black text-green-600" id="stat-m-cl">0.0</div>
                     </div>
                     <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
                         <div class="text-xs text-purple-600 font-bold uppercase">Earned Leave</div>
@@ -315,7 +301,7 @@
 
                 <!-- YTD Stats -->
                 <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsYtdLabel">Year To Date</h4>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-2 gap-4">
                     <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
                         <div class="text-xs text-blue-500 font-bold uppercase">Work Hours</div>
                         <div class="text-2xl font-black text-brand-blue" id="stat-y-work">0.0</div>
@@ -323,10 +309,6 @@
                     <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
                         <div class="text-xs text-orange-600 font-bold uppercase">Sick Leave</div>
                         <div class="text-2xl font-black text-brand-orange" id="stat-y-sl">0.0</div>
-                    </div>
-                    <div class="bg-green-50 p-3 rounded-lg border border-green-100">
-                        <div class="text-xs text-green-600 font-bold uppercase">Casual Leave</div>
-                        <div class="text-2xl font-black text-green-600" id="stat-y-cl">0.0</div>
                     </div>
                     <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
                         <div class="text-xs text-purple-600 font-bold uppercase">Earned Leave</div>
@@ -432,10 +414,32 @@
         let allEmployees = [];
         let allTimesheets = [];
         let currentReviewDocId = null;
+        let readNotifIds = new Set(); // Tracks notifications dismissed by the admin
 
         const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         // --- UI UTILS ---
+        window.toggleNotifications = () => {
+            document.getElementById('notifDropdown').classList.toggle('hidden');
+        };
+
+        window.markAllRead = () => {
+            const pending = allTimesheets.filter(ts => !ts.status || ts.status === 'Submitted' || ts.status === 'Pending');
+            pending.forEach(ts => readNotifIds.add(ts.id));
+            updateNotifications();
+            document.getElementById('notifDropdown').classList.add('hidden');
+            showToast("All notifications marked as read.", "success");
+        };
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const bell = document.getElementById('notifBell');
+            const dropdown = document.getElementById('notifDropdown');
+            if (bell && dropdown && !bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
         window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
         const showToast = (message, type = 'success') => {
             const toast = document.getElementById('toast');
@@ -604,18 +608,16 @@
                 });
             });
 
-            // Reusable formatter for Days & Hours layout
+            // Format stats to show Days (hrs/8) with Hours in brackets
             const formatStat = (hrs) => `<div class="flex items-baseline gap-1">${(hrs/8).toFixed(1)} <span class="text-sm font-bold opacity-70 tracking-wide uppercase">days</span></div><div class="text-xs font-semibold opacity-60 mt-0.5">(${hrs.toFixed(1)} hrs)</div>`;
 
             document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
             document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
-            document.getElementById('stat-m-cl').innerHTML = formatStat(monthly.CL);
             document.getElementById('stat-m-el').innerHTML = formatStat(monthly.EL);
             document.getElementById('stat-m-ph').innerHTML = formatStat(monthly.PH);
 
             document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
             document.getElementById('stat-y-sl').innerHTML = formatStat(ytd.SL);
-            document.getElementById('stat-y-cl').innerHTML = formatStat(ytd.CL);
             document.getElementById('stat-y-el').innerHTML = formatStat(ytd.EL);
             document.getElementById('stat-y-ph').innerHTML = formatStat(ytd.PH);
 
@@ -623,13 +625,31 @@
         };
 
         const updateNotifications = () => {
-            const pendingCount = allTimesheets.filter(ts => !ts.status || ts.status === 'Submitted' || ts.status === 'Pending').length;
+            const notifList = document.getElementById('notifList');
             const badge = document.getElementById('notificationBadge');
+            if (!notifList) return;
+
+            notifList.innerHTML = '';
+            
+            // Filter only unread pending timesheets
+            const pendingTimesheets = allTimesheets.filter(ts => (!ts.status || ts.status === 'Submitted' || ts.status === 'Pending') && !readNotifIds.has(ts.id));
+            const pendingCount = pendingTimesheets.length;
+
             if (pendingCount > 0) {
                 badge.textContent = pendingCount > 99 ? '99+' : pendingCount;
                 badge.classList.remove('hidden');
+
+                pendingTimesheets.forEach(ts => {
+                    notifList.innerHTML += `
+                        <div class="px-4 py-3 bg-blue-50 border-l-4 border-brand-blue cursor-pointer hover:bg-blue-100 transition-colors" onclick="switchTab('timesheets'); reviewTimesheet('${ts.id}'); toggleNotifications();">
+                            <p class="text-sm font-bold text-brand-blue">Timesheet Submitted</p>
+                            <p class="text-xs text-gray-700 mt-1"><span class="font-semibold">${ts.name}</span> submitted hours for ${ts.week}.</p>
+                        </div>
+                    `;
+                });
             } else {
                 badge.classList.add('hidden');
+                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">No new notifications.</div>';
             }
         };
 
@@ -875,33 +895,48 @@
             document.getElementById('editEmployeeModal').classList.remove('hidden');
         };
 
-        const renderEmployees = () => {
+        window.renderEmployees = () => {
             const tbody = document.getElementById('usersList');
             const countSpan = document.getElementById('userCount');
-            tbody.innerHTML = '';
+            if (tbody) tbody.innerHTML = '';
             
             const searchEmpSelect = document.getElementById('searchEmp');
             const currentSelection = searchEmpSelect ? searchEmpSelect.value : '';
+            
             if (searchEmpSelect) {
                 searchEmpSelect.innerHTML = '<option value="">-- Choose Employee --</option>';
-            }
-
-            if (allEmployees.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500">No employees added yet.</td></tr>`;
-                countSpan.textContent = "0 Employees";
-                return;
-            }
-
-            allEmployees.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-            allEmployees.forEach(emp => {
-                if (searchEmpSelect) {
+                // Ensure ALL employees show up in the Timesheet Tab lookup dropdown regardless of filters
+                [...allEmployees].sort((a,b) => a.name.localeCompare(b.name)).forEach(emp => {
                     const option = document.createElement('option');
                     option.value = emp.empId;
                     option.textContent = `${emp.name} (${emp.empId})`;
                     searchEmpSelect.appendChild(option);
-                }
+                });
+                if (currentSelection) searchEmpSelect.value = currentSelection;
+            }
 
+            // Grab filter values
+            const nameFilter = document.getElementById('filterName') ? document.getElementById('filterName').value.toLowerCase() : '';
+            const roleFilter = document.getElementById('filterRole') ? document.getElementById('filterRole').value : '';
+            const deptFilter = document.getElementById('filterDept') ? document.getElementById('filterDept').value : '';
+
+            // Apply filters to array
+            let displayEmployees = allEmployees.filter(emp => {
+                const matchesName = (emp.name && emp.name.toLowerCase().includes(nameFilter)) || (emp.empId && emp.empId.toLowerCase().includes(nameFilter));
+                const matchesRole = roleFilter === '' || emp.role === roleFilter;
+                const matchesDept = deptFilter === '' || emp.department === deptFilter;
+                return matchesName && matchesRole && matchesDept;
+            });
+
+            if (displayEmployees.length === 0) {
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500">No employees match the current filters.</td></tr>`;
+                if (countSpan) countSpan.textContent = "0 Employees";
+                return;
+            }
+
+            displayEmployees.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            displayEmployees.forEach(emp => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition-colors";
                 
@@ -938,14 +973,10 @@
                         <button id="del-btn-${emp.id}" onclick="deleteUser('${emp.id}')" class="text-red-500 hover:text-red-700 font-medium transition-colors">Delete</button>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                if (tbody) tbody.appendChild(tr);
             });
             
-            if (searchEmpSelect && currentSelection) {
-                searchEmpSelect.value = currentSelection;
-            }
-
-            countSpan.textContent = `${allEmployees.length} Employee${allEmployees.length !== 1 ? 's' : ''}`;
+            if (countSpan) countSpan.textContent = `${displayEmployees.length} Employee${displayEmployees.length !== 1 ? 's' : ''}`;
         };
 
         // Form Submit Handler (Add Employee)
