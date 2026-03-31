@@ -96,20 +96,24 @@
                             class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
                     </div>
                     <div>
+                        <label for="userRole" class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
+                        <select id="userRole" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                            <option value="Employee" selected>Employee</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
                         <label for="userDesig" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                        <input type="text" id="userDesig" required placeholder="e.g. Software Engineer" 
+                        <input type="text" id="userDesig" required placeholder="e.g. Graphic Designer" 
                             class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
                     </div>
                     <div>
                         <label for="userDept" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
                         <select id="userDept" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
                             <option value="" disabled selected>Select Department...</option>
-                            <option value="Engineering">Engineering</option>
-                            <option value="Product">Product</option>
                             <option value="Design">Design</option>
                             <option value="Marketing">Marketing</option>
-                            <option value="HR">HR & Operations</option>
-                            <option value="Finance">Finance</option>
+                            <option value="Founder's office">Founder's office</option>
                         </select>
                     </div>
                     <div>
@@ -210,6 +214,68 @@
             </div>
         </div>
     </main>
+
+    <!-- Modal: Edit Employee -->
+    <div id="editEmployeeModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900">Edit Employee Record</h3>
+                <button onclick="closeModal('editEmployeeModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <form id="editEmployeeForm" class="space-y-4">
+                    <input type="hidden" id="editDocId">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                            <input type="text" id="editEmpId" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input type="text" id="editUserName" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
+                            <select id="editUserRole" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                                <option value="Employee">Employee</option>
+                                <option value="Admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input type="email" id="editUserEmail" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                            <input type="text" id="editUserDesig" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <select id="editUserDept" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                                <option value="Design">Design</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Founder's office">Founder's office</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input type="tel" id="editUserPhone" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Joining</label>
+                            <input type="date" id="editUserDOJ" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                <button onclick="closeModal('editEmployeeModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors">Cancel</button>
+                <button type="submit" form="editEmployeeForm" class="px-4 py-2 bg-brand-blue text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal: Employee Stats -->
     <div id="statsModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
@@ -363,7 +429,6 @@
         let unsubscribeEmps = null;
         let unsubscribeTimesheets = null;
         
-        // Memory state to avoid complex queries
         let allEmployees = [];
         let allTimesheets = [];
         let currentReviewDocId = null;
@@ -413,7 +478,7 @@
             document.getElementById(modalId).classList.add('hidden');
         };
 
-        // --- DATE UTILS (For Stats) ---
+        // --- DATE UTILS ---
         const getDatesFromWeek = (yearWeek) => {
             const [yearStr, weekStr] = yearWeek.split('-W');
             const year = parseInt(yearStr);
@@ -448,7 +513,6 @@
             let ytd = { work: 0, SL: 0, CL: 0, EL: 0, PH: 0 };
             let monthly = { work: 0, SL: 0, CL: 0, EL: 0, PH: 0 };
 
-            // Filter all timesheets for this user
             const userTimesheets = allTimesheets.filter(ts => ts.empId === empId);
 
             userTimesheets.forEach(ts => {
@@ -463,7 +527,6 @@
                     const isCurrentMonth = isCurrentYear && dayDate.getMonth() === currentMonth;
 
                     if (ts.entries && ts.entries[day]) {
-                        // Handle both old single format and new array format
                         const entriesArray = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
                         
                         entriesArray.forEach(entry => {
@@ -489,7 +552,6 @@
                 });
             });
 
-            // Update UI
             document.getElementById('stat-m-work').textContent = monthly.work.toFixed(1);
             document.getElementById('stat-m-sl').textContent = monthly.SL.toFixed(1);
             document.getElementById('stat-m-cl').textContent = monthly.CL.toFixed(1);
@@ -570,7 +632,6 @@
                 return;
             }
 
-            // Sort by latest submission
             allTimesheets.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
 
             allTimesheets.forEach(ts => {
@@ -613,12 +674,10 @@
             document.getElementById('reviewEmpDetails').textContent = `${ts.name} (${ts.empId})`;
             document.getElementById('reviewTotalHours').innerHTML = `${ts.totalHours} <span class="text-lg font-normal text-gray-500">hrs logged</span>`;
 
-            // Reset modal delete button state
             const btnDelTs = document.getElementById('btnDeleteTs');
             btnDelTs.innerText = "Delete / Re-open";
             btnDelTs.className = "px-4 py-2 bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition-colors mr-auto";
 
-            // Status Badge
             const badge = document.getElementById('reviewStatusBadge');
             let statusText = ts.status === 'Submitted' ? 'Pending' : ts.status;
             badge.textContent = statusText;
@@ -626,7 +685,6 @@
             else if (statusText === 'Rejected') badge.className = "px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800";
             else badge.className = "px-3 py-1 rounded-full text-sm font-bold bg-yellow-100 text-yellow-800";
 
-            // Justification
             const justBlock = document.getElementById('reviewJustificationBlock');
             if (ts.justification && ts.justification.trim() !== '') {
                 justBlock.classList.remove('hidden');
@@ -635,7 +693,6 @@
                 justBlock.classList.add('hidden');
             }
 
-            // Table Entries
             const tbody = document.getElementById('reviewTableBody');
             tbody.innerHTML = '';
             
@@ -644,7 +701,7 @@
                     const entriesArr = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
                     
                     entriesArr.forEach((entry, idx) => {
-                        if (parseFloat(entry.hours) === 0) return; // Skip zero hour days for clean review
+                        if (parseFloat(entry.hours) === 0) return;
                         
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -662,7 +719,6 @@
                 tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-sm text-gray-500">No hours logged.</td></tr>`;
             }
 
-            // Show/Hide Action Buttons
             const btnApprove = document.getElementById('btnApprove');
             const btnReject = document.getElementById('btnReject');
             if (statusText === 'Approved' || statusText === 'Rejected') {
@@ -740,12 +796,28 @@
             }
         };
 
+        window.editUser = (docId) => {
+            const emp = allEmployees.find(e => e.id === docId);
+            if (!emp) return;
+            
+            document.getElementById('editDocId').value = emp.id;
+            document.getElementById('editEmpId').value = emp.empId || '';
+            document.getElementById('editUserName').value = emp.name || '';
+            document.getElementById('editUserEmail').value = emp.email || '';
+            document.getElementById('editUserRole').value = emp.role || 'Employee';
+            document.getElementById('editUserDesig').value = emp.designation || '';
+            document.getElementById('editUserDept').value = emp.department || '';
+            document.getElementById('editUserPhone').value = emp.phone || '';
+            document.getElementById('editUserDOJ').value = emp.doj || '';
+
+            document.getElementById('editEmployeeModal').classList.remove('hidden');
+        };
+
         const renderEmployees = () => {
             const tbody = document.getElementById('usersList');
             const countSpan = document.getElementById('userCount');
             tbody.innerHTML = '';
             
-            // Populate Search Dropdown
             const searchEmpSelect = document.getElementById('searchEmp');
             const currentSelection = searchEmpSelect ? searchEmpSelect.value : '';
             if (searchEmpSelect) {
@@ -758,11 +830,9 @@
                 return;
             }
 
-            // Sort newest first
             allEmployees.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
             allEmployees.forEach(emp => {
-                // Populate Dropdown Option
                 if (searchEmpSelect) {
                     const option = document.createElement('option');
                     option.value = emp.empId;
@@ -773,12 +843,12 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition-colors";
                 
-                // Format the Date of Joining nicely if it exists
                 const dojFormatted = emp.doj ? new Date(emp.doj).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+                const roleBadge = emp.role === 'Admin' ? '<span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 uppercase font-bold tracking-wider">Admin</span>' : '';
 
                 tr.innerHTML = `
                     <td class="px-4 py-3 whitespace-nowrap">
-                        <div class="text-sm font-bold text-gray-900">${emp.name}</div>
+                        <div class="text-sm font-bold text-gray-900 flex items-center">${emp.name} ${roleBadge}</div>
                         <div class="text-xs text-gray-500">ID: ${emp.empId}</div>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
@@ -793,6 +863,7 @@
                         <div class="text-sm text-gray-800">${dojFormatted}</div>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="editUser('${emp.id}')" class="text-brand-blue hover:text-blue-700 mr-3 font-medium transition-colors">Edit</button>
                         <button onclick="openStats('${emp.empId}', '${emp.name}')" class="text-brand-orange hover:text-orange-700 mr-3 font-medium transition-colors">Stats</button>
                         <button id="del-btn-${emp.id}" onclick="deleteUser('${emp.id}')" class="text-red-500 hover:text-red-700 font-medium transition-colors">Delete</button>
                     </td>
@@ -823,6 +894,7 @@
             const name = document.getElementById('userName').value.trim();
             const email = document.getElementById('userEmail').value.trim();
             const empId = document.getElementById('empId').value.trim();
+            const role = document.getElementById('userRole').value;
             const designation = document.getElementById('userDesig').value.trim();
             const department = document.getElementById('userDept').value;
             const phone = document.getElementById('userPhone').value.trim();
@@ -831,12 +903,47 @@
             try {
                 const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
                 await addDoc(employeesRef, {
-                    name, email, empId, designation, department, phone, doj, createdAt: Date.now()
+                    name, email, empId, role, designation, department, phone, doj, createdAt: Date.now()
                 });
                 showToast("Employee added successfully!");
                 e.target.reset();
             } catch (error) {
                 showToast("Failed to add employee: " + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Form Submit Handler (Edit Employee)
+        document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const docId = document.getElementById('editDocId').value;
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `Saving...`;
+            btn.disabled = true;
+
+            const updatedData = {
+                empId: document.getElementById('editEmpId').value.trim(),
+                name: document.getElementById('editUserName').value.trim(),
+                email: document.getElementById('editUserEmail').value.trim(),
+                role: document.getElementById('editUserRole').value,
+                designation: document.getElementById('editUserDesig').value.trim(),
+                department: document.getElementById('editUserDept').value,
+                phone: document.getElementById('editUserPhone').value.trim(),
+                doj: document.getElementById('editUserDOJ').value
+            };
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId);
+                await updateDoc(docRef, updatedData);
+                showToast("Employee record updated successfully!");
+                closeModal('editEmployeeModal');
+            } catch (error) {
+                showToast("Failed to update employee: " + error.message, 'error');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
