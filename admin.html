@@ -858,11 +858,16 @@
             
             updateNotifications();
 
-            const nameFilter = document.getElementById('tsFilterName') ? document.getElementById('tsFilterName').value.toLowerCase() : '';
+            // FIX: Ensure safe toLowerCase and trim for searching
+            const nameFilter = document.getElementById('tsFilterName') ? document.getElementById('tsFilterName').value.toLowerCase().trim() : '';
             const weekFilter = document.getElementById('tsFilterWeek') ? document.getElementById('tsFilterWeek').value : '';
 
             let displayTimesheets = allTimesheets.filter(ts => {
-                const matchesName = ts.name && ts.name.toLowerCase().includes(nameFilter);
+                // FIX: Guard against undefined names/ids and check both Name AND Employee ID
+                const tsName = (ts.name || '').toLowerCase();
+                const tsEmpId = (ts.empId || '').toLowerCase();
+                
+                const matchesName = nameFilter === '' || tsName.includes(nameFilter) || tsEmpId.includes(nameFilter);
                 const matchesWeek = weekFilter === '' || ts.week === weekFilter;
                 return matchesName && matchesWeek;
             });
@@ -1083,6 +1088,7 @@
             document.getElementById('editUserPhone').value = emp.phone || '';
             document.getElementById('editUserDOJ').value = emp.doj || '';
 
+            document.getElementById('editEmpId').classList.remove('border-red-500', 'ring-2', 'ring-red-200');
             document.getElementById('editEmployeeModal').classList.remove('hidden');
         };
 
@@ -1180,12 +1186,25 @@
 
             const name = document.getElementById('userName').value.trim();
             const email = document.getElementById('userEmail').value.trim();
-            const empId = document.getElementById('empId').value.trim();
+            const empIdInput = document.getElementById('empId');
+            const empId = empIdInput.value.trim();
             const role = document.getElementById('userRole').value;
             const designation = document.getElementById('userDesig').value.trim();
             const department = document.getElementById('userDept').value;
             const phone = document.getElementById('userPhone').value.trim();
             const doj = document.getElementById('userDOJ').value;
+
+            // FIX: Duplicate Employee ID Checker for Add Form
+            const isDuplicate = allEmployees.some(emp => emp.empId && emp.empId.toLowerCase() === empId.toLowerCase());
+            if (isDuplicate) {
+                showToast(`Error: Employee ID "${empId}" already exists! Please enter a unique ID.`, "error");
+                empIdInput.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                empIdInput.focus();
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return; // Absolutely prevents creation
+            }
+            empIdInput.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
 
             try {
                 const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
@@ -1212,8 +1231,23 @@
             btn.innerHTML = `Saving...`;
             btn.disabled = true;
 
+            const editEmpIdInput = document.getElementById('editEmpId');
+            const updatedEmpId = editEmpIdInput.value.trim();
+
+            // FIX: Duplicate Employee ID Checker for Edit Form (Excludes current user)
+            const isDuplicateEdit = allEmployees.some(emp => emp.id !== docId && emp.empId && emp.empId.toLowerCase() === updatedEmpId.toLowerCase());
+            if (isDuplicateEdit) {
+                showToast(`Error: Employee ID "${updatedEmpId}" already exists!`, "error");
+                editEmpIdInput.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                editEmpIdInput.focus();
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return; // Prevents saving edit
+            }
+            editEmpIdInput.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+
             const updatedData = {
-                empId: document.getElementById('editEmpId').value.trim(),
+                empId: updatedEmpId,
                 name: document.getElementById('editUserName').value.trim(),
                 email: document.getElementById('editUserEmail').value.trim(),
                 role: document.getElementById('editUserRole').value,
