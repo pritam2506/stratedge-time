@@ -345,10 +345,10 @@
                     tr.innerHTML = `
                         <td class="px-4 py-3 font-mono font-bold text-brand-blue">${client.clientCode}</td>
                         <td class="px-4 py-3">
-                            <div class="font-bold text-gray-900">${client.name}</div>
-                            <div class="text-[10px] text-gray-500 italic truncate max-w-[200px]">${client.address}</div>
+                            <div class="font-bold text-gray-900 text-xs">${client.name}</div>
+                            <div class="text-[9px] text-gray-500 italic truncate max-w-[200px]">${client.address}</div>
                         </td>
-                        <td class="px-4 py-3 text-xs text-gray-600">${client.stakeholder}</td>
+                        <td class="px-4 py-3 text-[10px] text-gray-600 font-medium">${client.stakeholder}</td>
                         <td class="px-4 py-3 text-center">
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${client.status === 'inactive' ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'}">${client.status || 'Active'}</span>
                         </td>
@@ -491,9 +491,14 @@
 
             doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(65, 105, 225).text("STRATEDGE", m, y);
             doc.setFontSize(10).setTextColor(150).text("COMMUNICATIONS PVT LTD", m, y + 6);
-            doc.setFont("helvetica", "normal").setTextColor(80).text(["42/22 New Ballygunge Road,", "Kolkata - 700039", "Email: accounts@stratedge.com"], 140, y);
+            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80).text([
+                "42/22 New Ballygunge Road,", 
+                "Kolkata - 700039", 
+                "Email: info.stratedgecommunications@gmail.com",
+                "Contact: +91-9123872596"
+            ], 140, y);
             
-            y += 35; doc.setDrawColor(230).line(m, y, 190, y); y += 15;
+            y += 40; doc.setDrawColor(230).line(m, y, 190, y); y += 15;
             doc.setFontSize(18).setFont("helvetica", "bold").setTextColor(40).text("INVOICE", m, y);
             doc.setFontSize(9).setFont("helvetica", "normal").text([`No: ${inv.invoiceNo}`, `Date: ${new Date().toLocaleDateString()}`], 150, y);
             
@@ -513,15 +518,12 @@
             y += 10; doc.setFont("helvetica", "bold").setFontSize(12).text("TOTAL AMOUNT:", 100, y);
             doc.setTextColor(65, 105, 225).text(`Rs. ${inv.amount.toLocaleString('en-IN')}/-`, 160, y);
             
-            y += 10; doc.setFontSize(9).setTextColor(80).setFont("helvetica", "italic").text(`In Words: ${amountToWords(inv.amount)}`, m, y);
+            y += 10; doc.setFontSize(9).setTextColor(80).setFont("helvetica", "italic").text(`In Words: ${amountToWords(inv.amount)}`, 190 - doc.getTextWidth(`In Words: ${amountToWords(inv.amount)}`), y);
 
             y += 25; doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold").text("BANK DETAILS FOR DIGITAL TRANSFER:", m, y);
             doc.setFont("helvetica", "normal").setFontSize(9).text(["A/c Name: Stratedge Communications Pvt Ltd", "A/c Number: [TO BE PROVIDED]", "IFSC Code: [TO BE PROVIDED]", "Bank Name: [TO BE PROVIDED]"], m, y + 6);
 
-            y = 245; doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40).text("For Stratedge Communications Pvt Ltd", 130, y);
-            doc.line(130, y + 20, 190, y + 20);
-            doc.setFontSize(9).text("Authorized Signatory", 130, y + 25);
-            doc.text("Rupsha Chakraborty", 130, y + 30);
+            doc.setFontSize(8).setTextColor(180).setFont("helvetica", "normal").text("This is a computer-generated invoice and does not require a physical signature.", 105, 280, { align: "center" });
 
             document.getElementById('pdfPreview').src = doc.output('datauristring');
             document.getElementById('pdfPreview').classList.remove('hidden');
