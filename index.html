@@ -58,7 +58,7 @@
                             </svg>
                         </div>
                         <input type="text" id="adminId" required placeholder="e.g. SE-1001" 
-                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-colors">
+                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
                     </div>
                 </div>
                 <div>
@@ -70,7 +70,7 @@
                             </svg>
                         </div>
                         <input type="password" id="adminPass" required placeholder="••••••••" 
-                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none transition-colors">
+                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
                     </div>
                 </div>
                 
@@ -135,7 +135,7 @@
         // ==========================================
         // ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE ⚠️
         // ==========================================
-       const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
   authDomain: "stratedge-time.firebaseapp.com",
   projectId: "stratedge-time",
@@ -182,36 +182,24 @@
             }
 
             toast.classList.remove('-translate-y-full', 'opacity-0');
-            
-            // Auto hide
             setTimeout(window.hideToast, 4000);
         };
 
         // Tab Switching Logic
         tabAdmin.addEventListener('click', () => {
-            // Activate Admin Tab
             tabAdmin.classList.add('border-brand-blue', 'text-brand-blue');
             tabAdmin.classList.remove('border-transparent', 'text-gray-400');
-            
-            // Deactivate Employee Tab
             tabEmployee.classList.add('border-transparent', 'text-gray-400');
             tabEmployee.classList.remove('border-brand-blue', 'text-brand-blue');
-            
-            // Show/Hide Forms
             adminForm.classList.remove('hidden');
             employeeForm.classList.add('hidden');
         });
 
         tabEmployee.addEventListener('click', () => {
-            // Activate Employee Tab
             tabEmployee.classList.add('border-brand-blue', 'text-brand-blue');
             tabEmployee.classList.remove('border-transparent', 'text-gray-400');
-            
-            // Deactivate Admin Tab
             tabAdmin.classList.add('border-transparent', 'text-gray-400');
             tabAdmin.classList.remove('border-brand-blue', 'text-brand-blue');
-            
-            // Show/Hide Forms
             employeeForm.classList.remove('hidden');
             adminForm.classList.add('hidden');
         });
