@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stratedge | Login</title>
+    <title>Stratedge | Timesheet Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -19,152 +19,199 @@
         }
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        
-        <!-- Header / Logo -->
-        <div class="bg-brand-blue px-8 py-10 text-center">
-            <div class="flex justify-center items-center gap-2 mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Header -->
+    <header class="bg-brand-blue text-white shadow-md z-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
                     <path d="M2 17l10 5 10-5"></path>
                     <path d="M2 12l10 5 10-5"></path>
                 </svg>
-                <h1 class="text-3xl font-bold tracking-wide text-white">Stratedge</h1>
+                <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
             </div>
-            <p class="text-blue-100 text-sm mt-2">Time Management Portal</p>
-        </div>
-
-        <div class="p-8">
-            <!-- Tabs -->
-            <div class="flex border-b border-gray-200 mb-6">
-                <button id="tab-admin" class="flex-1 pb-3 text-center font-semibold border-b-2 border-brand-blue text-brand-blue transition-colors">
-                    Admin
-                </button>
-                <button id="tab-employee" class="flex-1 pb-3 text-center font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition-colors">
-                    Employee
-                </button>
-            </div>
-
-            <!-- ============================== -->
-            <!-- ADMIN LOGIN FORM               -->
-            <!-- ============================== -->
-            <form id="adminForm" class="space-y-5">
+            <div class="flex items-center gap-4">
                 
-                <!-- STEP 1: Admin ID Input -->
-                <div id="adminStep1">
-                    <div>
-                        <label for="adminId" class="block text-sm font-medium text-gray-700 mb-1">Admin ID</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                            </div>
-                            <input type="text" id="adminId" placeholder="e.g. SE-1001" 
-                                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
+                <!-- Notifications -->
+                <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()">
+                    <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span id="empNotifBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    
+                    <!-- Dropdown Panel -->
+                    <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
+                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 font-bold text-gray-800 text-sm">Notifications</div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
-                    
-                    <button type="button" id="getAdminLinkBtn"
-                        class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-6 flex justify-center items-center">
-                        <span>Send Admin Login Link</span>
-                    </button>
                 </div>
 
-                <!-- STEP 2: Admin Magic Link Sent -->
-                <div id="adminLinkStep2" class="hidden text-center py-4">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mb-4">
-                        <svg class="w-8 h-8 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Check your inbox</h3>
-                    <p class="text-sm text-gray-600 mb-6" id="adminLinkMessage">We've sent an admin link to your email.</p>
-                    
-                    <div class="bg-orange-50 border border-orange-200 p-4 rounded-lg text-left">
-                        <p class="text-sm text-orange-800 font-medium mb-1">Instructions:</p>
-                        <p class="text-xs text-orange-700 leading-relaxed">
-                            Click the secure link in your email to authenticate as an Administrator. You can close this window.
-                        </p>
-                    </div>
-
-                    <button type="button" id="backToAdminIdBtn" class="mt-6 text-xs font-semibold text-gray-500 hover:text-brand-orange transition-colors">
-                        &larr; Use a different Admin ID
-                    </button>
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">
+                    Employee Portal
                 </div>
+                <button onclick="logout()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
 
-            </form>
-
-            <!-- ============================== -->
-            <!-- EMPLOYEE LOGIN FORM            -->
-            <!-- ============================== -->
-            <form id="employeeForm" class="space-y-5 hidden">
-                
-                <!-- STEP 1: Employee ID Input -->
-                <div id="otpStep1">
-                    <div>
-                        <label for="empId" class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- Left Side: User Profile -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-8">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="h-20 w-20 bg-brand-blue text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-inner mb-4" id="profileInitials">
+                            --
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900" id="profileName">Loading...</h2>
+                        <div class="text-sm font-medium text-brand-blue mt-1" id="profileRoleDept">Designation | Department</div>
+                        <span class="bg-brand-orange/10 text-brand-orange-hover px-3 py-1 rounded-full text-xs font-bold mt-2 border border-brand-orange/20" id="profileId">Emp ID: ---</span>
+                        
+                        <div class="mt-4 w-full bg-gray-50 rounded-lg p-3 text-left space-y-2 border border-gray-100 text-sm">
+                            <div class="flex items-center gap-2 text-gray-600">
+                                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <span id="profileEmail" class="truncate">loading@email.com</span>
                             </div>
-                            <input type="text" id="empId" placeholder="e.g. SE-1001" 
-                                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-colors">
+                            <div class="flex items-center gap-2 text-gray-600">
+                                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                <span id="profilePhone">---</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-600">
+                                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span id="profileDOJ">Joined: ---</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <button type="button" id="getOtpBtn"
-                        class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors mt-6 flex justify-center items-center">
-                        <span>Send Login Link</span>
-                    </button>
+
+                    <div class="mt-8 border-t border-gray-100 pt-6">
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Weekly Summary</h3>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Total Logged</span>
+                            <span class="font-bold text-brand-blue" id="summaryTotal">0.0 hrs</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-brand-blue h-2 rounded-full transition-all duration-500" id="summaryProgress" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-right">Target: 48.0 hrs</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Timesheet Entry -->
+            <div class="lg:col-span-3">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-1">Weekly Timesheet</h2>
+                        <p class="text-sm text-gray-600">Select a week to view or submit hours. <span class="font-semibold text-brand-blue text-xs ml-2">🟢 Approved &nbsp; 🟠 Pending &nbsp; 🔴 Open</span></p>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <label for="weekSelector" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Select Week</label>
+                        <select id="weekSelector" 
+                            class="w-full sm:w-auto px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all font-medium text-gray-700">
+                            <!-- Populated dynamically by JS -->
+                        </select>
+                    </div>
                 </div>
 
-                <!-- STEP 2: Magic Link Sent -->
-                <div id="magicLinkStep2" class="hidden text-center py-4">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
-                        <svg class="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Check your inbox</h3>
-                    <p class="text-sm text-gray-600 mb-6" id="magicLinkMessage">We've sent a magic link to your registered email.</p>
-                    
-                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-left">
-                        <p class="text-sm text-blue-800 font-medium mb-1">Instructions:</p>
-                        <p class="text-xs text-blue-700 leading-relaxed">
-                            Please check your email inbox for a link to login. Click on that secure link to automatically access your timesheet portal. You can now close this window.
-                        </p>
-                    </div>
-
-                    <button type="button" id="backToIdBtn" class="mt-6 text-xs font-semibold text-gray-500 hover:text-brand-blue transition-colors">
-                        &larr; Use a different Employee ID
-                    </button>
+                <!-- DOJ Warning (Hidden by default) -->
+                <div id="dojWarning" class="hidden bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center">
+                    <svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <h3 class="text-lg font-bold text-red-800">Invalid Week Selected</h3>
+                    <p class="text-sm text-red-600 mt-1">You cannot log time for weeks prior to your Date of Joining (<span id="dojWarningDate" class="font-bold"></span>).</p>
                 </div>
 
-            </form>
+                <!-- Pre-fill Warning (Hidden by default) -->
+                <div id="prefillWarning" class="hidden bg-orange-50 border-l-4 border-brand-orange p-4 mb-6 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-brand-orange" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-orange-800 font-medium">Auto-filled Template</p>
+                            <p class="text-sm text-orange-700 mt-1">This week's timesheet hasn't been submitted yet. We've pre-filled it based on your last approved timesheet to save you time. Please verify and adjust the hours below before submitting.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submission Status Banner -->
+                <div id="submittedBanner" class="hidden bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center">
+                    <svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h3 class="text-lg font-bold text-green-800">Timesheet Submitted</h3>
+                    <p class="text-sm text-green-600 mt-1">Your hours for this week have been successfully logged and locked.</p>
+                </div>
+
+                <form id="timesheetForm" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-opacity">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200" id="timesheetTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/6">Day</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-2/5">Project Name</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/6">Hours</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Category</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16"></th>
+                                </tr>
+                            </thead>
+                            <!-- Table Bodys will be generated by JS -->
+                        </table>
+                    </div>
+
+                    <div class="bg-gray-50 px-6 py-5 border-t border-gray-200">
+                        <div class="mb-4">
+                            <label for="justification" class="block text-sm font-semibold text-gray-700 mb-2">Justification for Shortfall / Overtime (Optional)</label>
+                            <textarea id="justification" rows="2" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors" placeholder="Explain any deviations from the standard 48-hour week..."></textarea>
+                        </div>
+                        
+                        <div class="flex items-center mb-6">
+                            <input id="declaration" type="checkbox" required class="h-4 w-4 text-brand-blue focus:ring-brand-blue border-gray-300 rounded cursor-pointer">
+                            <label for="declaration" class="ml-2 block text-sm text-gray-700 cursor-pointer">
+                                I declare that the hours logged above are accurate and reflect the actual work performed during this week.
+                            </label>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" id="submitBtn" class="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 px-8 rounded-lg shadow-sm transition-all focus:ring-4 focus:ring-orange-300 flex items-center justify-center">
+                                <span>Submit Weekly Timesheet</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
+    </main>
 
     <!-- Toast Notification System -->
-    <div id="toast" class="fixed top-4 right-4 transform -translate-y-full opacity-0 transition-all duration-300 z-[110] flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200 max-w-sm" role="alert">
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
         <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
         <div id="toastMessage" class="ml-3 text-sm font-normal">Message here.</div>
-        <button type="button" onclick="hideToast()" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" aria-label="Close">
+        <button type="button" onclick="hideToast()" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8">
             <span class="sr-only">Close</span>
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
     </div>
 
-    <!-- UI Logic & Firebase Backend Integration -->
+    <!-- Firebase Implementation & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
-        // ⚠️ PASTE YOUR FIREBASE CONFIGURATION HERE ⚠️
+        // ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE ⚠️
         // ==========================================
-        const firebaseConfig = {
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        let firebaseConfig;
+        if (firebaseConfigStr) {
+            firebaseConfig = JSON.parse(firebaseConfigStr);
+        } else {
+            const firebaseConfig = {
   apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
   authDomain: "stratedge-time.firebaseapp.com",
   projectId: "stratedge-time",
@@ -172,30 +219,76 @@
   messagingSenderId: "550779977682",
   appId: "1:550779977682:web:d4b4983b62876655b3d20b"
 };
-        const appId = 'stratedge-time-recorder';
+            };
+        }
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stratedge-time-recorder';
         // ==========================================
+
+        // Session validation
+        const sessionUser = sessionStorage.getItem('stratedge_active_user');
+        if (!sessionUser) {
+            window.location.href = 'index.html';
+        }
+        const activeUser = JSON.parse(sessionUser);
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        let currentUser = null;
+        
+        let fbUser = null;
+        let myTimesheets = [];
+        let unsubscribeTimesheets = null;
 
-        // Toast utility functions
-        let toastTimeout;
-        window.hideToast = () => {
-            const toast = document.getElementById('toast');
-            toast.classList.add('-translate-y-full', 'opacity-0');
-            clearTimeout(toastTimeout);
+        window.logout = () => {
+            sessionStorage.removeItem('stratedge_active_user');
+            window.location.href = 'index.html';
         };
 
-        const showToast = (message, type = 'error', duration = 4000) => {
+        window.toggleNotifications = () => {
+            document.getElementById('notifDropdown').classList.toggle('hidden');
+        };
+        
+        // Close notification dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const bell = document.getElementById('notifBell');
+            if (bell && !bell.contains(e.target)) {
+                document.getElementById('notifDropdown').classList.add('hidden');
+            }
+        });
+
+        // Populate Profile
+        document.getElementById('profileName').textContent = activeUser.name;
+        document.getElementById('profileId').textContent = `Emp ID: ${activeUser.empId}`;
+        document.getElementById('profileEmail').textContent = activeUser.email || 'N/A';
+        document.getElementById('profileRoleDept').textContent = `${activeUser.designation || 'N/A'} | ${activeUser.department || 'N/A'}`;
+        document.getElementById('profilePhone').textContent = activeUser.phone || 'N/A';
+        document.getElementById('profileDOJ').textContent = `Joined: ${activeUser.doj ? new Date(activeUser.doj).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}`;
+        
+        // Initials Logic
+        const nameParts = activeUser.name.split(' ');
+        let initials = nameParts[0].charAt(0);
+        if (nameParts.length > 1) initials += nameParts[nameParts.length - 1].charAt(0);
+        document.getElementById('profileInitials').textContent = initials.toUpperCase();
+
+        // Days & Category configuration
+        const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const categories = [
+            'Regular Work',
+            'Overtime',
+            'Sick Leave (SL)',
+            'Casual Leave (CL)',
+            'Earned Leave (EL)',
+            'Public Holiday (PH)'
+        ];
+
+        // --- UI UTILS ---
+        window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
+        const showToast = (message, type = 'success') => {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toastMessage');
             const iconEl = document.getElementById('toastIcon');
-            
             msgEl.textContent = message;
-            
             if (type === 'success') {
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg';
@@ -206,247 +299,538 @@
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
             }
-
-            toast.classList.remove('-translate-y-full', 'opacity-0');
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(window.hideToast, duration);
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(window.hideToast, 4000);
         };
 
-        // UI Tabs Logic
-        const tabAdmin = document.getElementById('tab-admin');
-        const tabEmployee = document.getElementById('tab-employee');
-        const adminForm = document.getElementById('adminForm');
-        const employeeForm = document.getElementById('employeeForm');
-
-        tabAdmin.addEventListener('click', () => {
-            tabAdmin.classList.add('border-brand-blue', 'text-brand-blue');
-            tabAdmin.classList.remove('border-transparent', 'text-gray-400');
-            tabEmployee.classList.add('border-transparent', 'text-gray-400');
-            tabEmployee.classList.remove('border-brand-blue', 'text-brand-blue');
-            adminForm.classList.remove('hidden');
-            employeeForm.classList.add('hidden');
-        });
-
-        tabEmployee.addEventListener('click', () => {
-            tabEmployee.classList.add('border-brand-blue', 'text-brand-blue');
-            tabEmployee.classList.remove('border-transparent', 'text-gray-400');
-            tabAdmin.classList.add('border-transparent', 'text-gray-400');
-            tabAdmin.classList.remove('border-brand-blue', 'text-brand-blue');
-            employeeForm.classList.remove('hidden');
-            adminForm.classList.add('hidden');
-        });
-
-        // --- SHARED AUTH LOGIC ---
-        
-        const maskEmail = (email) => {
-            const emailParts = email.split('@');
-            if (emailParts.length === 2) {
-                const namePart = emailParts[0];
-                const domainPart = emailParts[1];
-                const maskedName = namePart.length > 2 
-                    ? namePart[0] + '*'.repeat(namePart.length - 2) + namePart[namePart.length - 1] 
-                    : namePart[0] + '*';
-                return `${maskedName}@${domainPart}`;
+        // --- DATE UTILS ---
+        const getDatesFromWeek = (yearWeek) => {
+            const [yearStr, weekStr] = yearWeek.split('-W');
+            const year = parseInt(yearStr);
+            const week = parseInt(weekStr);
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dow = simple.getDay();
+            const ISOweekStart = simple;
+            if (dow <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+            
+            const dates = [];
+            for(let i=0; i<6; i++) {
+                const d = new Date(ISOweekStart);
+                d.setDate(d.getDate() + i);
+                dates.push(d);
             }
-            return email;
+            return dates;
         };
 
-        const processMagicLinkRequest = async (inputId, buttonId, targetType, messageElementId, step1Id, step2Id) => {
-            if (!currentUser && !isSignInWithEmailLink(auth, window.location.href)) {
-                showToast('Still connecting to the database. Please wait.', 'info');
-                return;
+        const formatDate = (dateObj) => {
+            return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        };
+
+        const getWeekString = (dateObj) => {
+            const tempDate = new Date(dateObj.valueOf());
+            const dayn = (tempDate.getDay() + 6) % 7;
+            tempDate.setDate(tempDate.getDate() - dayn + 3);
+            const firstThursday = tempDate.valueOf();
+            tempDate.setMonth(0, 1);
+            if (tempDate.getDay() !== 4) {
+                tempDate.setMonth(0, 1 + ((4 - tempDate.getDay()) + 7) % 7);
+            }
+            const weekNum = 1 + Math.ceil((firstThursday - tempDate) / 604800000);
+            return `${tempDate.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
+        };
+
+        const getWeekRangeText = (weekStr) => {
+            const dates = getDatesFromWeek(weekStr);
+            return `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} to ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+        };
+
+        // --- Notification Logic ---
+        const updateNotifications = () => {
+            const notifList = document.getElementById('notifList');
+            const badge = document.getElementById('empNotifBadge');
+            notifList.innerHTML = '';
+            let notifCount = 0;
+            
+            const now = new Date();
+            const currentWeekStr = getWeekString(now);
+
+            // 1. Check for Approvals/Rejections
+            myTimesheets.forEach(ts => {
+                if (ts.status === 'Approved' || ts.status === 'Rejected') {
+                    notifCount++;
+                    const color = ts.status === 'Approved' ? 'text-green-600' : 'text-red-600';
+                    const bg = ts.status === 'Approved' ? 'bg-green-50' : 'bg-red-50';
+                    notifList.innerHTML += `
+                        <div class="px-4 py-3 ${bg} border-l-4 ${ts.status === 'Approved' ? 'border-green-500' : 'border-red-500'} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="document.getElementById('weekSelector').value='${ts.week}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
+                            <p class="text-sm font-bold ${color}">Timesheet ${ts.status}</p>
+                            <p class="text-xs text-gray-700 mt-1">Your timesheet for ${ts.week} was ${ts.status.toLowerCase()} by Admin.</p>
+                        </div>
+                    `;
+                }
+            });
+
+            // 2. Check Missing Current Week (Friday or Saturday Reminder)
+            const dayOfWeek = now.getDay();
+            if (dayOfWeek === 5 || dayOfWeek === 6) {
+                const hasCurrentTimesheet = myTimesheets.some(ts => ts.week === currentWeekStr && ts.status !== 'Rejected');
+                if (!hasCurrentTimesheet) {
+                    notifCount++;
+                    notifList.innerHTML += `
+                        <div class="px-4 py-3 bg-orange-50 border-l-4 border-orange-500 cursor-pointer hover:bg-orange-100 transition-colors" onclick="document.getElementById('weekSelector').value='${currentWeekStr}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
+                            <p class="text-sm font-bold text-orange-700">Action Required</p>
+                            <p class="text-xs text-orange-700 mt-1">Reminder: Please submit your timesheet for the current week (${currentWeekStr}).</p>
+                        </div>
+                    `;
+                }
             }
 
-            const empIdInput = document.getElementById(inputId).value.trim();
-            if (!empIdInput) {
-                showToast('Please enter an ID first.', 'error');
-                return;
+            // Badge UI
+            if (notifCount === 0) {
+                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
+                badge.classList.add('hidden');
+            } else {
+                badge.textContent = notifCount;
+                badge.classList.remove('hidden');
             }
+        };
 
-            const btn = document.getElementById(buttonId);
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Sending Email...</span>`;
-            btn.disabled = true;
+        // --- Custom Color-Coded Dropdown Generation ---
+        const generateWeekOptions = () => {
+            const weekSelector = document.getElementById('weekSelector');
+            const currentVal = weekSelector.value;
+            weekSelector.innerHTML = '';
 
-            try {
-                const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
-                const snapshot = await getDocs(employeesRef);
+            const currentWeekStr = getWeekString(new Date());
+            
+            // Limit minimum week to DOJ (or 4 weeks ago if missing)
+            let startDoj = activeUser.doj ? new Date(activeUser.doj) : new Date(Date.now() - 4 * 604800000);
+            let iterWeek = getWeekString(startDoj);
+            if (iterWeek > currentWeekStr) iterWeek = currentWeekStr;
+
+            const weeksArr = [];
+            while(iterWeek <= currentWeekStr) {
+                weeksArr.push(iterWeek);
+                const d = getDatesFromWeek(iterWeek)[0];
+                d.setDate(d.getDate() + 7); // Increment by 1 week
+                iterWeek = getWeekString(d);
+            }
+            weeksArr.reverse(); // Show Newest at the top
+
+            weeksArr.forEach(w => {
+                const ts = myTimesheets.find(t => t.week === w);
                 
-                let foundEmployee = null;
-                snapshot.forEach(docSnap => {
-                    if (docSnap.data().empId === empIdInput) {
-                        foundEmployee = { id: docSnap.id, ...docSnap.data() };
+                let statusIcon = '🔴'; 
+                let statusText = 'Open';
+                
+                if (ts) {
+                    if (ts.status === 'Approved') {
+                        statusIcon = '🟢';
+                        statusText = 'Approved';
+                    } else if (ts.status === 'Rejected') {
+                        statusIcon = '🔴';
+                        statusText = 'Rejected (Fix & Resubmit)';
+                    } else {
+                        statusIcon = '🟠'; 
+                        statusText = 'Pending Approval';
+                    }
+                }
+
+                const rangeText = getWeekRangeText(w);
+                const isCurrent = w === currentWeekStr ? ' [Current]' : '';
+                
+                const option = document.createElement('option');
+                option.value = w;
+                option.textContent = `${statusIcon} ${w} : ${rangeText} - ${statusText} ${isCurrent}`;
+                weekSelector.appendChild(option);
+            });
+
+            // Restore selection or default to current
+            if (currentVal && weeksArr.includes(currentVal)) {
+                weekSelector.value = currentVal;
+            } else {
+                weekSelector.value = currentWeekStr;
+            }
+        };
+
+        // --- Helper Functions for Dynamic Rows ---
+        const updateDayLabels = (tbody) => {
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                const dayCell = row.querySelector('td:first-child');
+                if (index === 0) {
+                    dayCell.innerHTML = `
+                        <div class="font-bold text-gray-900">${tbody.dataset.dayName}</div>
+                        <div class="text-xs text-gray-500">${tbody.dataset.dateStr}</div>
+                    `;
+                } else {
+                    dayCell.innerHTML = `<div class="text-xs text-gray-400 italic">↳ Additional entry</div>`;
+                }
+            });
+        };
+
+        window.addEntryRow = (dayIndex, dayName, dateStr, data = null, isSubmitted = false) => {
+            let tbody = document.getElementById(`day-tbody-${dayIndex}`);
+            
+            // Create tbody if it doesn't exist (initial render)
+            if (!tbody) {
+                tbody = document.createElement('tbody');
+                tbody.id = `day-tbody-${dayIndex}`;
+                tbody.dataset.dayName = dayName;
+                tbody.dataset.dateStr = dateStr;
+                tbody.className = "bg-white divide-y divide-gray-100 border-b border-gray-200 group";
+                document.getElementById('timesheetTable').appendChild(tbody);
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-blue-50/50 transition-colors";
+            
+            const catOptions = categories.map(cat => 
+                `<option value="${cat}" ${data && data.type === cat ? 'selected' : ''}>${cat}</option>`
+            ).join('');
+
+            const hrsValue = data ? data.hours : '8';
+            const projValue = data && data.project ? data.project : '';
+
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap align-top"></td>
+                <td class="px-6 py-3 align-top">
+                    <input type="text" placeholder="Project Name / Client" required class="project-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-sm" value="${projValue}" ${isSubmitted ? 'readonly' : ''}>
+                </td>
+                <td class="px-6 py-3 align-top">
+                    <div class="flex items-center">
+                        <input type="number" min="0" max="24" step="0.5" required class="hours-input w-20 px-3 py-2 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-sm text-center font-bold text-brand-blue" value="${hrsValue}" ${isSubmitted ? 'readonly' : ''}>
+                        <span class="ml-2 text-xs text-gray-500 font-medium">hrs</span>
+                    </div>
+                </td>
+                <td class="px-6 py-3 align-top">
+                    <select required class="type-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-sm" ${isSubmitted ? 'disabled' : ''}>
+                        ${catOptions}
+                    </select>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium align-top">
+                    ${!isSubmitted ? `
+                        <button type="button" class="text-brand-blue hover:text-blue-700 mr-2 font-bold text-xl px-2 py-1 rounded hover:bg-blue-50 transition-colors" onclick="addEntryRow(${dayIndex}, '${dayName}', '${dateStr}')" title="Add Row">+</button>
+                        <button type="button" class="text-red-500 hover:text-red-700 font-bold text-xl px-2 py-1 rounded hover:bg-red-50 transition-colors" onclick="removeEntryRow(this, ${dayIndex})" title="Remove Row">-</button>
+                    ` : ''}
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+            updateDayLabels(tbody);
+            
+            tr.querySelector('.hours-input').addEventListener('input', calculateTotals);
+
+            // Auto-fill "On Leave" logic
+            const typeSelect = tr.querySelector('.type-input');
+            const projInput = tr.querySelector('.project-input');
+            
+            const applyLeaveLogic = () => {
+                if (typeSelect.value !== 'Regular Work' && typeSelect.value !== 'Overtime') {
+                    projInput.value = 'On Leave';
+                    projInput.readOnly = true;
+                    projInput.classList.add('bg-gray-100', 'text-gray-500');
+                } else {
+                    if (projInput.value === 'On Leave') projInput.value = '';
+                    if (!isSubmitted) {
+                        projInput.readOnly = false;
+                        projInput.classList.remove('bg-gray-100', 'text-gray-500');
+                    }
+                }
+            };
+
+            typeSelect.addEventListener('change', applyLeaveLogic);
+            applyLeaveLogic(); // Initialize state immediately for loaded rows
+
+            calculateTotals();
+        };
+
+        window.removeEntryRow = (btn, dayIndex) => {
+            const tbody = document.getElementById(`day-tbody-${dayIndex}`);
+            if (tbody.children.length > 1) {
+                btn.closest('tr').remove();
+                updateDayLabels(tbody);
+                calculateTotals();
+            } else {
+                showToast("You must have at least one row per day. Set hours to 0 if not working.", "info");
+            }
+        };
+
+        // Render Timesheet Grid (Now fueled by memory)
+        const renderTimesheetGrid = async (weekStr) => {
+            if (!weekStr) return;
+            
+            const dojWarning = document.getElementById('dojWarning');
+            const timesheetForm = document.getElementById('timesheetForm');
+            
+            dojWarning.classList.add('hidden');
+            timesheetForm.classList.remove('hidden');
+
+            const dates = getDatesFromWeek(weekStr);
+            const table = document.getElementById('timesheetTable');
+            
+            // Clear existing generated tbodys
+            const tbodys = table.querySelectorAll('tbody');
+            tbodys.forEach(t => t.remove());
+
+            // Initialize 6 days default rows
+            daysOfWeek.forEach((day, index) => {
+                window.addEntryRow(index, day, formatDate(dates[index]));
+            });
+
+            // Check if we should PRE-FILL based on last approved timesheet
+            const currentData = myTimesheets.find(ts => ts.week === weekStr);
+            
+            if (!currentData) {
+                // Find last approved timesheet for prefill
+                const approvedSheets = myTimesheets.filter(ts => ts.status === 'Approved').sort((a,b) => b.week.localeCompare(a.week));
+                if (approvedSheets.length > 0) {
+                    const lastApproved = approvedSheets[0];
+                    document.getElementById('prefillWarning').classList.remove('hidden');
+                    
+                    daysOfWeek.forEach((day, index) => {
+                        const tbody = document.getElementById(`day-tbody-${index}`);
+                        tbody.innerHTML = ''; // clear default row
+                        
+                        if (lastApproved.entries && lastApproved.entries[day] && Array.isArray(lastApproved.entries[day])) {
+                            lastApproved.entries[day].forEach(entry => {
+                                // Prefill, but keep it editable (isSubmitted = false)
+                                window.addEntryRow(index, day, formatDate(dates[index]), entry, false);
+                            });
+                        } else {
+                            window.addEntryRow(index, day, formatDate(dates[index]), {hours: 8, project: '', type: 'Regular Work'}, false);
+                        }
+                    });
+                } else {
+                    document.getElementById('prefillWarning').classList.add('hidden');
+                }
+            } else {
+                document.getElementById('prefillWarning').classList.add('hidden');
+            }
+
+            // Sync with memory instantly
+            checkSubmissionStatus(weekStr);
+            calculateTotals();
+        };
+
+        // Memory-based verification (No heavy database queries needed)
+        const checkSubmissionStatus = (weekStr) => {
+            if (!fbUser) return;
+            
+            const form = document.getElementById('timesheetForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const banner = document.getElementById('submittedBanner');
+            const dates = getDatesFromWeek(weekStr);
+            
+            // Find in loaded array
+            const data = myTimesheets.find(ts => ts.week === weekStr);
+            
+            if (data && data.status !== 'Rejected') {
+                banner.classList.remove('hidden');
+                
+                // Color the banner based on status
+                if (data.status === 'Approved') {
+                    banner.className = "bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center";
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-green-800">Timesheet Approved</h3><p class="text-sm text-green-600 mt-1">Your hours for this week have been approved and locked.</p>`;
+                } else {
+                    banner.className = "bg-orange-50 border border-orange-200 p-4 mb-6 rounded-lg text-center";
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending</h3><p class="text-sm text-orange-600 mt-1">Your hours have been submitted and are pending Admin approval.</p>`;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = "Submitted";
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('declaration').disabled = true;
+                document.getElementById('declaration').checked = true;
+
+                // Populate existing locked data
+                daysOfWeek.forEach((day, index) => {
+                    const tbody = document.getElementById(`day-tbody-${index}`);
+                    tbody.innerHTML = ''; 
+                    
+                    if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
+                        data.entries[day].forEach(entry => {
+                            window.addEntryRow(index, day, formatDate(dates[index]), entry, true);
+                        });
+                    } else if (data.entries && data.entries[day]) {
+                        window.addEntryRow(index, day, formatDate(dates[index]), data.entries[day], true);
+                    } else {
+                        window.addEntryRow(index, day, formatDate(dates[index]), {hours: 0, project: '', type: 'Regular Work'}, true);
                     }
                 });
 
-                if (foundEmployee) {
-                    
-                    // Specific Logic for Admin vs Employee Request
-                    if (targetType === 'admin' && foundEmployee.role !== 'Admin') {
-                        showToast('Access Denied: This ID does not have Administrator privileges.', 'error');
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                        return;
-                    }
+                const justBox = document.getElementById('justification');
+                if (data.justification) justBox.value = data.justification;
+                justBox.disabled = true;
 
-                    if (!foundEmployee.email) {
-                        showToast('No email is registered for this ID. Please contact system support.', 'error', 6000);
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                        return;
-                    }
-
-                    // Append target param so the receiving page knows where to route them
-                    const redirectUrl = window.location.href.split('?')[0] + `?target=${targetType}`;
-                    
-                    const actionCodeSettings = {
-                        url: redirectUrl, 
-                        handleCodeInApp: true,
-                    };
-
-                    await sendSignInLinkToEmail(auth, foundEmployee.email, actionCodeSettings);
-                    
-                    // Save context locally
-                    window.localStorage.setItem('emailForSignIn', foundEmployee.email);
-                    window.localStorage.setItem('pendingEmpData', JSON.stringify(foundEmployee));
-                    
-                    const maskedEmail = maskEmail(foundEmployee.email);
-                    
-                    const textClass = targetType === 'admin' ? 'text-brand-orange' : 'text-brand-blue';
-                    document.getElementById(messageElementId).innerHTML = `Login link sent securely to <br><span class="font-bold ${textClass}">${maskedEmail}</span>`;
-                    
-                    document.getElementById(step1Id).classList.add('hidden');
-                    document.getElementById(step2Id).classList.remove('hidden');
-
-                } else {
-                    showToast('ID not found. Check with your administrator.', 'error');
-                }
+            } else {
+                // Not submitted OR Rejected (Leaves it Open)
+                banner.classList.add('hidden');
                 
+                if (data && data.status === 'Rejected') {
+                    banner.classList.remove('hidden');
+                    banner.className = "bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center";
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Rejected</h3><p class="text-sm text-red-600 mt-1">Please correct your hours and submit again.</p>`;
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = "<span>Submit Weekly Timesheet</span>";
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('declaration').disabled = false;
+                document.getElementById('declaration').checked = false;
+                document.getElementById('justification').disabled = false;
+                document.getElementById('justification').value = '';
+                
+                if (data && data.status === 'Rejected') {
+                    // Pre-fill rejected data to edit
+                    daysOfWeek.forEach((day, index) => {
+                        const tbody = document.getElementById(`day-tbody-${index}`);
+                        tbody.innerHTML = ''; 
+                        if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
+                            data.entries[day].forEach(entry => {
+                                window.addEntryRow(index, day, formatDate(dates[index]), entry, false);
+                            });
+                        }
+                    });
+                    if (data.justification) document.getElementById('justification').value = data.justification;
+                }
+            }
+        };
+
+        // Calculate Totals & Compliance
+        const calculateTotals = () => {
+            let total = 0;
+            document.querySelectorAll('.hours-input').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+
+            const summaryTotal = document.getElementById('summaryTotal');
+            const summaryProgress = document.getElementById('summaryProgress');
+            
+            summaryTotal.textContent = `${total.toFixed(1)} hrs`;
+            
+            // Progress Bar Logic (Target 48 hours for 6 days)
+            const percentage = Math.min((total / 48) * 100, 100);
+            summaryProgress.style.width = `${percentage}%`;
+
+            if (total < 48) {
+                summaryProgress.className = "bg-brand-orange h-2 rounded-full transition-all duration-500";
+                summaryTotal.className = "font-bold text-brand-orange";
+            } else if (total === 48) {
+                summaryProgress.className = "bg-green-500 h-2 rounded-full transition-all duration-500";
+                summaryTotal.className = "font-bold text-green-600";
+            } else {
+                summaryProgress.className = "bg-brand-blue h-2 rounded-full transition-all duration-500";
+                summaryTotal.className = "font-bold text-brand-blue";
+            }
+        };
+
+        document.getElementById('weekSelector').addEventListener('change', (e) => {
+            renderTimesheetGrid(e.target.value);
+        });
+
+        // Submit Timesheet
+        document.getElementById('timesheetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fbUser) {
+                showToast("Not connected to database. Please wait.", "error");
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Submitting...`;
+            btn.disabled = true;
+
+            const weekStr = document.getElementById('weekSelector').value;
+            const entriesData = {};
+            let totalHours = 0;
+
+            daysOfWeek.forEach((day, index) => {
+                const tbody = document.getElementById(`day-tbody-${index}`);
+                const rows = tbody.querySelectorAll('tr');
+                const dayEntries = [];
+                
+                rows.forEach(row => {
+                    const hrs = parseFloat(row.querySelector('.hours-input').value) || 0;
+                    totalHours += hrs;
+                    dayEntries.push({
+                        project: row.querySelector('.project-input').value.trim(),
+                        hours: hrs,
+                        type: row.querySelector('.type-input').value
+                    });
+                });
+                entriesData[day] = dayEntries;
+            });
+
+            const payload = {
+                empId: activeUser.empId,
+                name: activeUser.name,
+                week: weekStr,
+                entries: entriesData,
+                totalHours: totalHours,
+                justification: document.getElementById('justification').value.trim(),
+                status: 'Submitted',
+                submittedAt: Date.now()
+            };
+
+            try {
+                // Save to 'timesheets' collection with specific document ID
+                const docId = `${activeUser.empId}_${weekStr}`;
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId);
+                
+                await setDoc(docRef, payload);
+                showToast("Timesheet submitted successfully!", "success");
+                
+                // Realtime listener will auto-update the UI (lock the form)
             } catch (error) {
-                console.error(error);
-                showToast('Failed to send login link. Error: ' + error.message, 'error');
-            } finally {
+                console.error("Submission Error", error);
+                showToast("Failed to submit timesheet. Error: " + error.message, "error");
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
+        });
+
+        // Realtime Data Listener
+        const startDataListeners = () => {
+            const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
+            
+            // Listen to database changes in real-time securely
+            unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
+                myTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })).filter(ts => ts.empId === activeUser.empId);
+                
+                generateWeekOptions();
+                updateNotifications();
+                
+                // Re-render the active selection smoothly
+                renderTimesheetGrid(document.getElementById('weekSelector').value);
+                
+            }, (error) => {
+                console.error("Database error: ", error);
+            });
         };
 
-        // --- BUTTON HANDLERS ---
-        
-        // Admin Request
-        document.getElementById('getAdminLinkBtn').addEventListener('click', () => {
-            processMagicLinkRequest('adminId', 'getAdminLinkBtn', 'admin', 'adminLinkMessage', 'adminStep1', 'adminLinkStep2');
-        });
-
-        // Admin Back
-        document.getElementById('backToAdminIdBtn').addEventListener('click', () => {
-            document.getElementById('adminLinkStep2').classList.add('hidden');
-            document.getElementById('adminStep1').classList.remove('hidden');
-        });
-
-        // Employee Request
-        document.getElementById('getOtpBtn').addEventListener('click', () => {
-            // Employees (and Admins) can log into the employee portal
-            processMagicLinkRequest('empId', 'getOtpBtn', 'employee', 'magicLinkMessage', 'otpStep1', 'magicLinkStep2');
-        });
-
-        // Employee Back
-        document.getElementById('backToIdBtn').addEventListener('click', () => {
-            document.getElementById('magicLinkStep2').classList.add('hidden');
-            document.getElementById('otpStep1').classList.remove('hidden');
-        });
-
-        // --- HANDLE INCOMING MAGIC LINK ---
-        const handleIncomingMagicLink = async () => {
-            if (isSignInWithEmailLink(auth, window.location.href)) {
-                
-                // Extract target from URL to know where to route them
-                const urlParams = new URLSearchParams(window.location.search);
-                const target = urlParams.get('target') || 'employee';
-
-                document.body.insertAdjacentHTML('beforeend', `
-                    <div id="magicLinkLoader" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-brand-blue mb-4"></div>
-                        <h2 class="text-xl font-bold text-gray-800">Authenticating...</h2>
-                        <p class="text-gray-500 text-sm mt-2">Securely verifying your identity.</p>
-                    </div>
-                `);
-
-                let email = window.localStorage.getItem('emailForSignIn');
-                
-                if (!email) {
-                    email = window.prompt('For security, please confirm your email address to log in:');
-                }
-
-                if (email) {
-                    try {
-                        await signInWithEmailLink(auth, email, window.location.href);
-                        window.localStorage.removeItem('emailForSignIn');
-                        
-                        let activeUser = JSON.parse(window.localStorage.getItem('pendingEmpData'));
-                        
-                        if (!activeUser) {
-                            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
-                            const snapshot = await getDocs(employeesRef);
-                            snapshot.forEach(docSnap => {
-                                if (docSnap.data().email === email) {
-                                    activeUser = { id: docSnap.id, ...docSnap.data() };
-                                }
-                            });
-                        }
-
-                        if (activeUser) {
-                            // Enforce Security Check on link open
-                            if (target === 'admin') {
-                                if (activeUser.role === 'Admin') {
-                                    // Admins requesting admin portal
-                                    window.location.href = 'admin.html';
-                                } else {
-                                    // Non-admins attempting to access admin portal
-                                    document.getElementById('magicLinkLoader').remove();
-                                    showToast("Access Denied: You do not have Administrator privileges.", "error", 6000);
-                                    // Ensure URL is cleaned up so they don't get stuck in a loop
-                                    window.history.replaceState({}, document.title, window.location.pathname);
-                                }
-                            } else {
-                                // Both Employees and Admins can access the timesheet portal
-                                sessionStorage.setItem('stratedge_active_user', JSON.stringify(activeUser));
-                                window.location.href = 'timesheet.html';
-                            }
-                        } else {
-                            showToast("Could not find employee profile for this email.", "error");
-                            document.getElementById('magicLinkLoader').remove();
-                        }
-                    } catch (error) {
-                        console.error("Magic Link Error", error);
-                        showToast("Link expired or invalid. Please request a new one.", "error", 6000);
-                        document.getElementById('magicLinkLoader').remove();
-                    }
-                } else {
-                    document.getElementById('magicLinkLoader').remove();
-                }
-            } else {
-                initAuth();
-            }
-        };
-
-        // Start Firebase Auth (Required for Firestore access)
+        // Firebase Initialization
         const initAuth = async () => {
             try {
                 await signInAnonymously(auth);
             } catch (error) {
-                showToast("Auth Error: Could not connect to database.", 'error');
-                console.error("Auth error", error);
+                showToast("Authentication Error. Check database connection.", "error");
             }
         };
 
-        // Listen for connection
         onAuthStateChanged(auth, (user) => {
-            currentUser = user;
+            fbUser = user;
+            if (user) {
+                startDataListeners(); // Triggers the real-time cascade!
+            } else {
+                if (unsubscribeTimesheets) unsubscribeTimesheets();
+            }
         });
 
-        // Run the Magic Link check immediately on page load
-        handleIncomingMagicLink();
+        initAuth();
+
     </script>
 </body>
 </html>
