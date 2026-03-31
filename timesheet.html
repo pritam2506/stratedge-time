@@ -101,6 +101,32 @@
                         </div>
                         <p class="text-xs text-gray-500 mt-2 text-right">Target: 48.0 hrs</p>
                     </div>
+
+                    <!-- YTD Leave Summary Block -->
+                    <div class="mt-8 border-t border-gray-100 pt-6">
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">YTD Leave Summary</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600 flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-brand-orange"></div>Sick Leave (SL)
+                                </span>
+                                <span class="font-bold text-gray-800" id="leaveSL">0.0 days</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600 flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>Casual Leave (CL)
+                                </span>
+                                <span class="font-bold text-gray-800" id="leaveCL">0.0 days</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600 flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-purple-500"></div>Earned Leave (EL)
+                                </span>
+                                <span class="font-bold text-gray-800" id="leaveEL">0.0 days</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-3 text-right">* 1 day = 8 hours</p>
+                    </div>
                 </div>
             </div>
 
@@ -300,6 +326,109 @@
             return `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} to ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
         };
 
+        // --- YTD Leave Calculation ---
+        const updateLeaveSummary = () => {
+            let sl = 0, cl = 0, el = 0;
+            const currentYear = new Date().getFullYear().toString();
+
+            myTimesheets.forEach(ts => {
+                // Calculate only from approved timesheets in the current year
+                if (ts.status === 'Approved' && ts.week.startsWith(currentYear)) {
+                    Object.values(ts.entries).forEach(dayArr => {
+                        const entries = Array.isArray(dayArr) ? dayArr : [dayArr];
+                        entries.forEach(entry => {
+                            const hrs = parseFloat(entry.hours) || 0;
+                            if (entry.type.includes('SL')) sl += hrs;
+                            if (entry.type.includes('CL')) cl += hrs;
+                            if (entry.type.includes('EL')) el += hrs;
+                        });
+                    });
+                }
+            });
+
+            // Convert hours to days (1 day = 8 hours)
+            document.getElementById('leaveSL').textContent = `${(sl / 8).toFixed(1)} days`;
+            document.getElementById('leaveCL').textContent = `${(cl / 8).toFixed(1)} days`;
+            document.getElementById('leaveEL').textContent = `${(el / 8).toFixed(1)} days`;
+        };
+
+        // --- Notifications Generation ---
+        const updateNotifications = () => {
+            const notifList = document.getElementById('notifList');
+            const badge = document.getElementById('empNotifBadge');
+            notifList.innerHTML = '';
+            let notifCount = 0;
+            
+            const now = new Date();
+            const currentWeekStr = getWeekString(now);
+            const dayOfWeek = now.getDay();
+
+            // 1. Process explicit statuses (Approved/Rejected)
+            myTimesheets.forEach(ts => {
+                if (ts.status === 'Approved' || ts.status === 'Rejected') {
+                    notifCount++;
+                    const color = ts.status === 'Approved' ? 'text-green-600' : 'text-red-600';
+                    const bg = ts.status === 'Approved' ? 'bg-green-50' : 'bg-red-50';
+                    const border = ts.status === 'Approved' ? 'border-green-500' : 'border-red-500';
+                    
+                    notifList.innerHTML += `
+                        <div class="px-4 py-3 ${bg} border-l-4 ${border} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="document.getElementById('weekSelector').value='${ts.week}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
+                            <p class="text-sm font-bold ${color}">Timesheet ${ts.status}</p>
+                            <p class="text-xs text-gray-700 mt-1">Your timesheet for ${ts.week} was ${ts.status.toLowerCase()} by Admin.</p>
+                        </div>
+                    `;
+                }
+            });
+
+            // 2. Scan past weeks for missing/re-opened sheets and current week reminders
+            let startDoj = activeUser.doj ? new Date(activeUser.doj) : new Date(Date.now() - 4 * 604800000);
+            let iterWeek = getWeekString(startDoj);
+            if (iterWeek > currentWeekStr) iterWeek = currentWeekStr;
+
+            const weeksArr = [];
+            while(iterWeek <= currentWeekStr) {
+                weeksArr.push(iterWeek);
+                const d = getDatesFromWeek(iterWeek)[0];
+                d.setDate(d.getDate() + 7);
+                iterWeek = getWeekString(d);
+            }
+            weeksArr.reverse();
+
+            weeksArr.forEach(w => {
+                const ts = myTimesheets.find(t => t.week === w);
+                const isMissing = !ts || ts.status === 'Rejected';
+                
+                if (!ts && w !== currentWeekStr) {
+                    // Past week is totally missing (never submitted, or Admin deleted/re-opened it)
+                    notifCount++;
+                    notifList.innerHTML += `
+                        <div class="px-4 py-3 bg-yellow-50 border-l-4 border-yellow-500 cursor-pointer hover:bg-yellow-100 transition-colors" onclick="document.getElementById('weekSelector').value='${w}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
+                            <p class="text-sm font-bold text-yellow-700">Missing Timesheet</p>
+                            <p class="text-xs text-yellow-700 mt-1">Action required: Timesheet for past week (${w}) is open or was re-opened by Admin.</p>
+                        </div>
+                    `;
+                } else if (!ts && w === currentWeekStr && (dayOfWeek === 5 || dayOfWeek === 6)) {
+                    // Current week Friday/Saturday reminder
+                    notifCount++;
+                    notifList.innerHTML += `
+                        <div class="px-4 py-3 bg-orange-50 border-l-4 border-orange-500 cursor-pointer hover:bg-orange-100 transition-colors" onclick="document.getElementById('weekSelector').value='${w}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
+                            <p class="text-sm font-bold text-orange-700">Action Required</p>
+                            <p class="text-xs text-orange-700 mt-1">Reminder: Please submit your timesheet for the current week (${w}).</p>
+                        </div>
+                    `;
+                }
+            });
+
+            // Badge UI Update
+            if (notifCount === 0) {
+                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
+                badge.classList.add('hidden');
+            } else {
+                badge.textContent = notifCount;
+                badge.classList.remove('hidden');
+            }
+        };
+
         // --- Dropdown Logic ---
         const generateWeekOptions = () => {
             const weekSelector = document.getElementById('weekSelector');
@@ -384,6 +513,7 @@
             const hrsValue = data ? data.hours : '8';
             const projValue = data && data.project ? data.project : '';
 
+            // Secure Lock applied directly via `readonly` and `disabled` if isSubmitted is true
             tr.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap align-top"></td>
                 <td class="px-6 py-3 align-top">
@@ -496,6 +626,7 @@
             calculateTotals();
         };
 
+        // Handles locking the fields if Submitted/Approved
         const checkSubmissionStatus = (weekStr) => {
             const form = document.getElementById('timesheetForm');
             const submitBtn = document.getElementById('submitBtn');
@@ -503,6 +634,7 @@
             const dates = getDatesFromWeek(weekStr);
             const data = myTimesheets.find(ts => ts.week === weekStr);
             
+            // If it exists and hasn't been rejected, it is strictly locked
             if (data && data.status !== 'Rejected') {
                 banner.classList.remove('hidden');
                 if (data.status === 'Approved') {
@@ -514,7 +646,7 @@
                 }
 
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = "Submitted";
+                submitBtn.innerHTML = "Locked";
                 submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 document.getElementById('declaration').disabled = true;
                 document.getElementById('declaration').checked = true;
@@ -523,6 +655,7 @@
                     const tbody = document.getElementById(`day-tbody-${index}`);
                     tbody.innerHTML = ''; 
                     if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
+                        // isSubmitted = true securely locks the rows
                         data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, true));
                     } else if (data.entries && data.entries[day]) {
                         window.addEntryRow(index, day, formatDate(dates[index]), data.entries[day], true);
@@ -543,6 +676,7 @@
                 justBox.disabled = true;
 
             } else {
+                // Timesheet is Open or Rejected
                 banner.classList.add('hidden');
                 if (data && data.status === 'Rejected') {
                     banner.classList.remove('hidden');
@@ -567,6 +701,7 @@
                         const tbody = document.getElementById(`day-tbody-${index}`);
                         tbody.innerHTML = ''; 
                         if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
+                            // isSubmitted = false ensures they can edit it
                             data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, false));
                         }
                     });
@@ -657,7 +792,7 @@
                 justBlock.classList.remove('hidden');
                 justBox.classList.add('border-red-500', 'ring-2', 'ring-red-200');
                 justBox.focus();
-                showToast(`You logged ${totalHours} hrs. Justification required for not logging exactly 48 hrs.`, "error");
+                showToast(`You logged ${totalHours.toFixed(1)} hrs. Justification required for not logging exactly 48 hrs.`, "error");
                 btn.innerHTML = originalText;
                 btn.disabled = false;
                 return;
@@ -716,7 +851,9 @@
                     const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
                     unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
                         myTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })).filter(ts => ts.empId === activeUser.empId);
+                        
                         generateWeekOptions();
+                        updateLeaveSummary();
                         updateNotifications();
                         window.renderTimesheetGrid(document.getElementById('weekSelector').value);
                     }, (error) => console.error("Database sync error: ", error));
