@@ -161,13 +161,10 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-        let firebaseConfig;
-        if (firebaseConfigStr) {
-            firebaseConfig = JSON.parse(firebaseConfigStr);
-        } else {
-            // Fallback config for local testing
-            const firebaseConfig = {
+        // ==========================================
+        // ⚠️ PASTE YOUR FIREBASE CONFIGURATION HERE ⚠️
+        // ==========================================
+        const firebaseConfig = {
   apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
   authDomain: "stratedge-time.firebaseapp.com",
   projectId: "stratedge-time",
@@ -175,8 +172,8 @@
   messagingSenderId: "550779977682",
   appId: "1:550779977682:web:d4b4983b62876655b3d20b"
 };
-        }
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stratedge-time-recorder';
+        const appId = 'stratedge-time-recorder';
+        // ==========================================
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -271,10 +268,12 @@
             btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Sending Email...</span>`;
             btn.disabled = true;
 
-            // CRITICAL FIX: Declare foundEmployee OUTSIDE the try block so the catch block can access it
+            // CRITICAL FIX: Declare foundEmployee OUTSIDE the try block. 
+            // This ensures if Firebase errors out on sending the email, the catch block still knows who the user is.
             let foundEmployee = null;
 
             try {
+                // First, find the employee in the database
                 const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
                 const snapshot = await getDocs(employeesRef);
                 
@@ -284,6 +283,7 @@
                     }
                 });
 
+                // If user is found, process permissions and send email
                 if (foundEmployee) {
                     
                     // Specific Logic for Admin vs Employee Request
@@ -309,9 +309,10 @@
                         handleCodeInApp: true,
                     };
 
+                    // Send Email via Firebase
                     await sendSignInLinkToEmail(auth, foundEmployee.email, actionCodeSettings);
                     
-                    // Save context locally
+                    // Save context locally for when they click the link
                     window.localStorage.setItem('emailForSignIn', foundEmployee.email);
                     window.localStorage.setItem('pendingEmpData', JSON.stringify(foundEmployee));
                     
@@ -347,7 +348,7 @@
                         if (targetType === 'admin') {
                             window.location.href = 'admin.html';
                         } else {
-                            // Now foundEmployee is safely accessible here!
+                            // Because foundEmployee is safely declared globally above, we can store it here securely!
                             if (foundEmployee) {
                                 sessionStorage.setItem('stratedge_active_user', JSON.stringify(foundEmployee));
                             }
