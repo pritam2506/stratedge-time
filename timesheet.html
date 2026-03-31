@@ -197,49 +197,22 @@
         </button>
     </div>
 
-    <!-- Firebase Implementation & Logic -->
+    <!-- Script Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
-        // ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE ⚠️
+        // 1. SESSION VALIDATION & UI SETUP (Runs immediately)
         // ==========================================
-        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-        let firebaseConfig;
-        if (firebaseConfigStr) {
-            firebaseConfig = JSON.parse(firebaseConfigStr);
-        } else {
-            const firebaseConfig = {
-  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
-  authDomain: "stratedge-time.firebaseapp.com",
-  projectId: "stratedge-time",
-  storageBucket: "stratedge-time.firebasestorage.app",
-  messagingSenderId: "550779977682",
-  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
-};
-            };
-        }
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stratedge-time-recorder';
-        // ==========================================
-
-        // Session validation
         const sessionUser = sessionStorage.getItem('stratedge_active_user');
         if (!sessionUser) {
             window.location.href = 'index.html';
         }
         const activeUser = JSON.parse(sessionUser);
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        let fbUser = null;
-        let myTimesheets = [];
-        let unsubscribeTimesheets = null;
-
+        // Define Global UI Functions
         window.logout = () => {
             sessionStorage.removeItem('stratedge_active_user');
             window.location.href = 'index.html';
@@ -248,30 +221,33 @@
         window.toggleNotifications = () => {
             document.getElementById('notifDropdown').classList.toggle('hidden');
         };
-        
-        // Close notification dropdown when clicking outside
+
         document.addEventListener('click', (e) => {
             const bell = document.getElementById('notifBell');
-            if (bell && !bell.contains(e.target)) {
-                document.getElementById('notifDropdown').classList.add('hidden');
+            const dropdown = document.getElementById('notifDropdown');
+            if (bell && dropdown && !bell.contains(e.target)) {
+                dropdown.classList.add('hidden');
             }
         });
 
-        // Populate Profile
-        document.getElementById('profileName').textContent = activeUser.name;
-        document.getElementById('profileId').textContent = `Emp ID: ${activeUser.empId}`;
+        // Populate Profile Instantly
+        document.getElementById('profileName').textContent = activeUser.name || 'Unknown';
+        document.getElementById('profileId').textContent = `Emp ID: ${activeUser.empId || 'N/A'}`;
         document.getElementById('profileEmail').textContent = activeUser.email || 'N/A';
         document.getElementById('profileRoleDept').textContent = `${activeUser.designation || 'N/A'} | ${activeUser.department || 'N/A'}`;
         document.getElementById('profilePhone').textContent = activeUser.phone || 'N/A';
         document.getElementById('profileDOJ').textContent = `Joined: ${activeUser.doj ? new Date(activeUser.doj).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}`;
         
-        // Initials Logic
-        const nameParts = activeUser.name.split(' ');
+        const nameParts = (activeUser.name || 'U').split(' ');
         let initials = nameParts[0].charAt(0);
         if (nameParts.length > 1) initials += nameParts[nameParts.length - 1].charAt(0);
         document.getElementById('profileInitials').textContent = initials.toUpperCase();
 
-        // Days & Category configuration
+        // Core App Variables
+        let fbUser = null;
+        let myTimesheets = [];
+        let unsubscribeTimesheets = null;
+
         const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const categories = [
             'Regular Work',
@@ -282,28 +258,7 @@
             'Public Holiday (PH)'
         ];
 
-        // --- UI UTILS ---
-        window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
-        const showToast = (message, type = 'success') => {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toastMessage');
-            const iconEl = document.getElementById('toastIcon');
-            msgEl.textContent = message;
-            if (type === 'success') {
-                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
-                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg';
-            } else if (type === 'info') {
-                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`;
-                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-blue-500 bg-blue-100 rounded-lg';
-            } else {
-                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
-                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
-            }
-            toast.classList.remove('translate-y-full', 'opacity-0');
-            setTimeout(window.hideToast, 4000);
-        };
-
-        // --- DATE UTILS ---
+        // --- Date Utils ---
         const getDatesFromWeek = (yearWeek) => {
             const [yearStr, weekStr] = yearWeek.split('-W');
             const year = parseInt(yearStr);
@@ -345,65 +300,13 @@
             return `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} to ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
         };
 
-        // --- Notification Logic ---
-        const updateNotifications = () => {
-            const notifList = document.getElementById('notifList');
-            const badge = document.getElementById('empNotifBadge');
-            notifList.innerHTML = '';
-            let notifCount = 0;
-            
-            const now = new Date();
-            const currentWeekStr = getWeekString(now);
-
-            // 1. Check for Approvals/Rejections
-            myTimesheets.forEach(ts => {
-                if (ts.status === 'Approved' || ts.status === 'Rejected') {
-                    notifCount++;
-                    const color = ts.status === 'Approved' ? 'text-green-600' : 'text-red-600';
-                    const bg = ts.status === 'Approved' ? 'bg-green-50' : 'bg-red-50';
-                    notifList.innerHTML += `
-                        <div class="px-4 py-3 ${bg} border-l-4 ${ts.status === 'Approved' ? 'border-green-500' : 'border-red-500'} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="document.getElementById('weekSelector').value='${ts.week}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
-                            <p class="text-sm font-bold ${color}">Timesheet ${ts.status}</p>
-                            <p class="text-xs text-gray-700 mt-1">Your timesheet for ${ts.week} was ${ts.status.toLowerCase()} by Admin.</p>
-                        </div>
-                    `;
-                }
-            });
-
-            // 2. Check Missing Current Week (Friday or Saturday Reminder)
-            const dayOfWeek = now.getDay();
-            if (dayOfWeek === 5 || dayOfWeek === 6) {
-                const hasCurrentTimesheet = myTimesheets.some(ts => ts.week === currentWeekStr && ts.status !== 'Rejected');
-                if (!hasCurrentTimesheet) {
-                    notifCount++;
-                    notifList.innerHTML += `
-                        <div class="px-4 py-3 bg-orange-50 border-l-4 border-orange-500 cursor-pointer hover:bg-orange-100 transition-colors" onclick="document.getElementById('weekSelector').value='${currentWeekStr}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
-                            <p class="text-sm font-bold text-orange-700">Action Required</p>
-                            <p class="text-xs text-orange-700 mt-1">Reminder: Please submit your timesheet for the current week (${currentWeekStr}).</p>
-                        </div>
-                    `;
-                }
-            }
-
-            // Badge UI
-            if (notifCount === 0) {
-                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
-                badge.classList.add('hidden');
-            } else {
-                badge.textContent = notifCount;
-                badge.classList.remove('hidden');
-            }
-        };
-
-        // --- Custom Color-Coded Dropdown Generation ---
+        // --- Dropdown Logic ---
         const generateWeekOptions = () => {
             const weekSelector = document.getElementById('weekSelector');
             const currentVal = weekSelector.value;
             weekSelector.innerHTML = '';
 
             const currentWeekStr = getWeekString(new Date());
-            
-            // Limit minimum week to DOJ (or 4 weeks ago if missing)
             let startDoj = activeUser.doj ? new Date(activeUser.doj) : new Date(Date.now() - 4 * 604800000);
             let iterWeek = getWeekString(startDoj);
             if (iterWeek > currentWeekStr) iterWeek = currentWeekStr;
@@ -412,28 +315,20 @@
             while(iterWeek <= currentWeekStr) {
                 weeksArr.push(iterWeek);
                 const d = getDatesFromWeek(iterWeek)[0];
-                d.setDate(d.getDate() + 7); // Increment by 1 week
+                d.setDate(d.getDate() + 7);
                 iterWeek = getWeekString(d);
             }
-            weeksArr.reverse(); // Show Newest at the top
+            weeksArr.reverse();
 
             weeksArr.forEach(w => {
                 const ts = myTimesheets.find(t => t.week === w);
-                
                 let statusIcon = '🔴'; 
                 let statusText = 'Open';
                 
                 if (ts) {
-                    if (ts.status === 'Approved') {
-                        statusIcon = '🟢';
-                        statusText = 'Approved';
-                    } else if (ts.status === 'Rejected') {
-                        statusIcon = '🔴';
-                        statusText = 'Rejected (Fix & Resubmit)';
-                    } else {
-                        statusIcon = '🟠'; 
-                        statusText = 'Pending Approval';
-                    }
+                    if (ts.status === 'Approved') { statusIcon = '🟢'; statusText = 'Approved'; } 
+                    else if (ts.status === 'Rejected') { statusIcon = '🔴'; statusText = 'Rejected (Fix & Resubmit)'; } 
+                    else { statusIcon = '🟠'; statusText = 'Pending Approval'; }
                 }
 
                 const rangeText = getWeekRangeText(w);
@@ -445,15 +340,14 @@
                 weekSelector.appendChild(option);
             });
 
-            // Restore selection or default to current
             if (currentVal && weeksArr.includes(currentVal)) {
                 weekSelector.value = currentVal;
-            } else {
-                weekSelector.value = currentWeekStr;
+            } else if (weeksArr.length > 0) {
+                weekSelector.value = weeksArr[0];
             }
         };
 
-        // --- Helper Functions for Dynamic Rows ---
+        // --- Row Building Logic ---
         const updateDayLabels = (tbody) => {
             const rows = tbody.querySelectorAll('tr');
             rows.forEach((row, index) => {
@@ -471,8 +365,6 @@
 
         window.addEntryRow = (dayIndex, dayName, dateStr, data = null, isSubmitted = false) => {
             let tbody = document.getElementById(`day-tbody-${dayIndex}`);
-            
-            // Create tbody if it doesn't exist (initial render)
             if (!tbody) {
                 tbody = document.createElement('tbody');
                 tbody.id = `day-tbody-${dayIndex}`;
@@ -521,7 +413,6 @@
             
             tr.querySelector('.hours-input').addEventListener('input', calculateTotals);
 
-            // Auto-fill "On Leave" logic
             const typeSelect = tr.querySelector('.type-input');
             const projInput = tr.querySelector('.project-input');
             
@@ -538,10 +429,8 @@
                     }
                 }
             };
-
             typeSelect.addEventListener('change', applyLeaveLogic);
-            applyLeaveLogic(); // Initialize state immediately for loaded rows
-
+            applyLeaveLogic();
             calculateTotals();
         };
 
@@ -556,8 +445,8 @@
             }
         };
 
-        // Render Timesheet Grid (Now fueled by memory)
-        const renderTimesheetGrid = async (weekStr) => {
+        // --- Grid Rendering Logic ---
+        window.renderTimesheetGrid = async (weekStr) => {
             if (!weekStr) return;
             
             const dojWarning = document.getElementById('dojWarning');
@@ -569,20 +458,17 @@
             const dates = getDatesFromWeek(weekStr);
             const table = document.getElementById('timesheetTable');
             
-            // Clear existing generated tbodys
             const tbodys = table.querySelectorAll('tbody');
             tbodys.forEach(t => t.remove());
 
-            // Initialize 6 days default rows
+            // Initialize default blank rows instantly
             daysOfWeek.forEach((day, index) => {
                 window.addEntryRow(index, day, formatDate(dates[index]));
             });
 
-            // Check if we should PRE-FILL based on last approved timesheet
+            // Prefill / Verification Logic
             const currentData = myTimesheets.find(ts => ts.week === weekStr);
-            
             if (!currentData) {
-                // Find last approved timesheet for prefill
                 const approvedSheets = myTimesheets.filter(ts => ts.status === 'Approved').sort((a,b) => b.week.localeCompare(a.week));
                 if (approvedSheets.length > 0) {
                     const lastApproved = approvedSheets[0];
@@ -590,11 +476,9 @@
                     
                     daysOfWeek.forEach((day, index) => {
                         const tbody = document.getElementById(`day-tbody-${index}`);
-                        tbody.innerHTML = ''; // clear default row
-                        
+                        tbody.innerHTML = '';
                         if (lastApproved.entries && lastApproved.entries[day] && Array.isArray(lastApproved.entries[day])) {
                             lastApproved.entries[day].forEach(entry => {
-                                // Prefill, but keep it editable (isSubmitted = false)
                                 window.addEntryRow(index, day, formatDate(dates[index]), entry, false);
                             });
                         } else {
@@ -608,27 +492,19 @@
                 document.getElementById('prefillWarning').classList.add('hidden');
             }
 
-            // Sync with memory instantly
             checkSubmissionStatus(weekStr);
             calculateTotals();
         };
 
-        // Memory-based verification (No heavy database queries needed)
         const checkSubmissionStatus = (weekStr) => {
-            if (!fbUser) return;
-            
             const form = document.getElementById('timesheetForm');
             const submitBtn = document.getElementById('submitBtn');
             const banner = document.getElementById('submittedBanner');
             const dates = getDatesFromWeek(weekStr);
-            
-            // Find in loaded array
             const data = myTimesheets.find(ts => ts.week === weekStr);
             
             if (data && data.status !== 'Rejected') {
                 banner.classList.remove('hidden');
-                
-                // Color the banner based on status
                 if (data.status === 'Approved') {
                     banner.className = "bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center";
                     banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-green-800">Timesheet Approved</h3><p class="text-sm text-green-600 mt-1">Your hours for this week have been approved and locked.</p>`;
@@ -643,15 +519,11 @@
                 document.getElementById('declaration').disabled = true;
                 document.getElementById('declaration').checked = true;
 
-                // Populate existing locked data
                 daysOfWeek.forEach((day, index) => {
                     const tbody = document.getElementById(`day-tbody-${index}`);
                     tbody.innerHTML = ''; 
-                    
                     if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                        data.entries[day].forEach(entry => {
-                            window.addEntryRow(index, day, formatDate(dates[index]), entry, true);
-                        });
+                        data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, true));
                     } else if (data.entries && data.entries[day]) {
                         window.addEntryRow(index, day, formatDate(dates[index]), data.entries[day], true);
                     } else {
@@ -664,9 +536,7 @@
                 justBox.disabled = true;
 
             } else {
-                // Not submitted OR Rejected (Leaves it Open)
                 banner.classList.add('hidden');
-                
                 if (data && data.status === 'Rejected') {
                     banner.classList.remove('hidden');
                     banner.className = "bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center";
@@ -682,14 +552,11 @@
                 document.getElementById('justification').value = '';
                 
                 if (data && data.status === 'Rejected') {
-                    // Pre-fill rejected data to edit
                     daysOfWeek.forEach((day, index) => {
                         const tbody = document.getElementById(`day-tbody-${index}`);
                         tbody.innerHTML = ''; 
                         if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                            data.entries[day].forEach(entry => {
-                                window.addEntryRow(index, day, formatDate(dates[index]), entry, false);
-                            });
+                            data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, false));
                         }
                     });
                     if (data.justification) document.getElementById('justification').value = data.justification;
@@ -697,19 +564,12 @@
             }
         };
 
-        // Calculate Totals & Compliance
         const calculateTotals = () => {
             let total = 0;
-            document.querySelectorAll('.hours-input').forEach(input => {
-                total += parseFloat(input.value) || 0;
-            });
-
+            document.querySelectorAll('.hours-input').forEach(input => { total += parseFloat(input.value) || 0; });
             const summaryTotal = document.getElementById('summaryTotal');
             const summaryProgress = document.getElementById('summaryProgress');
-            
             summaryTotal.textContent = `${total.toFixed(1)} hrs`;
-            
-            // Progress Bar Logic (Target 48 hours for 6 days)
             const percentage = Math.min((total / 48) * 100, 100);
             summaryProgress.style.width = `${percentage}%`;
 
@@ -725,22 +585,37 @@
             }
         };
 
-        document.getElementById('weekSelector').addEventListener('change', (e) => {
-            renderTimesheetGrid(e.target.value);
-        });
+        // --- Toast & Base UI Utility ---
+        window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
+        const showToast = (message, type = 'success') => {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMessage');
+            const iconEl = document.getElementById('toastIcon');
+            msgEl.textContent = message;
+            if (type === 'success') {
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg';
+            } else if (type === 'info') {
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-blue-500 bg-blue-100 rounded-lg';
+            } else {
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
+            }
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(window.hideToast, 4000);
+        };
 
-        // Submit Timesheet
+        // --- Bind Events ---
+        document.getElementById('weekSelector').addEventListener('change', (e) => window.renderTimesheetGrid(e.target.value));
+
         document.getElementById('timesheetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            if (!fbUser) {
-                showToast("Not connected to database. Please wait.", "error");
-                return;
-            }
+            if (!fbUser) { showToast("Not connected to database. Please wait.", "error"); return; }
 
             const btn = document.getElementById('submitBtn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Submitting...`;
+            btn.innerHTML = `Submitting...`;
             btn.disabled = true;
 
             const weekStr = document.getElementById('weekSelector').value;
@@ -751,86 +626,85 @@
                 const tbody = document.getElementById(`day-tbody-${index}`);
                 const rows = tbody.querySelectorAll('tr');
                 const dayEntries = [];
-                
                 rows.forEach(row => {
                     const hrs = parseFloat(row.querySelector('.hours-input').value) || 0;
                     totalHours += hrs;
-                    dayEntries.push({
-                        project: row.querySelector('.project-input').value.trim(),
-                        hours: hrs,
-                        type: row.querySelector('.type-input').value
-                    });
+                    dayEntries.push({ project: row.querySelector('.project-input').value.trim(), hours: hrs, type: row.querySelector('.type-input').value });
                 });
                 entriesData[day] = dayEntries;
             });
 
             const payload = {
-                empId: activeUser.empId,
-                name: activeUser.name,
-                week: weekStr,
-                entries: entriesData,
-                totalHours: totalHours,
-                justification: document.getElementById('justification').value.trim(),
-                status: 'Submitted',
-                submittedAt: Date.now()
+                empId: activeUser.empId, name: activeUser.name, week: weekStr, entries: entriesData,
+                totalHours: totalHours, justification: document.getElementById('justification').value.trim(), status: 'Submitted', submittedAt: Date.now()
             };
 
             try {
-                // Save to 'timesheets' collection with specific document ID
                 const docId = `${activeUser.empId}_${weekStr}`;
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId);
-                
                 await setDoc(docRef, payload);
                 showToast("Timesheet submitted successfully!", "success");
-                
-                // Realtime listener will auto-update the UI (lock the form)
             } catch (error) {
                 console.error("Submission Error", error);
-                showToast("Failed to submit timesheet. Error: " + error.message, "error");
+                showToast("Failed to submit timesheet.", "error");
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         });
 
-        // Realtime Data Listener
-        const startDataListeners = () => {
-            const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
-            
-            // Listen to database changes in real-time securely
-            unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
-                myTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })).filter(ts => ts.empId === activeUser.empId);
-                
-                generateWeekOptions();
-                updateNotifications();
-                
-                // Re-render the active selection smoothly
-                renderTimesheetGrid(document.getElementById('weekSelector').value);
-                
-            }, (error) => {
-                console.error("Database error: ", error);
+        // ==========================================
+        // 2. INITIALIZE INSTANT UI (Before Database Loads)
+        // ==========================================
+        generateWeekOptions();
+        window.renderTimesheetGrid(document.getElementById('weekSelector').value || getWeekString(new Date()));
+
+
+        // ==========================================
+        // 3. FIREBASE CONNECTION 
+        // ==========================================
+        // ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE ⚠️
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        let firebaseConfig;
+        if (firebaseConfigStr) {
+            firebaseConfig = JSON.parse(firebaseConfigStr);
+        } else {
+            const firebaseConfig = {
+  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+  authDomain: "stratedge-time.firebaseapp.com",
+  projectId: "stratedge-time",
+  storageBucket: "stratedge-time.firebasestorage.app",
+  messagingSenderId: "550779977682",
+  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+};
+        }
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stratedge-time-recorder';
+
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            onAuthStateChanged(auth, (user) => {
+                fbUser = user;
+                if (user) {
+                    const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
+                    unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
+                        myTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })).filter(ts => ts.empId === activeUser.empId);
+                        generateWeekOptions();
+                        updateNotifications();
+                        window.renderTimesheetGrid(document.getElementById('weekSelector').value);
+                    }, (error) => console.error("Database sync error: ", error));
+                } else {
+                    if (unsubscribeTimesheets) unsubscribeTimesheets();
+                }
             });
-        };
 
-        // Firebase Initialization
-        const initAuth = async () => {
-            try {
-                await signInAnonymously(auth);
-            } catch (error) {
-                showToast("Authentication Error. Check database connection.", "error");
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            fbUser = user;
-            if (user) {
-                startDataListeners(); // Triggers the real-time cascade!
-            } else {
-                if (unsubscribeTimesheets) unsubscribeTimesheets();
-            }
-        });
-
-        initAuth();
-
+            signInAnonymously(auth).catch(e => console.error("Auth error", e));
+        } catch (e) {
+            console.error("Firebase Configuration Error", e);
+            showToast("Database connection failed. Check config.", "error");
+        }
     </script>
 </body>
 </html>
