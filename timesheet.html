@@ -265,8 +265,18 @@
         }
         const activeUser = JSON.parse(sessionUser);
 
+        // Core App Variables
+        let fbUser = null;
+        let myTimesheets = [];
+        let unsubscribeTimesheets = null;
+        let unsubscribePrefs = null;
+        let readNotifIds = new Set();
+        let currentActiveNotifIds = [];
+
         // Global UI Click Closers
         window.logout = () => {
+            if (unsubscribeTimesheets) unsubscribeTimesheets();
+            if (unsubscribePrefs) unsubscribePrefs();
             sessionStorage.removeItem('stratedge_active_user');
             window.location.href = 'index.html';
         };
@@ -306,20 +316,25 @@
         if (nameParts.length > 1) initials += nameParts[nameParts.length - 1].charAt(0);
         document.getElementById('profileInitials').textContent = initials.toUpperCase();
 
-        // Core App Variables
-        let fbUser = null;
-        let myTimesheets = [];
-        let unsubscribeTimesheets = null;
-        let readNotifIds = new Set();
-        let currentActiveNotifIds = [];
-
         const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const categories = [
             'Regular Work', 'Sick Leave (SL)', 'Earned Leave (EL)', 'Public Holiday (PH)'
         ];
 
+        // --- Persistent Notification Storage ---
+        const saveReadNotifs = async () => {
+            if (!fbUser) return;
+            try {
+                const prefsRef = doc(db, 'artifacts', appId, 'public', 'data', 'employee_prefs', activeUser.empId);
+                await setDoc(prefsRef, { readNotifs: Array.from(readNotifIds) }, { merge: true });
+            } catch (error) {
+                console.error("Error saving read notifications:", error);
+            }
+        };
+
         window.markAllRead = () => {
             currentActiveNotifIds.forEach(id => readNotifIds.add(id));
+            saveReadNotifs(); // Save to database
             updateNotifications();
             document.getElementById('notifDropdown').classList.add('hidden');
             showToast("All notifications marked as read.", "success");
@@ -327,6 +342,7 @@
 
         window.markReadAndGo = (notifId, weekStr) => {
             readNotifIds.add(notifId);
+            saveReadNotifs(); // Save to database
             updateNotifications();
             window.selectWeek(weekStr);
             document.getElementById('notifDropdown').classList.add('hidden');
@@ -383,7 +399,7 @@
             let icon = '🔴';
             if (ts) {
                 if (ts.status === 'Approved') icon = '🟢';
-                else if (ts.status === 'Rejected') icon = '🔴';
+                else if (ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned') icon = '🔴';
                 else icon = '🟠';
             }
             if (weekStr > getWeekString(new Date())) icon = '⏳'; // Future
@@ -398,7 +414,7 @@
             window.renderTimesheetGrid(weekStr);
         };
 
-        // --- Calendar View Filter Generation (Replaces old select dropdown) ---
+        // --- Calendar View Filter Generation ---
         const generateCalendarList = () => {
             const dropdown = document.getElementById('weekDropdown');
             const currentVal = document.getElementById('weekSelector').value;
@@ -449,9 +465,9 @@
                         if (ts.status === 'Approved') {
                             bgColor = 'bg-green-50'; borderColor = 'border-green-500'; textColor = 'text-green-800';
                             statusBadge = '🟢 Approved';
-                        } else if (ts.status === 'Rejected') {
+                        } else if (ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned') {
                             bgColor = 'bg-red-50'; borderColor = 'border-red-500'; textColor = 'text-red-800';
-                            statusBadge = '🔴 Rejected';
+                            statusBadge = '🔴 ' + ts.status;
                         } else {
                             bgColor = 'bg-orange-50'; borderColor = 'border-orange-500'; textColor = 'text-orange-800';
                             statusBadge = '🟠 Pending';
@@ -524,21 +540,30 @@
             const currentWeekStr = getWeekString(now);
             const dayOfWeek = now.getDay();
 
-            // 1. Alert on Explicit Admin Actions (Approved / Rejected)
+            // 1. Alert on Explicit Admin Actions (Approved / Rejected / Resubmit / Returned)
             myTimesheets.forEach(ts => {
-                if (ts.status === 'Approved' || ts.status === 'Rejected') {
-                    const notifId = `${ts.id}_${ts.status}`;
+                const needsResubmit = ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned';
+                
+                if (ts.status === 'Approved' || needsResubmit) {
+                    const statusStr = ts.status; // Get explicit status word
+                    const notifId = `${ts.id}_${statusStr}`;
+                    
                     if (!readNotifIds.has(notifId)) {
                         currentActiveNotifIds.push(notifId);
                         notifCount++;
-                        const color = ts.status === 'Approved' ? 'text-green-600' : 'text-red-600';
-                        const bg = ts.status === 'Approved' ? 'bg-green-50' : 'bg-red-50';
-                        const border = ts.status === 'Approved' ? 'border-green-500' : 'border-red-500';
+                        const isAppr = ts.status === 'Approved';
+                        const color = isAppr ? 'text-green-600' : 'text-red-600';
+                        const bg = isAppr ? 'bg-green-50' : 'bg-red-50';
+                        const border = isAppr ? 'border-green-500' : 'border-red-500';
                         
+                        const msg = needsResubmit 
+                            ? `Admin has requested changes to your timesheet for ${ts.week}. Status is marked as ${statusStr}.`
+                            : `Your timesheet for ${ts.week} was approved by Admin.`;
+
                         notifList.innerHTML += `
                             <div class="px-4 py-3 ${bg} border-l-4 ${border} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${notifId}', '${ts.week}')">
-                                <p class="text-sm font-bold ${color}">Timesheet ${ts.status}</p>
-                                <p class="text-xs text-gray-700 mt-1">Your timesheet for ${ts.week} was ${ts.status.toLowerCase()} by Admin.</p>
+                                <p class="text-sm font-bold ${color}">Timesheet ${statusStr}</p>
+                                <p class="text-xs text-gray-700 mt-1">${msg}</p>
                             </div>
                         `;
                     }
@@ -562,7 +587,7 @@
                 const ts = myTimesheets.find(t => t.week === w);
                 
                 if (!ts && w !== currentWeekStr) {
-                    // It's a past week, but no timesheet exists. (Never submitted, or Admin Re-opened/Deleted it)
+                    // It's a past week, but no timesheet exists.
                     const notifId = `missing_${w}`;
                     if (!readNotifIds.has(notifId)) {
                         currentActiveNotifIds.push(notifId);
@@ -765,8 +790,11 @@
             const dates = getDatesFromWeek(weekStr);
             const data = myTimesheets.find(ts => ts.week === weekStr);
             
-            if (data && data.status !== 'Rejected') {
-                // If Timesheet exists and isn't actively rejected, Lock Everything
+            // Check if it's explicitly rejected, resubmit, or returned
+            const isReopened = data && (data.status === 'Rejected' || data.status === 'Resubmit' || data.status === 'Returned');
+            
+            if (data && !isReopened) {
+                // If Timesheet exists and isn't actively rejected/reopened, Lock Everything
                 banner.classList.remove('hidden');
                 if (data.status === 'Approved') {
                     banner.className = "bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center shadow-sm";
@@ -809,7 +837,7 @@
                 justBox.classList.add('bg-gray-50');
 
             } else {
-                // Not submitted OR Rejected -> Form is Open and Editable
+                // Not submitted OR Rejected/Resubmit -> Form is Open and Editable
                 banner.classList.add('hidden');
                 
                 submitBtn.disabled = false;
@@ -827,10 +855,10 @@
                 justBox.value = '';
                 justBlock.classList.add('hidden');
                 
-                if (data && data.status === 'Rejected') {
+                if (isReopened) {
                     banner.classList.remove('hidden');
                     banner.className = "bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center shadow-sm";
-                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Rejected</h3><p class="text-sm text-red-600 mt-1">Please correct your hours below and submit again.</p>`;
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Requires Updates</h3><p class="text-sm text-red-600 mt-1">Status: <strong>${data.status}</strong>. Please correct your hours below and submit again.</p>`;
                     
                     daysOfWeek.forEach((day, index) => {
                         const tbody = document.getElementById(`day-tbody-${index}`);
@@ -953,7 +981,6 @@
         // ==========================================
         // 2. FIREBASE CONNECTION 
         // ==========================================
-        // ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE ⚠️
         const firebaseConfig = {
   apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
   authDomain: "stratedge-time.firebaseapp.com",
@@ -973,6 +1000,17 @@
             onAuthStateChanged(auth, (user) => {
                 fbUser = user;
                 if (user) {
+                    
+                    // 1. Hook up the Notification State Sync
+                    const prefsRef = doc(db, 'artifacts', appId, 'public', 'data', 'employee_prefs', activeUser.empId);
+                    unsubscribePrefs = onSnapshot(prefsRef, (docSnap) => {
+                        if (docSnap.exists() && docSnap.data().readNotifs) {
+                            readNotifIds = new Set(docSnap.data().readNotifs);
+                            updateNotifications(); // Re-render logic with new memory state
+                        }
+                    });
+
+                    // 2. Hook up the Timesheets Sync
                     const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
                     unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
                         myTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })).filter(ts => ts.empId === activeUser.empId);
@@ -989,8 +1027,10 @@
                             window.renderTimesheetGrid(document.getElementById('weekSelector').value);
                         }
                     }, (error) => console.error("Database sync error: ", error));
+
                 } else {
                     if (unsubscribeTimesheets) unsubscribeTimesheets();
+                    if (unsubscribePrefs) unsubscribePrefs();
                 }
             });
 
