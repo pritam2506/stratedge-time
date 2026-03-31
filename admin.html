@@ -272,7 +272,7 @@
             </div>
             <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
                 <button onclick="closeModal('editEmployeeModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors">Cancel</button>
-                <button type="submit" form="editEmployeeForm" class="px-4 py-2 bg-brand-blue text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">Save Changes</button>
+                <button type="submit" id="editSubmitBtn" form="editEmployeeForm" class="px-4 py-2 bg-brand-blue text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">Save Changes</button>
             </div>
         </div>
     </div>
@@ -928,7 +928,7 @@
             if (!currentUser) return;
 
             const docId = document.getElementById('editDocId').value;
-            const btn = e.target.querySelector('button[type="submit"]');
+            const btn = document.getElementById('editSubmitBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = `Saving...`;
             btn.disabled = true;
