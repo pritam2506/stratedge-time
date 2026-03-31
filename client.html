@@ -85,19 +85,19 @@
                     <input type="hidden" id="editingId">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1 uppercase tracking-wider">Client Code</label>
-                        <input type="text" id="clientCode" readonly value="Auto-generated" class="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 font-bold outline-none cursor-not-allowed">
+                        <input type="text" id="clientCode" readonly value="Auto-generated" class="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 font-bold outline-none cursor-not-allowed text-sm">
                     </div>
                     <div>
                         <label for="clientName" class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                        <input type="text" id="clientName" required placeholder="e.g. Acme Corp" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        <input type="text" id="clientName" required placeholder="e.g. Acme Corp" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm">
                     </div>
                     <div>
                         <label for="stakeholder" class="block text-sm font-medium text-gray-700 mb-1">Main Stakeholder</label>
-                        <input type="text" id="stakeholder" required placeholder="Name & Role" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        <input type="text" id="stakeholder" required placeholder="Name & Role" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm">
                     </div>
                     <div>
                         <label for="clientAddress" class="block text-sm font-medium text-gray-700 mb-1">Office Address</label>
-                        <textarea id="clientAddress" required rows="2" placeholder="Full billing address..." class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all"></textarea>
+                        <textarea id="clientAddress" required rows="2" placeholder="Full billing address..." class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -149,76 +149,88 @@
         </div>
 
         <!-- TAB 2: INVOICE GENERATOR -->
-        <div id="tab-invoices" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-8 transition-all">
-            <div class="space-y-6">
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                    <h3 id="invFormTitle" class="text-xl font-bold text-brand-blue mb-6 flex items-center gap-2 border-b pb-4">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        New Invoice
+        <div id="tab-invoices" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 transition-all h-[calc(100vh-250px)]">
+            <!-- Form & History Panel -->
+            <div class="lg:col-span-4 flex flex-col gap-6 overflow-y-auto pr-2 custom-scroll h-full">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 id="invFormTitle" class="text-lg font-bold text-brand-blue mb-6 flex items-center gap-2 border-b pb-4">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Invoice Details
                     </h3>
                     <form id="invoiceForm" class="space-y-4">
                         <input type="hidden" id="editingInvId">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Client</label>
-                                <select id="invClientSelect" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg outline-none">
-                                    <option value="" disabled selected>-- Choose Client --</option>
-                                </select>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Client Selection</label>
+                            <select id="invClientSelect" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
+                                <option value="" disabled selected>-- Choose Client --</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Billing From</label>
+                                <input type="date" id="invFromDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-xs">
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">From</label>
-                                <input type="date" id="invFromDate" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">To</label>
-                                <input type="date" id="invToDate" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg outline-none">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Service Type</label>
-                                <select id="invServiceType" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg outline-none">
-                                    <option value="Social Media">Social Media</option>
-                                    <option value="Brand Strategy">Brand Strategy</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Comments <span class="text-xs font-normal text-gray-400">(30 chars)</span></label>
-                                <input type="text" id="invComments" maxlength="30" placeholder="Summary of service..." required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg outline-none">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Amount (INR)</label>
-                                <input type="number" id="invAmount" step="0.01" required placeholder="0.00" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg outline-none font-bold text-brand-blue">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Billing To</label>
+                                <input type="date" id="invToDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-xs">
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button type="submit" class="flex-1 bg-brand-orange hover:bg-brand-orange-hover text-white font-black py-3 rounded-lg shadow-lg flex justify-center items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                GENERATE & SAVE
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Service Category</label>
+                            <select id="invServiceType" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
+                                <option value="Social Media">Social Media</option>
+                                <option value="Brand Strategy">Brand Strategy</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Comments <span class="text-[10px] font-normal text-gray-400">(Max 30)</span></label>
+                            <input type="text" id="invComments" maxlength="30" placeholder="Brief description..." required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Net Amount (INR)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2 text-gray-400 text-sm font-bold">₹</span>
+                                <input type="number" id="invAmount" step="0.01" required placeholder="0.00" class="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none font-bold text-brand-blue">
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2 pt-2">
+                            <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                GENERATE INVOICE
                             </button>
-                            <button type="button" id="cancelInvBtn" onclick="resetInvoiceForm()" class="hidden px-4 py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
+                            <button type="button" id="cancelInvBtn" onclick="resetInvoiceForm()" class="hidden w-full py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 text-sm">Discard Changes</button>
                         </div>
                     </form>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Past Invoices</h3>
-                    <div id="invoiceHistoryList" class="space-y-3 max-h-[350px] overflow-y-auto pr-2"></div>
+                <!-- History sub-panel -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow">
+                    <h3 class="text-sm font-bold text-gray-900 mb-4 border-b pb-2 flex justify-between">
+                        Past Records 
+                        <span id="invCount" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">0 Total</span>
+                    </h3>
+                    <div id="invoiceHistoryList" class="space-y-3"></div>
                 </div>
             </div>
 
-            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col h-full min-h-[650px] border-4 border-gray-700">
-                <div class="bg-gray-700 px-4 py-2 flex justify-between items-center text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    <span>Live PDF Preview</span>
-                    <div class="flex gap-2">
-                        <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-                        <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
-                        <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+            <!-- PDF Viewer Panel -->
+            <div class="lg:col-span-8 bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col h-full border-4 border-gray-700">
+                <div class="bg-gray-700 px-4 py-2 flex justify-between items-center text-xs font-bold text-gray-300 uppercase tracking-widest">
+                    <span>Invoice Preview Portal</span>
+                    <div class="flex gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
                     </div>
                 </div>
-                <div id="pdfPlaceholder" class="flex-grow flex items-center justify-center text-center p-8">
-                    <p class="text-gray-500 font-medium italic">Create an invoice to see a preview</p>
+                <div id="pdfPlaceholder" class="flex-grow flex flex-col items-center justify-center text-center p-12 space-y-4">
+                    <div class="p-6 bg-gray-700/50 rounded-full border border-gray-600">
+                        <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <p class="text-gray-500 font-medium max-w-xs">Complete the form and click generate to render the official PDF invoice.</p>
                 </div>
-                <iframe id="pdfPreview" class="hidden w-full h-full border-none"></iframe>
+                <iframe id="pdfPreview" class="hidden w-full h-full border-none bg-white"></iframe>
             </div>
         </div>
     </main>
@@ -275,8 +287,7 @@
             } else {
                 btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm";
                 btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
-                tabInvoices.classList.remove('hidden');
-                tabInvoices.classList.add('grid');
+                tabInvoices.classList.replace('hidden', 'grid');
                 tabClients.classList.replace('grid', 'hidden');
             }
         };
@@ -345,10 +356,10 @@
                     tr.innerHTML = `
                         <td class="px-4 py-3 font-mono font-bold text-brand-blue">${client.clientCode}</td>
                         <td class="px-4 py-3">
-                            <div class="font-bold text-gray-900 text-xs">${client.name}</div>
-                            <div class="text-[9px] text-gray-500 italic truncate max-w-[200px]">${client.address}</div>
+                            <div class="font-bold text-gray-900">${client.name}</div>
+                            <div class="text-[10px] text-gray-500 italic line-clamp-1 max-w-[180px]">${client.address}</div>
                         </td>
-                        <td class="px-4 py-3 text-[10px] text-gray-600 font-medium">${client.stakeholder}</td>
+                        <td class="px-4 py-3 text-xs text-gray-600 font-medium">${client.stakeholder}</td>
                         <td class="px-4 py-3 text-center">
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${client.status === 'inactive' ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'}">${client.status || 'Active'}</span>
                         </td>
@@ -369,21 +380,22 @@
 
         window.renderInvoices = () => {
             const list = document.getElementById('invoiceHistoryList');
+            document.getElementById('invCount').textContent = `${allInvoices.length} Total`;
             list.innerHTML = '';
             if (allInvoices.length === 0) list.innerHTML = '<div class="text-center py-4 text-gray-400 text-sm italic">No invoices found.</div>';
             else {
                 allInvoices.forEach(inv => {
                     const div = document.createElement('div');
-                    div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all";
+                    div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30";
                     div.innerHTML = `
-                        <div>
-                            <div class="text-[10px] font-bold text-brand-blue uppercase">${inv.invoiceNo}</div>
-                            <div class="font-bold text-sm">${inv.clientName}</div>
-                            <div class="text-[10px] text-gray-500">₹${inv.amount.toLocaleString('en-IN')} | ${inv.serviceType}</div>
+                        <div class="overflow-hidden">
+                            <div class="text-[9px] font-bold text-brand-blue uppercase truncate">${inv.invoiceNo}</div>
+                            <div class="font-bold text-xs truncate">${inv.clientName}</div>
+                            <div class="text-[9px] text-gray-500">Rs. ${inv.amount.toLocaleString('en-IN')}/-</div>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="editInvoice('${inv.id}')" class="p-1 hover:bg-blue-100 rounded text-blue-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                            <button onclick="deleteInvoice('${inv.id}')" class="p-1 hover:bg-red-100 rounded text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        <div class="flex gap-1.5 ml-2">
+                            <button onclick="editInvoice('${inv.id}')" class="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors" title="Edit Data"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                            <button onclick="deleteInvoice('${inv.id}')" class="p-1 hover:bg-red-100 rounded text-red-600 transition-colors" title="Delete record"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </div>
                     `;
                     list.appendChild(div);
@@ -416,8 +428,10 @@
             document.getElementById('invServiceType').value = inv.serviceType;
             document.getElementById('invComments').value = inv.comments;
             document.getElementById('invAmount').value = inv.amount;
-            document.getElementById('invFormTitle').innerHTML = 'Edit Invoice ' + inv.invoiceNo;
+            document.getElementById('invFormTitle').innerHTML = 'Edit Invoice';
             document.getElementById('cancelInvBtn').classList.remove('hidden');
+            const client = allClients.find(c => c.id === inv.clientId);
+            if(client) generatePDF(client, inv);
         };
 
         window.resetForm = () => {
@@ -432,7 +446,7 @@
         window.resetInvoiceForm = () => {
             document.getElementById('invoiceForm').reset();
             document.getElementById('editingInvId').value = '';
-            document.getElementById('invFormTitle').innerHTML = 'New Invoice';
+            document.getElementById('invFormTitle').innerHTML = 'Invoice Details';
             document.getElementById('cancelInvBtn').classList.add('hidden');
             document.getElementById('pdfPreview').classList.add('hidden');
             document.getElementById('pdfPlaceholder').classList.remove('hidden');
@@ -481,52 +495,75 @@
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'invoices'), { ...data, invoiceNo: invNo, createdAt: Date.now() });
             }
             generatePDF(client, { ...data, invoiceNo: invNo });
-            showToast("Invoice processed.");
+            showToast("Invoice updated & preview generated.");
         });
 
         const generatePDF = (client, inv) => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const m = 20; let y = 20;
+            const m = 20; const rightAlignX = 190; let y = 20;
 
+            // Brand Header
             doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(65, 105, 225).text("STRATEDGE", m, y);
             doc.setFontSize(10).setTextColor(150).text("COMMUNICATIONS PVT LTD", m, y + 6);
-            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80).text([
-                "42/22 New Ballygunge Road,", 
-                "Kolkata - 700039", 
-                "Email: info.stratedgecommunications@gmail.com",
-                "Contact: +91-9123872596"
-            ], 140, y);
+            
+            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
+            doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
+            doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
+            doc.text("Email: info.stratedgecommunications@gmail.com", rightAlignX, y + 10, { align: 'right' });
+            doc.text("Contact: +91-9123872596", rightAlignX, y + 15, { align: 'right' });
             
             y += 40; doc.setDrawColor(230).line(m, y, 190, y); y += 15;
-            doc.setFontSize(18).setFont("helvetica", "bold").setTextColor(40).text("INVOICE", m, y);
-            doc.setFontSize(9).setFont("helvetica", "normal").text([`No: ${inv.invoiceNo}`, `Date: ${new Date().toLocaleDateString()}`], 150, y);
-            
-            y += 20; doc.setFont("helvetica", "bold").text("BILL TO:", m, y);
-            doc.setFont("helvetica", "normal").text([client.name, ...doc.splitTextToSize(client.address, 80)], m, y + 6);
-            doc.setFont("helvetica", "bold").text("PERIOD:", 140, y);
-            doc.setFont("helvetica", "normal").text(`${new Date(inv.fromDate).toLocaleDateString()} to ${new Date(inv.toDate).toLocaleDateString()}`, 140, y + 6);
 
-            y += 45; doc.setFillColor(245).rect(m, y, 170, 10, 'F');
-            doc.setFont("helvetica", "bold").text("DESCRIPTION", m + 5, y + 7); doc.text("AMOUNT", 160, y + 7);
+            // Invoice Meta
+            doc.setFontSize(18).setFont("helvetica", "bold").setTextColor(40).text("INVOICE", m, y);
+            doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(80);
+            doc.text(`No: ${inv.invoiceNo}`, rightAlignX, y, { align: 'right' });
+            doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, rightAlignX, y + 5, { align: 'right' });
             
-            y += 18; doc.setFont("helvetica", "normal").text(inv.serviceType, m + 5, y);
+            y += 20;
+            doc.setFont("helvetica", "bold").setTextColor(40).text("BILL TO:", m, y);
+            doc.setFont("helvetica", "normal").setTextColor(60).text([client.name, ...doc.splitTextToSize(client.address, 80)], m, y + 6);
+            
+            doc.setFont("helvetica", "bold").setTextColor(40).text("BILLING PERIOD:", rightAlignX, y, { align: 'right' });
+            doc.setFont("helvetica", "normal").setTextColor(60).text(`${new Date(inv.fromDate).toLocaleDateString('en-GB')} to ${new Date(inv.toDate).toLocaleDateString('en-GB')}`, rightAlignX, y + 6, { align: 'right' });
+
+            y += 45;
+            doc.setFillColor(245).rect(m, y, 170, 10, 'F');
+            doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40).text("DESCRIPTION", m + 5, y + 7);
+            doc.text("AMOUNT", rightAlignX - 5, y + 7, { align: 'right' });
+            
+            y += 18;
+            doc.setFont("helvetica", "normal").text(inv.serviceType, m + 5, y);
             doc.setFontSize(8).setTextColor(120).text(inv.comments, m + 5, y + 5);
-            doc.setFontSize(11).setTextColor(40).text(`Rs. ${inv.amount.toLocaleString('en-IN')}/-`, 160, y, { align: 'left' });
+            doc.setFontSize(11).setTextColor(40).text(`Rs. ${inv.amount.toLocaleString('en-IN')}/-`, rightAlignX - 5, y, { align: 'right' });
             
             y += 25; doc.setDrawColor(230).line(m, y, 190, y);
-            y += 10; doc.setFont("helvetica", "bold").setFontSize(12).text("TOTAL AMOUNT:", 100, y);
-            doc.setTextColor(65, 105, 225).text(`Rs. ${inv.amount.toLocaleString('en-IN')}/-`, 160, y);
             
-            y += 10; doc.setFontSize(9).setTextColor(80).setFont("helvetica", "italic").text(`In Words: ${amountToWords(inv.amount)}`, 190 - doc.getTextWidth(`In Words: ${amountToWords(inv.amount)}`), y);
+            y += 10;
+            doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(40).text("TOTAL AMOUNT:", rightAlignX - 50, y, { align: 'right' });
+            doc.setTextColor(65, 105, 225).text(`Rs. ${inv.amount.toLocaleString('en-IN')}/-`, rightAlignX - 5, y, { align: 'right' });
+            
+            y += 8;
+            const words = `In Words: ${amountToWords(inv.amount)}`;
+            doc.setFontSize(9).setTextColor(100).setFont("helvetica", "italic").text(words, rightAlignX - 5, y, { align: 'right' });
 
-            y += 25; doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold").text("BANK DETAILS FOR DIGITAL TRANSFER:", m, y);
-            doc.setFont("helvetica", "normal").setFontSize(9).text(["A/c Name: Stratedge Communications Pvt Ltd", "A/c Number: [TO BE PROVIDED]", "IFSC Code: [TO BE PROVIDED]", "Bank Name: [TO BE PROVIDED]"], m, y + 6);
+            y += 30;
+            doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold").text("BANK DETAILS FOR DIGITAL TRANSFER:", m, y);
+            doc.setFont("helvetica", "normal").setFontSize(9).text([
+                "A/c Name: Stratedge Communications Pvt Ltd",
+                "A/c Number: [TO BE PROVIDED]",
+                "IFSC Code: [TO BE PROVIDED]",
+                "Bank Name: [TO BE PROVIDED]"
+            ], m, y + 6);
 
-            doc.setFontSize(8).setTextColor(180).setFont("helvetica", "normal").text("This is a computer-generated invoice and does not require a physical signature.", 105, 280, { align: "center" });
+            // formal Footer
+            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "normal").text("This is a computer-generated invoice and does not require a physical signature.", 105, 280, { align: "center" });
 
-            document.getElementById('pdfPreview').src = doc.output('datauristring');
-            document.getElementById('pdfPreview').classList.remove('hidden');
+            const pdfUri = doc.output('datauristring');
+            const preview = document.getElementById('pdfPreview');
+            preview.src = pdfUri;
+            preview.classList.remove('hidden');
             document.getElementById('pdfPlaceholder').classList.add('hidden');
         };
 
