@@ -142,7 +142,8 @@
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Code</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client Details</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Since</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Registered</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Metadata</th>
                                 <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
@@ -256,8 +257,6 @@
 
         const generateNextClientCode = () => {
             if (allClients.length === 0) return 'C0001';
-            
-            // Extract numeric parts, find max, and increment
             const codes = allClients.map(c => parseInt((c.clientCode || 'C0000').substring(1)) || 0);
             const maxCode = Math.max(...codes);
             const nextNum = maxCode + 1;
@@ -283,6 +282,12 @@
                 filtered.forEach(client => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50 transition-colors group";
+                    
+                    // Format Created Date
+                    const createdDate = client.createdAt ? new Date(client.createdAt).toLocaleString(undefined, {
+                        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    }) : 'N/A';
+
                     tr.innerHTML = `
                         <td class="px-4 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 bg-blue-50 text-brand-blue text-xs font-bold rounded-md border border-blue-100 uppercase">${client.clientCode}</span>
@@ -294,6 +299,10 @@
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                             ${new Date(client.engagementDate).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })}
                         </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">By: ${client.addedBy || 'N/A'}</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">${createdDate}</div>
+                        </td>
                         <td class="px-4 py-4 whitespace-nowrap text-right">
                             <button onclick="editClient('${client.id}')" class="text-brand-blue hover:text-blue-700 font-bold text-xs mr-3">EDIT</button>
                             <button onclick="deleteClient('${client.id}')" class="text-red-400 hover:text-red-600 font-bold text-xs">DELETE</button>
@@ -303,7 +312,6 @@
                 });
             }
 
-            // Update Form Placeholder for next code
             if (!document.getElementById('editingId').value) {
                 document.getElementById('clientCode').value = generateNextClientCode();
             }
@@ -388,10 +396,8 @@
             }
         });
 
-        // --- Data Listeners ---
         const startListeners = () => {
             if (!fbUser) return;
-            
             const clientRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
             unsubscribeClients = onSnapshot(clientRef, (snapshot) => {
                 allClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
