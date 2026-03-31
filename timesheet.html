@@ -164,8 +164,8 @@
                     </div>
 
                     <div class="bg-gray-50 px-6 py-5 border-t border-gray-200">
-                        <div class="mb-4">
-                            <label for="justification" class="block text-sm font-semibold text-gray-700 mb-2">Justification for Shortfall / Overtime (Optional)</label>
+                        <div id="justificationBlock" class="mb-4 hidden">
+                            <label for="justification" class="block text-sm font-semibold text-gray-700 mb-2">Justification for Shortfall / Overtime <span class="text-red-500">*</span></label>
                             <textarea id="justification" rows="2" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors" placeholder="Explain any deviations from the standard 48-hour week..."></textarea>
                         </div>
                         
@@ -531,8 +531,15 @@
                     }
                 });
 
+                const justBlock = document.getElementById('justificationBlock');
                 const justBox = document.getElementById('justification');
-                if (data.justification) justBox.value = data.justification;
+                if (data.justification) {
+                    justBlock.classList.remove('hidden');
+                    justBox.value = data.justification;
+                } else {
+                    justBlock.classList.add('hidden');
+                    justBox.value = '';
+                }
                 justBox.disabled = true;
 
             } else {
@@ -548,8 +555,12 @@
                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 document.getElementById('declaration').disabled = false;
                 document.getElementById('declaration').checked = false;
-                document.getElementById('justification').disabled = false;
-                document.getElementById('justification').value = '';
+                
+                const justBlock = document.getElementById('justificationBlock');
+                const justBox = document.getElementById('justification');
+                justBox.disabled = false;
+                justBox.value = '';
+                justBlock.classList.add('hidden');
                 
                 if (data && data.status === 'Rejected') {
                     daysOfWeek.forEach((day, index) => {
@@ -559,7 +570,10 @@
                             data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, false));
                         }
                     });
-                    if (data.justification) document.getElementById('justification').value = data.justification;
+                    if (data.justification) {
+                        justBlock.classList.remove('hidden');
+                        justBox.value = data.justification;
+                    }
                 }
             }
         };
@@ -611,7 +625,7 @@
 
         document.getElementById('timesheetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!fbUser) { showToast("Not connected to database. Please wait.", "error"); return; }
+            if (!fbUser) { showToast("Not connected to database. Please wait or check config.", "error"); return; }
 
             const btn = document.getElementById('submitBtn');
             const originalText = btn.innerHTML;
@@ -634,9 +648,26 @@
                 entriesData[day] = dayEntries;
             });
 
+            // Dynamic Justification Validation
+            const justBlock = document.getElementById('justificationBlock');
+            const justBox = document.getElementById('justification');
+            const justificationText = justBox.value.trim();
+
+            if (totalHours !== 48 && justificationText === '') {
+                justBlock.classList.remove('hidden');
+                justBox.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                justBox.focus();
+                showToast(`You logged ${totalHours} hrs. Justification required for not logging exactly 48 hrs.`, "error");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            } else {
+                justBox.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+            }
+
             const payload = {
                 empId: activeUser.empId, name: activeUser.name, week: weekStr, entries: entriesData,
-                totalHours: totalHours, justification: document.getElementById('justification').value.trim(), status: 'Submitted', submittedAt: Date.now()
+                totalHours: totalHours, justification: justificationText, status: 'Submitted', submittedAt: Date.now()
             };
 
             try {
@@ -663,12 +694,7 @@
         // 3. FIREBASE CONNECTION 
         // ==========================================
         // ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE ⚠️
-        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-        let firebaseConfig;
-        if (firebaseConfigStr) {
-            firebaseConfig = JSON.parse(firebaseConfigStr);
-        } else {
-            const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
   authDomain: "stratedge-time.firebaseapp.com",
   projectId: "stratedge-time",
@@ -676,8 +702,7 @@
   messagingSenderId: "550779977682",
   appId: "1:550779977682:web:d4b4983b62876655b3d20b"
 };
-        }
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stratedge-time-recorder';
+        const appId = 'stratedge-time-recorder';
 
         let app, auth, db;
         try {
