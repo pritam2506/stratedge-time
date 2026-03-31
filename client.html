@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stratedge | Client & Invoicing Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -82,7 +84,7 @@
             <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
                 <h3 id="formTitle" class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"></path></svg>
-                    Register New Client
+                    Register Client
                 </h3>
                 <form id="clientForm" class="space-y-4">
                     <input type="hidden" id="editingId">
@@ -103,13 +105,13 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="engagementDate" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                            <label for="engagementDate" class="block text-sm font-medium text-gray-700 mb-1 text-xs">Start Date</label>
                             <input type="date" id="engagementDate" required 
-                                class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-sm">
+                                class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-xs">
                         </div>
                         <div>
-                            <label for="clientStatus" class="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
-                            <select id="clientStatus" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-sm">
+                            <label for="clientStatus" class="block text-sm font-medium text-gray-700 mb-1 text-xs">Account Status</label>
+                            <select id="clientStatus" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-xs">
                                 <option value="active" selected>Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
@@ -165,10 +167,94 @@
             </div>
         </div>
 
-        <div id="tab-invoices" class="hidden bg-white p-12 rounded-xl shadow-sm border border-gray-200 text-center">
-            <svg class="w-16 h-16 text-brand-blue/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Invoice Generator (Coming Soon)</h3>
-            <p class="text-gray-600 max-w-md mx-auto">This module will allow you to generate professional PDF invoices based on employee timesheet data and client billing rates.</p>
+        <!-- TAB 2: INVOICE GENERATOR -->
+        <div id="tab-invoices" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-8 transition-all">
+            
+            <!-- Invoice Creation Form -->
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="text-xl font-bold text-brand-blue mb-6 flex items-center gap-2 border-b pb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Generate Professional Invoice
+                </h3>
+                
+                <form id="invoiceForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Select Client</label>
+                            <select id="invClientSelect" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                                <option value="" disabled selected>-- Choose Client --</option>
+                                <!-- Populated by JS from allClients -->
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Billing From</label>
+                            <input type="date" id="invFromDate" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Billing To</label>
+                            <input type="date" id="invToDate" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Service Type</label>
+                            <div class="flex flex-wrap gap-4 mt-2">
+                                <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 cursor-pointer hover:border-brand-blue transition-colors">
+                                    <input type="radio" name="serviceType" value="Social Media" checked class="w-4 h-4 text-brand-blue">
+                                    <span class="text-sm">Social Media</span>
+                                </label>
+                                <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 cursor-pointer hover:border-brand-blue transition-colors">
+                                    <input type="radio" name="serviceType" value="Brand Strategy" class="w-4 h-4 text-brand-blue">
+                                    <span class="text-sm">Brand Strategy</span>
+                                </label>
+                                <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 cursor-pointer hover:border-brand-blue transition-colors">
+                                    <input type="radio" name="serviceType" value="Others" class="w-4 h-4 text-brand-blue">
+                                    <span class="text-sm">Others</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Service Comments <span class="text-xs text-gray-400 font-normal">(Max 30 chars)</span></label>
+                            <input type="text" id="invComments" maxlength="30" placeholder="e.g. Content Creation for March" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-all">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Amount (INR)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-400 font-bold">₹</span>
+                                <input type="number" id="invAmount" required placeholder="0.00" step="0.01" class="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-all font-mono font-bold text-lg">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-black py-4 px-6 rounded-xl shadow-lg transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        PREVIEW & DOWNLOAD INVOICE
+                    </button>
+                </form>
+            </div>
+
+            <!-- PDF Preview -->
+            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col h-full min-h-[600px] relative border-4 border-gray-700">
+                <div class="bg-gray-700 px-4 py-2 flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Live PDF Preview</span>
+                    <div class="flex gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                    </div>
+                </div>
+                
+                <!-- This will hold our preview iframe -->
+                <div id="pdfPlaceholder" class="flex-grow flex items-center justify-center text-center p-8">
+                    <div>
+                        <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <p class="text-gray-500 font-medium">Fill out the form to generate a preview</p>
+                    </div>
+                </div>
+                <iframe id="pdfPreview" class="hidden w-full h-full border-none"></iframe>
+            </div>
         </div>
     </main>
 
@@ -228,6 +314,7 @@
                 btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm";
                 btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900";
                 tabInvoices.classList.remove('hidden');
+                tabInvoices.classList.add('grid');
                 tabClients.classList.replace('grid', 'hidden');
             }
         };
@@ -250,6 +337,8 @@
             setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
         };
 
+        // --- Client Logic ---
+
         const generateNextClientCode = () => {
             if (allClients.length === 0) return 'C0001';
             const codes = allClients.map(c => parseInt((c.clientCode || 'C0000').substring(1)) || 0);
@@ -261,12 +350,25 @@
             const tbody = document.getElementById('clientsList');
             const empty = document.getElementById('emptyState');
             const search = document.getElementById('clientSearch').value.toLowerCase();
+            const invSelect = document.getElementById('invClientSelect');
+            
             tbody.innerHTML = '';
+            const currentInvValue = invSelect.value;
+            invSelect.innerHTML = '<option value="" disabled selected>-- Choose Client --</option>';
             
             const filtered = allClients.filter(c => 
                 (c.name || '').toLowerCase().includes(search) || 
                 (c.clientCode || '').toLowerCase().includes(search)
             ).sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            // Populate Invoice Dropdown (All Active Clients)
+            allClients.filter(c => c.status !== 'inactive').sort((a,b) => a.name.localeCompare(b.name)).forEach(client => {
+                const opt = document.createElement('option');
+                opt.value = client.id;
+                opt.textContent = `${client.name} (${client.clientCode})`;
+                invSelect.appendChild(opt);
+            });
+            if (currentInvValue) invSelect.value = currentInvValue;
 
             if (filtered.length === 0) {
                 empty.classList.remove('hidden');
@@ -286,20 +388,20 @@
                     tr.innerHTML = `
                         <td class="px-4 py-4 whitespace-nowrap font-mono text-xs font-bold text-brand-blue">${client.clientCode}</td>
                         <td class="px-4 py-4">
-                            <div class="font-bold text-gray-900">${client.name}</div>
-                            <div class="text-[10px] text-gray-500 line-clamp-1 italic">${client.address}</div>
+                            <div class="font-bold text-gray-900 text-xs">${client.name}</div>
+                            <div class="text-[9px] text-gray-500 line-clamp-1 italic">${client.address}</div>
                         </td>
                         <td class="px-4 py-4 text-center">${statusBadge}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-xs text-gray-600">
                             ${new Date(client.engagementDate).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })}
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap">
-                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">By: ${client.addedBy || 'N/A'}</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">${createdDate}</div>
+                            <div class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">By: ${client.addedBy || 'N/A'}</div>
+                            <div class="text-[9px] text-gray-400 mt-0.5">${createdDate}</div>
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap text-right">
-                            <button onclick="editClient('${client.id}')" class="text-brand-blue hover:text-blue-700 font-bold text-xs mr-3">EDIT</button>
-                            <button onclick="deleteClient('${client.id}')" class="text-red-400 hover:text-red-600 font-bold text-xs">DEL</button>
+                            <button onclick="editClient('${client.id}')" class="text-brand-blue hover:text-blue-700 font-bold text-[10px] mr-2">EDIT</button>
+                            <button onclick="deleteClient('${client.id}')" class="text-red-400 hover:text-red-600 font-bold text-[10px]">DEL</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -323,7 +425,7 @@
             document.getElementById('clientStatus').value = c.status || 'active';
 
             document.getElementById('formTitle').innerHTML = `
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2-2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 Update Client
             `;
             document.getElementById('submitBtn').innerHTML = "Save Changes";
@@ -389,6 +491,136 @@
             }
         });
 
+        // --- Invoice Generator Logic ---
+        document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const clientId = document.getElementById('invClientSelect').value;
+            const fromDate = document.getElementById('invFromDate').value;
+            const toDate = document.getElementById('invToDate').value;
+            const serviceType = document.querySelector('input[name="serviceType"]:checked').value;
+            const comments = document.getElementById('invComments').value;
+            const amount = parseFloat(document.getElementById('invAmount').value);
+
+            const client = allClients.find(c => c.id === clientId);
+            if (!client) return;
+
+            generateInvoicePDF(client, fromDate, toDate, serviceType, comments, amount);
+        });
+
+        const generateInvoicePDF = (client, fromDate, toDate, serviceType, comments, amount) => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const margin = 20;
+            let cursorY = 20;
+
+            // Branding Header
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(24);
+            doc.setTextColor(65, 105, 225); // Brand Blue
+            doc.text("STRATEDGE", margin, cursorY);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text("COMMUNICATIONS PVT LTD", margin, cursorY + 6);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            doc.setFont("helvetica", "normal");
+            doc.text("Hiranandani Gardens, Powai,", 140, cursorY);
+            doc.text("Mumbai, Maharashtra 400076", 140, cursorY + 5);
+            doc.text("Email: accounts@stratedge.com", 140, cursorY + 10);
+            
+            cursorY += 35;
+            doc.setDrawColor(230, 230, 230);
+            doc.line(margin, cursorY, 190, cursorY);
+            cursorY += 15;
+
+            // Invoice Title & Info
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(40, 40, 40);
+            doc.text("INVOICE", margin, cursorY);
+            
+            const invNo = "INV-" + Date.now().toString().slice(-6);
+            const today = new Date().toLocaleDateString();
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Invoice No: ${invNo}`, 140, cursorY);
+            doc.text(`Date: ${today}`, 140, cursorY + 5);
+            
+            cursorY += 20;
+
+            // Bill To
+            doc.setFont("helvetica", "bold");
+            doc.text("BILL TO:", margin, cursorY);
+            doc.setFont("helvetica", "normal");
+            doc.text(client.name, margin, cursorY + 5);
+            
+            // Handle address wrapping
+            const splitAddress = doc.splitTextToSize(client.address, 80);
+            doc.text(splitAddress, margin, cursorY + 10);
+            
+            // Billing Period
+            doc.setFont("helvetica", "bold");
+            doc.text("BILLING PERIOD:", 140, cursorY);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${new Date(fromDate).toLocaleDateString()} to ${new Date(toDate).toLocaleDateString()}`, 140, cursorY + 5);
+
+            cursorY += 40;
+
+            // Table Header
+            doc.setFillColor(245, 245, 245);
+            doc.rect(margin, cursorY, 170, 10, 'F');
+            doc.setFont("helvetica", "bold");
+            doc.text("DESCRIPTION", margin + 5, cursorY + 7);
+            doc.text("AMOUNT", 160, cursorY + 7);
+            
+            cursorY += 10;
+            
+            // Item row
+            doc.setFont("helvetica", "normal");
+            doc.text(`${serviceType}`, margin + 5, cursorY + 10);
+            doc.setFontSize(8);
+            doc.setTextColor(120, 120, 120);
+            doc.text(comments, margin + 5, cursorY + 15);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(40, 40, 40);
+            doc.text(`INR ${amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 160, cursorY + 10);
+            
+            cursorY += 30;
+            doc.line(margin, cursorY, 190, cursorY);
+            cursorY += 10;
+
+            // Totals
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text("TOTAL AMOUNT:", 110, cursorY);
+            doc.setTextColor(65, 105, 225);
+            doc.text(`INR ${amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 160, cursorY);
+            
+            // Footer
+            cursorY = 270;
+            doc.setFontSize(8);
+            doc.setTextColor(180, 180, 180);
+            doc.text("This is a computer generated document. No signature required.", 105, cursorY, { align: "center" });
+
+            // Preview logic
+            const pdfDataUri = doc.output('datauristring');
+            const previewEl = document.getElementById('pdfPreview');
+            const placeholderEl = document.getElementById('pdfPlaceholder');
+            
+            previewEl.src = pdfDataUri;
+            previewEl.classList.remove('hidden');
+            placeholderEl.classList.add('hidden');
+            
+            showToast("Invoice generated successfully! Scroll down to download or view.", "success");
+        };
+
+        // --- Data Listeners ---
         onAuthStateChanged(auth, (user) => {
             fbUser = user;
             if (user) {
