@@ -112,94 +112,94 @@
                             <option value="Employee" selected>Employee</option>
                             <option value="Admin">Admin</option>
                         </select>
-                    </div>
-                    <div>
-                        <label for="userDesig" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                        <input type="text" id="userDesig" required placeholder="e.g. Graphic Designer" 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
-                    </div>
-                    <div>
-                        <label for="userDept" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                        <select id="userDept" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
-                            <option value="" disabled selected>Select Department...</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Founder's office">Founder's office</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="userPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <input type="tel" id="userPhone" required placeholder="e.g. +1 234 567 8900" 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
-                    </div>
-                    <div>
-                        <label for="userDOJ" class="block text-sm font-medium text-gray-700 mb-1">Date of Joining</label>
-                        <input type="date" id="userDOJ" required 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-sm">
-                    </div>
-                    
-                    <button type="submit" id="submitBtn" 
-                        class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center mt-6">
-                        <span>Add Employee</span>
+        <!-- Modal: Employee Stats -->
+        <div id="statsModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-xl font-bold text-gray-900" id="statsModalTitle">Employee Statistics</h3>
+                    <button onclick="closeModal('statsModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
-                </form>
-            </div>
-
-            <!-- Users List -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                        Current Employees
-                    </h3>
-                    <span id="userCount" class="bg-blue-100 text-brand-blue text-xs font-bold px-3 py-1.5 rounded-full">0 Employees</span>
                 </div>
-                
-                <!-- Employee Filters -->
-                <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div class="flex-1">
-                        <label for="filterName" class="sr-only">Search Employee</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <div class="p-6 overflow-y-auto flex-1">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Left Column: Current Month -->
+                        <div>
+                            <!-- Current Month Stats -->
+                            <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsMonthLabel">Current Month</h4>
+                            
+                            <!-- TOTAL HOURS MONTH -->
+                            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mb-4 shadow-sm">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Hours Logged</div>
+                                    <div class="text-[10px] font-bold px-2 py-1 bg-white rounded text-indigo-700 shadow-sm border border-indigo-100" id="stat-m-prog">0% of Goal</div>
+                                </div>
+                                <div class="text-3xl font-black text-indigo-900 mt-1" id="stat-m-total">0.0</div>
+                                <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3">
+                                    <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" id="stat-m-bar" style="width: 0%"></div>
+                                </div>
                             </div>
-                            <input type="text" id="filterName" oninput="renderEmployees()" placeholder="Search by name or ID..." class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors">
+
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <div class="text-xs text-blue-500 font-bold uppercase">Work Hours</div>
+                                    <div class="text-2xl font-black text-brand-blue" id="stat-m-work">0.0</div>
+                                </div>
+                                <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                    <div class="text-xs text-orange-600 font-bold uppercase">Sick Leave</div>
+                                    <div class="text-2xl font-black text-brand-orange" id="stat-m-sl">0.0</div>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                                    <div class="text-xs text-purple-600 font-bold uppercase">Earned Leave</div>
+                                    <div class="text-2xl font-black text-purple-600" id="stat-m-el">0.0</div>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <div class="text-xs text-gray-600 font-bold uppercase">Public Holiday</div>
+                                    <div class="text-2xl font-black text-gray-700" id="stat-m-ph">0.0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: YTD -->
+                        <div>
+                            <!-- YTD Stats -->
+                            <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsYtdLabel">Year To Date</h4>
+                            
+                            <!-- TOTAL HOURS YTD -->
+                            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mb-4 shadow-sm">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Hours Logged</div>
+                                    <div class="text-[10px] font-bold px-2 py-1 bg-white rounded text-indigo-700 shadow-sm border border-indigo-100" id="stat-y-prog">0% of Goal</div>
+                                </div>
+                                <div class="text-3xl font-black text-indigo-900 mt-1" id="stat-y-total">0.0</div>
+                                <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3">
+                                    <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" id="stat-y-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <div class="text-xs text-blue-500 font-bold uppercase">Work Hours</div>
+                                    <div class="text-2xl font-black text-brand-blue" id="stat-y-work">0.0</div>
+                                </div>
+                                <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                    <div class="text-xs text-orange-600 font-bold uppercase">Sick Leave</div>
+                                    <div class="text-2xl font-black text-brand-orange" id="stat-y-sl">0.0</div>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                                    <div class="text-xs text-purple-600 font-bold uppercase">Earned Leave</div>
+                                    <div class="text-2xl font-black text-purple-600" id="stat-y-el">0.0</div>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <div class="text-xs text-gray-600 font-bold uppercase">Public Holiday</div>
+                                    <div class="text-2xl font-black text-gray-700" id="stat-y-ph">0.0</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="sm:w-40">
-                        <label for="filterRole" class="sr-only">Filter by Role</label>
-                        <select id="filterRole" onchange="renderEmployees()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors text-gray-700">
-                            <option value="">All Roles</option>
-                            <option value="Employee">Employee</option>
-                            <option value="Admin">Admin</option>
-                        </select>
-                    </div>
-                    <div class="sm:w-48">
-                        <label for="filterDept" class="sr-only">Filter by Department</label>
-                        <select id="filterDept" onchange="renderEmployees()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors text-gray-700">
-                            <option value="">All Departments</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Founder's office">Founder's office</option>
-                        </select>
-                    </div>
                 </div>
-
-                <div class="overflow-x-auto border border-gray-200 rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role/Dept</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersList" class="bg-white divide-y divide-gray-200">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 text-right text-xs text-gray-500">
+                    * Progress statistics are calculated from approved timesheets only.
                 </div>
             </div>
         </div>
@@ -213,6 +213,36 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                     Timesheet Approvals
                 </h3>
+            </div>
+            
+            <!-- Timesheet Filters -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div class="flex-1">
+                    <label for="tsFilterName" class="sr-only">Search Employee</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="tsFilterName" oninput="renderTimesheets()" placeholder="Search by employee name..." class="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors">
+                    </div>
+                </div>
+                
+                <!-- Custom Calendar Week Selector Dropdown -->
+                <div class="w-full sm:w-72 relative">
+                    <label class="sr-only">Calendar Week Filter</label>
+                    <button id="adminWeekSelectorBtn" type="button" onclick="toggleAdminWeekDropdown()" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-md flex justify-between items-center hover:bg-gray-50 focus:ring-2 focus:ring-brand-blue outline-none transition-all shadow-sm text-sm text-gray-700">
+                        <div id="adminWeekSelectorDisplay" class="flex items-center gap-2 font-medium">
+                            All Weeks
+                        </div>
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <!-- Calendar Popover List -->
+                    <div id="adminWeekDropdown" class="hidden absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl right-0 p-2">
+                        <!-- Injected dynamically via JS -->
+                    </div>
+                    <input type="hidden" id="tsFilterWeek" value="">
+                </div>
             </div>
             
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
@@ -479,6 +509,10 @@
             document.getElementById('notifDropdown').classList.toggle('hidden');
         };
 
+        window.toggleAdminWeekDropdown = () => {
+            document.getElementById('adminWeekDropdown').classList.toggle('hidden');
+        };
+
         window.markAllRead = () => {
             const pending = allTimesheets.filter(ts => !ts.status || ts.status === 'Submitted' || ts.status === 'Pending');
             pending.forEach(ts => readNotifIds.add(ts.id));
@@ -492,6 +526,12 @@
             const dropdown = document.getElementById('notifDropdown');
             if (bell && dropdown && !bell.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.classList.add('hidden');
+            }
+
+            const adminWeekBtn = document.getElementById('adminWeekSelectorBtn');
+            const adminWeekDrop = document.getElementById('adminWeekDropdown');
+            if (adminWeekBtn && adminWeekDrop && !adminWeekBtn.contains(e.target) && !adminWeekDrop.contains(e.target)) {
+                adminWeekDrop.classList.add('hidden');
             }
         });
 
@@ -555,6 +595,22 @@
                 dates.push(d);
             }
             return dates;
+        };
+
+        const getWeekString = (dateObj) => {
+            const tempDate = new Date(dateObj.valueOf());
+            const dayn = (tempDate.getDay() + 6) % 7;
+            tempDate.setDate(tempDate.getDate() - dayn + 3);
+            const firstThursday = tempDate.valueOf();
+            tempDate.setMonth(0, 1);
+            if (tempDate.getDay() !== 4) tempDate.setMonth(0, 1 + ((4 - tempDate.getDay()) + 7) % 7);
+            const weekNum = 1 + Math.ceil((firstThursday - tempDate) / 604800000);
+            return `${tempDate.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
+        };
+
+        const getWeekRangeText = (weekStr) => {
+            const dates = getDatesFromWeek(weekStr);
+            return `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} to ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
         };
 
         // --- EXPORT LOGIC ---
@@ -742,20 +798,77 @@
         };
 
         // --- TIMESHEET APPROVAL LOGIC ---
+
+        window.selectAdminWeek = (weekStr) => {
+            document.getElementById('tsFilterWeek').value = weekStr;
+            if (weekStr === '') {
+                document.getElementById('adminWeekSelectorDisplay').textContent = 'All Weeks';
+            } else {
+                const dates = getDatesFromWeek(weekStr);
+                const monthShort = dates[0].toLocaleDateString('en-US', {month: 'short'});
+                document.getElementById('adminWeekSelectorDisplay').innerHTML = `
+                    <span class="font-bold text-gray-800">${weekStr}</span> 
+                    <span class="text-gray-500 font-medium ml-1">(${monthShort})</span>
+                `;
+            }
+            document.getElementById('adminWeekDropdown').classList.add('hidden');
+            renderTimesheets();
+        };
+
+        const generateAdminCalendarList = () => {
+            const dropdown = document.getElementById('adminWeekDropdown');
+            if (!dropdown) return;
+            dropdown.innerHTML = '';
+
+            dropdown.innerHTML += `
+                <div class="p-2 mb-1 rounded-md border border-transparent hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-all" onclick="selectAdminWeek('')">
+                    <div class="font-bold text-gray-800 text-sm">All Weeks</div>
+                </div>
+            `;
+
+            const uniqueWeeks = [...new Set(allTimesheets.map(ts => ts.week))];
+            const currentWeekStr = getWeekString(new Date());
+            if (!uniqueWeeks.includes(currentWeekStr)) uniqueWeeks.push(currentWeekStr);
+
+            uniqueWeeks.sort().reverse();
+
+            uniqueWeeks.forEach(w => {
+                const rangeText = getWeekRangeText(w);
+                const isCurrent = w === currentWeekStr;
+                const currentBadge = isCurrent ? '<span class="ml-2 bg-brand-blue text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm">Current</span>' : '';
+                
+                dropdown.innerHTML += `
+                    <div class="p-2 mb-1 rounded-md border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all" onclick="selectAdminWeek('${w}')">
+                        <div class="font-bold text-gray-800 text-sm flex items-center">${w} ${currentBadge}</div>
+                        <div class="text-xs text-gray-500 mt-0.5">${rangeText}</div>
+                    </div>
+                `;
+            });
+        };
+
         const renderTimesheets = () => {
             const tbody = document.getElementById('timesheetsList');
             tbody.innerHTML = '';
             
             updateNotifications();
 
-            if (allTimesheets.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No timesheets submitted yet.</td></tr>`;
+            const nameFilter = document.getElementById('tsFilterName') ? document.getElementById('tsFilterName').value.toLowerCase() : '';
+            const weekFilter = document.getElementById('tsFilterWeek') ? document.getElementById('tsFilterWeek').value : '';
+
+            let displayTimesheets = allTimesheets.filter(ts => {
+                const matchesName = ts.name && ts.name.toLowerCase().includes(nameFilter);
+                const matchesWeek = weekFilter === '' || ts.week === weekFilter;
+                return matchesName && matchesWeek;
+            });
+
+            if (displayTimesheets.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No timesheets match the current filters.</td></tr>`;
                 return;
             }
 
-            allTimesheets.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+            displayTimesheets.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
 
-            allTimesheets.forEach(ts => {
+            displayTimesheets.forEach(ts => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition-colors";
                 
@@ -1130,6 +1243,7 @@
             const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
             unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
                 allTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                generateAdminCalendarList();
                 renderTimesheets();
             }, (error) => console.error("Timesheet error:", error));
         };
