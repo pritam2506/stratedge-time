@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratedge | Client & Invoicing Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#4169E1', // Royal Blue
+                        'brand-orange': '#FFA500', // Orange
+                        'brand-orange-hover': '#e69500',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Access Denied Overlay (Hidden by default) -->
+    <div id="accessDenied" class="fixed inset-0 bg-white z-[999] hidden flex-col items-center justify-center">
+        <svg class="w-20 h-20 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Access Denied</h2>
+        <p class="text-gray-600 mb-6">You must be an Administrator to access the Client Portal.</p>
+        <button onclick="window.location.href='index.html'" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">Return to Login</button>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-brand-blue text-white shadow-md z-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='admin.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 hidden sm:flex border-r border-white/20 pr-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Admin Dashboard
+                </button>
+
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">
+                    Client Portal
+                </div>
+                <button onclick="logout()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Client & Invoicing</h2>
+                <p class="text-gray-600 mt-1">Manage client records and generate monthly invoices.</p>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex bg-gray-200 p-1 rounded-lg shadow-inner">
+                <button id="tab-btn-clients" class="px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm" onclick="switchTab('clients')">
+                    Client Directory
+                </button>
+                <button id="tab-btn-invoices" class="px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900" onclick="switchTab('invoices')">
+                    Invoice Generator
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================== -->
+        <!-- TAB 1: CLIENT MANAGEMENT       -->
+        <!-- ============================== -->
+        <div id="tab-clients" class="grid grid-cols-1 lg:grid-cols-3 gap-8 transition-all">
+            <!-- Add Client Form -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
+                <h3 id="formTitle" class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"></path></svg>
+                    Register New Client
+                </h3>
+                <form id="clientForm" class="space-y-4">
+                    <input type="hidden" id="editingId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 uppercase tracking-wider">Client Code</label>
+                        <input type="text" id="clientCode" readonly value="Auto-generated" 
+                            class="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 font-bold outline-none cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="clientName" class="block text-sm font-medium text-gray-700 mb-1">Client / Company Name</label>
+                        <input type="text" id="clientName" required placeholder="e.g. Acme Corp" 
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="clientAddress" class="block text-sm font-medium text-gray-700 mb-1">Office Address</label>
+                        <textarea id="clientAddress" required rows="3" placeholder="Full billing address..." 
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all"></textarea>
+                    </div>
+                    <div>
+                        <label for="engagementDate" class="block text-sm font-medium text-gray-700 mb-1">Engagement Start Date</label>
+                        <input type="date" id="engagementDate" required 
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                    </div>
+                    
+                    <div class="flex gap-2 pt-4">
+                        <button type="submit" id="submitBtn" 
+                            class="flex-1 bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 px-4 rounded-lg shadow-sm transition-all flex justify-center items-center">
+                            <span>Register Client</span>
+                        </button>
+                        <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Client List Display -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        Registered Clients
+                    </h3>
+                    <div class="relative w-64">
+                        <input type="text" id="clientSearch" oninput="renderClients()" placeholder="Search clients..." 
+                            class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-blue outline-none">
+                        <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-gray-100">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Code</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client Details</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Since</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsList" class="bg-white divide-y divide-gray-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="hidden py-12 text-center text-gray-500">
+                    <p>No clients found. Register your first client to get started.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================== -->
+        <!-- TAB 2: INVOICE GENERATOR       -->
+        <!-- ============================== -->
+        <div id="tab-invoices" class="hidden bg-white p-12 rounded-xl shadow-sm border border-gray-200 text-center">
+            <svg class="w-16 h-16 text-brand-blue/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Invoice Generator (Coming Soon)</h3>
+            <p class="text-gray-600 max-w-md mx-auto">This module will allow you to generate professional PDF invoices based on employee timesheet data and client billing rates.</p>
+        </div>
+
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-[100] flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
+        <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
+        <div id="toastMessage" class="ml-3 text-sm font-semibold">Message here.</div>
+    </div>
+
+    <!-- Firebase Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+  authDomain: "stratedge-time.firebaseapp.com",
+  projectId: "stratedge-time",
+  storageBucket: "stratedge-time.firebasestorage.app",
+  messagingSenderId: "550779977682",
+  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+};
+        const appId = 'stratedge-time-recorder';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Session & State
+        const sessionUser = sessionStorage.getItem('stratedge_active_user');
+        const activeUser = sessionUser ? JSON.parse(sessionUser) : null;
+        let fbUser = null;
+        let allClients = [];
+        let unsubscribeClients = null;
+
+        // --- Auth Guard ---
+        if (!activeUser || activeUser.role !== 'Admin') {
+            document.getElementById('accessDenied').classList.remove('hidden');
+        }
+
+        window.logout = () => {
+            sessionStorage.removeItem('stratedge_active_user');
+            window.location.href = 'index.html';
+        };
+
+        // --- UI Utils ---
+        window.switchTab = (tabName) => {
+            const btnClients = document.getElementById('tab-btn-clients');
+            const btnInvoices = document.getElementById('tab-btn-invoices');
+            const tabClients = document.getElementById('tab-clients');
+            const tabInvoices = document.getElementById('tab-invoices');
+
+            if (tabName === 'clients') {
+                btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm";
+                btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900";
+                tabClients.classList.remove('hidden');
+                tabClients.classList.add('grid');
+                tabInvoices.classList.add('hidden');
+            } else {
+                btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm";
+                btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900";
+                tabInvoices.classList.remove('hidden');
+                tabClients.classList.remove('grid');
+                tabClients.classList.add('hidden');
+            }
+        };
+
+        const showToast = (message, type = 'success') => {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMessage');
+            const iconEl = document.getElementById('toastIcon');
+            msgEl.textContent = message;
+            
+            if (type === 'success') {
+                iconEl.innerHTML = `<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg';
+            } else {
+                iconEl.innerHTML = `<svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center w-8 h-8 bg-red-100 rounded-lg';
+            }
+            
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
+        };
+
+        // --- Client Logic ---
+
+        const generateNextClientCode = () => {
+            if (allClients.length === 0) return 'C0001';
+            
+            // Extract numeric parts, find max, and increment
+            const codes = allClients.map(c => parseInt((c.clientCode || 'C0000').substring(1)) || 0);
+            const maxCode = Math.max(...codes);
+            const nextNum = maxCode + 1;
+            return `C${nextNum.toString().padStart(4, '0')}`;
+        };
+
+        window.renderClients = () => {
+            const tbody = document.getElementById('clientsList');
+            const empty = document.getElementById('emptyState');
+            const search = document.getElementById('clientSearch').value.toLowerCase();
+            
+            tbody.innerHTML = '';
+            
+            const filtered = allClients.filter(c => 
+                (c.name || '').toLowerCase().includes(search) || 
+                (c.clientCode || '').toLowerCase().includes(search)
+            ).sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            if (filtered.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                filtered.forEach(client => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition-colors group";
+                    tr.innerHTML = `
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 bg-blue-50 text-brand-blue text-xs font-bold rounded-md border border-blue-100 uppercase">${client.clientCode}</span>
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="text-sm font-bold text-gray-900">${client.name}</div>
+                            <div class="text-xs text-gray-500 mt-0.5 line-clamp-1 italic">${client.address}</div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                            ${new Date(client.engagementDate).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-right">
+                            <button onclick="editClient('${client.id}')" class="text-brand-blue hover:text-blue-700 font-bold text-xs mr-3">EDIT</button>
+                            <button onclick="deleteClient('${client.id}')" class="text-red-400 hover:text-red-600 font-bold text-xs">DELETE</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Update Form Placeholder for next code
+            if (!document.getElementById('editingId').value) {
+                document.getElementById('clientCode').value = generateNextClientCode();
+            }
+        };
+
+        window.editClient = (id) => {
+            const c = allClients.find(client => client.id === id);
+            if (!c) return;
+
+            document.getElementById('editingId').value = c.id;
+            document.getElementById('clientCode').value = c.clientCode;
+            document.getElementById('clientName').value = c.name;
+            document.getElementById('clientAddress').value = c.address;
+            document.getElementById('engagementDate').value = c.engagementDate;
+
+            document.getElementById('formTitle').innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                Update Client Info
+            `;
+            document.getElementById('submitBtn').innerHTML = "Save Changes";
+            document.getElementById('cancelBtn').classList.remove('hidden');
+        };
+
+        window.resetForm = () => {
+            document.getElementById('clientForm').reset();
+            document.getElementById('editingId').value = '';
+            document.getElementById('clientCode').value = generateNextClientCode();
+            document.getElementById('formTitle').innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"></path></svg>
+                Register New Client
+            `;
+            document.getElementById('submitBtn').innerHTML = "Register Client";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        };
+
+        window.deleteClient = async (id) => {
+            if (!confirm("Are you sure? This will remove the client record permanently.")) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'clients', id));
+                showToast("Client deleted successfully.");
+            } catch (error) {
+                showToast("Delete failed: " + error.message, 'error');
+            }
+        };
+
+        document.getElementById('clientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!activeUser || activeUser.role !== 'Admin') return;
+
+            const editId = document.getElementById('editingId').value;
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            const payload = {
+                name: document.getElementById('clientName').value.trim(),
+                address: document.getElementById('clientAddress').value.trim(),
+                engagementDate: document.getElementById('engagementDate').value,
+                updatedAt: Date.now()
+            };
+
+            try {
+                if (editId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'clients', editId), payload);
+                    showToast("Client updated successfully.");
+                } else {
+                    const code = generateNextClientCode();
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), {
+                        ...payload,
+                        clientCode: code,
+                        addedBy: activeUser.empId,
+                        createdAt: Date.now()
+                    });
+                    showToast("New client registered successfully!");
+                }
+                resetForm();
+            } catch (error) {
+                showToast("Storage error: " + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            }
+        });
+
+        // --- Data Listeners ---
+        const startListeners = () => {
+            if (!fbUser) return;
+            
+            const clientRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
+            unsubscribeClients = onSnapshot(clientRef, (snapshot) => {
+                allClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderClients();
+            });
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            fbUser = user;
+            if (user) startListeners();
+            else if (unsubscribeClients) unsubscribeClients();
+        });
+
+        signInAnonymously(auth);
+
+    </script>
+</body>
+</html>
