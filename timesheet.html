@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stratedge | Timesheet Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom sleek scrollbar for the calendar dropdown */
+        .calendar-scroll::-webkit-scrollbar { width: 6px; }
+        .calendar-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .calendar-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .calendar-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
     <script>
         tailwind.config = {
             theme: {
@@ -114,15 +121,15 @@
                             </div>
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600 flex items-center gap-2">
-                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>Casual Leave (CL)
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>Earned Leave (EL)
                                 </span>
-                                <span class="font-bold text-gray-800" id="leaveCL">0.0 days</span>
+                                <span class="font-bold text-gray-800" id="leaveEL">0.0 days</span>
                             </div>
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600 flex items-center gap-2">
-                                    <div class="w-2 h-2 rounded-full bg-purple-500"></div>Earned Leave (EL)
+                                    <div class="w-2 h-2 rounded-full bg-purple-500"></div>Public Holiday (PH)
                                 </span>
-                                <span class="font-bold text-gray-800" id="leaveEL">0.0 days</span>
+                                <span class="font-bold text-gray-800" id="leavePH">0.0 days</span>
                             </div>
                         </div>
                         <p class="text-xs text-gray-400 mt-3 text-right">* 1 day = 8 hours</p>
@@ -132,28 +139,44 @@
 
             <!-- Right Side: Timesheet Entry -->
             <div class="lg:col-span-3">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                
+                <!-- Enhanced Calendar Header -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                    <div class="flex-1">
                         <h2 class="text-xl font-bold text-gray-900 mb-1">Weekly Timesheet</h2>
-                        <p class="text-sm text-gray-600">Select a week to view or submit hours. <span class="font-semibold text-brand-blue text-xs ml-2">🟢 Approved &nbsp; 🟠 Pending &nbsp; 🔴 Open</span></p>
+                        <div class="flex items-center gap-3 text-xs font-semibold text-gray-500 bg-gray-50 py-1.5 px-3 rounded-lg w-fit mt-2">
+                            <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-green-500"></div> Approved</span>
+                            <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-brand-orange"></div> Pending</span>
+                            <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-red-500"></div> Open</span>
+                        </div>
                     </div>
-                    <div class="w-full sm:w-auto">
-                        <label for="weekSelector" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Select Week</label>
-                        <select id="weekSelector" 
-                            class="w-full sm:w-auto px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all font-medium text-gray-700">
-                            <!-- Populated dynamically by JS -->
-                        </select>
+                    
+                    <!-- Custom Calendar Week Selector Dropdown -->
+                    <div class="w-full sm:w-72 relative">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Calendar Week Filter</label>
+                        <button id="weekSelectorBtn" type="button" onclick="toggleWeekDropdown()" class="w-full px-4 py-3 bg-white border-2 border-brand-blue/30 rounded-xl flex justify-between items-center hover:bg-blue-50 focus:ring-4 focus:ring-blue-100 outline-none transition-all shadow-sm">
+                            <div id="weekSelectorDisplay" class="flex items-center gap-2 text-sm">
+                                <span class="animate-pulse bg-gray-200 h-4 w-20 rounded"></span>
+                            </div>
+                            <svg class="w-5 h-5 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        
+                        <!-- Calendar Popover List -->
+                        <div id="weekDropdown" class="hidden absolute z-50 mt-2 w-full sm:w-80 max-h-[400px] calendar-scroll overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-2xl right-0 sm:left-auto sm:right-0 p-3">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                        <input type="hidden" id="weekSelector" value="">
                     </div>
                 </div>
 
-                <!-- DOJ Warning (Hidden by default) -->
+                <!-- DOJ Warning (Safeguard) -->
                 <div id="dojWarning" class="hidden bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center">
                     <svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     <h3 class="text-lg font-bold text-red-800">Invalid Week Selected</h3>
                     <p class="text-sm text-red-600 mt-1">You cannot log time for weeks prior to your Date of Joining (<span id="dojWarningDate" class="font-bold"></span>).</p>
                 </div>
 
-                <!-- Pre-fill Warning (Hidden by default) -->
+                <!-- Pre-fill Warning -->
                 <div id="prefillWarning" class="hidden bg-orange-50 border-l-4 border-brand-orange p-4 mb-6 rounded-r-lg">
                     <div class="flex">
                         <div class="flex-shrink-0">
@@ -173,6 +196,7 @@
                     <p class="text-sm text-green-600 mt-1">Your hours for this week have been successfully logged and locked.</p>
                 </div>
 
+                <!-- Main Form Grid -->
                 <form id="timesheetForm" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-opacity">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200" id="timesheetTable">
@@ -192,7 +216,7 @@
                     <div class="bg-gray-50 px-6 py-5 border-t border-gray-200">
                         <div id="justificationBlock" class="mb-4 hidden">
                             <label for="justification" class="block text-sm font-semibold text-gray-700 mb-2">Justification for Shortfall / Overtime <span class="text-red-500">*</span></label>
-                            <textarea id="justification" rows="2" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors" placeholder="Explain any deviations from the standard 48-hour week..."></textarea>
+                            <textarea id="justification" rows="2" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-colors shadow-sm" placeholder="Explain any deviations from the standard 48-hour week..."></textarea>
                         </div>
                         
                         <div class="flex items-center mb-6">
@@ -203,7 +227,7 @@
                         </div>
 
                         <div class="flex justify-end">
-                            <button type="submit" id="submitBtn" class="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 px-8 rounded-lg shadow-sm transition-all focus:ring-4 focus:ring-orange-300 flex items-center justify-center">
+                            <button type="submit" id="submitBtn" class="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all focus:ring-4 focus:ring-orange-300 flex items-center justify-center min-w-[250px]">
                                 <span>Submit Weekly Timesheet</span>
                             </button>
                         </div>
@@ -214,9 +238,9 @@
     </main>
 
     <!-- Toast Notification System -->
-    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-xl border border-gray-200" role="alert">
         <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
-        <div id="toastMessage" class="ml-3 text-sm font-normal">Message here.</div>
+        <div id="toastMessage" class="ml-3 text-sm font-medium">Message here.</div>
         <button type="button" onclick="hideToast()" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8">
             <span class="sr-only">Close</span>
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
@@ -227,10 +251,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
-        // 1. SESSION VALIDATION & UI SETUP (Runs immediately)
+        // 1. SESSION VALIDATION & UI SETUP
         // ==========================================
         const sessionUser = sessionStorage.getItem('stratedge_active_user');
         if (!sessionUser) {
@@ -238,7 +262,7 @@
         }
         const activeUser = JSON.parse(sessionUser);
 
-        // Define Global UI Functions
+        // Global UI Click Closers
         window.logout = () => {
             sessionStorage.removeItem('stratedge_active_user');
             window.location.href = 'index.html';
@@ -248,11 +272,21 @@
             document.getElementById('notifDropdown').classList.toggle('hidden');
         };
 
+        window.toggleWeekDropdown = () => {
+            document.getElementById('weekDropdown').classList.toggle('hidden');
+        };
+
         document.addEventListener('click', (e) => {
             const bell = document.getElementById('notifBell');
-            const dropdown = document.getElementById('notifDropdown');
-            if (bell && dropdown && !bell.contains(e.target)) {
-                dropdown.classList.add('hidden');
+            const nDrop = document.getElementById('notifDropdown');
+            if (bell && nDrop && !bell.contains(e.target) && !nDrop.contains(e.target)) {
+                nDrop.classList.add('hidden');
+            }
+
+            const weekBtn = document.getElementById('weekSelectorBtn');
+            const wDrop = document.getElementById('weekDropdown');
+            if (weekBtn && wDrop && !weekBtn.contains(e.target) && !wDrop.contains(e.target)) {
+                wDrop.classList.add('hidden');
             }
         });
 
@@ -276,12 +310,7 @@
 
         const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const categories = [
-            'Regular Work',
-            'Overtime',
-            'Sick Leave (SL)',
-            'Casual Leave (CL)',
-            'Earned Leave (EL)',
-            'Public Holiday (PH)'
+            'Regular Work', 'Sick Leave (SL)', 'Earned Leave (EL)', 'Public Holiday (PH)'
         ];
 
         // --- Date Utils ---
@@ -304,9 +333,7 @@
             return dates;
         };
 
-        const formatDate = (dateObj) => {
-            return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        };
+        const formatDate = (dateObj) => dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
         const getWeekString = (dateObj) => {
             const tempDate = new Date(dateObj.valueOf());
@@ -314,9 +341,7 @@
             tempDate.setDate(tempDate.getDate() - dayn + 3);
             const firstThursday = tempDate.valueOf();
             tempDate.setMonth(0, 1);
-            if (tempDate.getDay() !== 4) {
-                tempDate.setMonth(0, 1 + ((4 - tempDate.getDay()) + 7) % 7);
-            }
+            if (tempDate.getDay() !== 4) tempDate.setMonth(0, 1 + ((4 - tempDate.getDay()) + 7) % 7);
             const weekNum = 1 + Math.ceil((firstThursday - tempDate) / 604800000);
             return `${tempDate.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
         };
@@ -326,9 +351,125 @@
             return `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} to ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
         };
 
+        // --- Select Week / Calendar List Trigger ---
+        window.selectWeek = (weekStr) => {
+            if (!weekStr) return;
+            document.getElementById('weekSelector').value = weekStr;
+            
+            // Update Top Button Display
+            const dates = getDatesFromWeek(weekStr);
+            const monthShort = dates[0].toLocaleDateString('en-US', {month: 'short'});
+            
+            const ts = myTimesheets.find(t => t.week === weekStr);
+            let icon = '🔴';
+            if (ts) {
+                if (ts.status === 'Approved') icon = '🟢';
+                else if (ts.status === 'Rejected') icon = '🔴';
+                else icon = '🟠';
+            }
+            if (weekStr > getWeekString(new Date())) icon = '⏳'; // Future
+
+            document.getElementById('weekSelectorDisplay').innerHTML = `
+                <span class="text-lg">${icon}</span>
+                <span class="font-bold text-gray-800 text-base">${weekStr}</span> 
+                <span class="text-gray-500 font-medium ml-1">(${monthShort})</span>
+            `;
+            
+            document.getElementById('weekDropdown').classList.add('hidden');
+            window.renderTimesheetGrid(weekStr);
+        };
+
+        // --- Calendar View Filter Generation (Replaces old select dropdown) ---
+        const generateCalendarList = () => {
+            const dropdown = document.getElementById('weekDropdown');
+            const currentVal = document.getElementById('weekSelector').value;
+            dropdown.innerHTML = '';
+
+            const currentWeekStr = getWeekString(new Date());
+            
+            // Strict limitation: Start loop from DOJ only
+            let startDoj = activeUser.doj ? new Date(activeUser.doj) : new Date(Date.now() - 4 * 604800000);
+            let dojWeekStr = getWeekString(startDoj);
+
+            // Generate up to 4 upcoming future weeks to show (but disabled)
+            let futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 28);
+            let futureWeekStr = getWeekString(futureDate);
+
+            let iterWeekStr = dojWeekStr;
+            const weeksArr = [];
+            
+            if (iterWeekStr > futureWeekStr) {
+                weeksArr.push(iterWeekStr); // Edge case safeguard
+            } else {
+                while(iterWeekStr <= futureWeekStr) {
+                    weeksArr.push(iterWeekStr);
+                    const d = getDatesFromWeek(iterWeekStr)[0];
+                    d.setDate(d.getDate() + 7);
+                    iterWeekStr = getWeekString(d);
+                }
+            }
+            weeksArr.reverse(); // Newest top
+
+            weeksArr.forEach(w => {
+                const ts = myTimesheets.find(t => t.week === w);
+                const rangeText = getWeekRangeText(w);
+                const isFuture = w > currentWeekStr;
+                const isCurrent = w === currentWeekStr;
+                
+                let bgColor, borderColor, textColor, statusBadge, clickAction;
+                
+                // Color Logic mapped exactly to keys
+                if (isFuture) {
+                    bgColor = 'bg-gray-100'; borderColor = 'border-gray-200'; textColor = 'text-gray-400';
+                    statusBadge = '⏳ Upcoming';
+                    clickAction = ''; // No click event = Selection not allowed
+                } else {
+                    clickAction = `onclick="selectWeek('${w}')"`;
+                    if (ts) {
+                        if (ts.status === 'Approved') {
+                            bgColor = 'bg-green-50'; borderColor = 'border-green-500'; textColor = 'text-green-800';
+                            statusBadge = '🟢 Approved';
+                        } else if (ts.status === 'Rejected') {
+                            bgColor = 'bg-red-50'; borderColor = 'border-red-500'; textColor = 'text-red-800';
+                            statusBadge = '🔴 Rejected';
+                        } else {
+                            bgColor = 'bg-orange-50'; borderColor = 'border-orange-500'; textColor = 'text-orange-800';
+                            statusBadge = '🟠 Pending';
+                        }
+                    } else {
+                        bgColor = 'bg-red-50'; borderColor = 'border-red-300'; textColor = 'text-red-800';
+                        statusBadge = '🔴 Open';
+                    }
+                }
+                
+                const currentBadge = isCurrent ? '<span class="ml-2 bg-brand-blue text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm">Current</span>' : '';
+                const cursorStyle = isFuture ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:shadow-md hover:-translate-y-px transition-all';
+                
+                dropdown.innerHTML += `
+                    <div class="p-3 mb-2 rounded-lg border-2 ${bgColor} ${borderColor} ${cursorStyle}" ${clickAction}>
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="font-bold ${textColor} text-sm flex items-center">${w} ${currentBadge}</div>
+                            <div class="text-xs font-bold px-2 py-1 rounded-md bg-white/70 ${textColor} shadow-sm border border-black/5">${statusBadge}</div>
+                        </div>
+                        <div class="text-xs ${textColor} opacity-80">${rangeText}</div>
+                    </div>
+                `;
+            });
+
+            // Auto-select behavior
+            if (currentVal && weeksArr.includes(currentVal)) {
+                window.selectWeek(currentVal);
+            } else {
+                // Default to current week. If DOJ is in future, select DOJ week.
+                const defaultSelection = currentWeekStr >= dojWeekStr ? currentWeekStr : dojWeekStr;
+                window.selectWeek(defaultSelection);
+            }
+        };
+
         // --- YTD Leave Calculation ---
         const updateLeaveSummary = () => {
-            let sl = 0, cl = 0, el = 0;
+            let sl = 0, el = 0, ph = 0;
             const currentYear = new Date().getFullYear().toString();
 
             myTimesheets.forEach(ts => {
@@ -339,8 +480,8 @@
                         entries.forEach(entry => {
                             const hrs = parseFloat(entry.hours) || 0;
                             if (entry.type.includes('SL')) sl += hrs;
-                            if (entry.type.includes('CL')) cl += hrs;
                             if (entry.type.includes('EL')) el += hrs;
+                            if (entry.type.includes('PH')) ph += hrs;
                         });
                     });
                 }
@@ -348,11 +489,11 @@
 
             // Convert hours to days (1 day = 8 hours)
             document.getElementById('leaveSL').textContent = `${(sl / 8).toFixed(1)} days`;
-            document.getElementById('leaveCL').textContent = `${(cl / 8).toFixed(1)} days`;
             document.getElementById('leaveEL').textContent = `${(el / 8).toFixed(1)} days`;
+            document.getElementById('leavePH').textContent = `${(ph / 8).toFixed(1)} days`;
         };
 
-        // --- Notifications Generation ---
+        // --- Active Notification Scanning ---
         const updateNotifications = () => {
             const notifList = document.getElementById('notifList');
             const badge = document.getElementById('empNotifBadge');
@@ -363,7 +504,7 @@
             const currentWeekStr = getWeekString(now);
             const dayOfWeek = now.getDay();
 
-            // 1. Process explicit statuses (Approved/Rejected)
+            // 1. Alert on Explicit Admin Actions (Approved / Rejected)
             myTimesheets.forEach(ts => {
                 if (ts.status === 'Approved' || ts.status === 'Rejected') {
                     notifCount++;
@@ -372,7 +513,7 @@
                     const border = ts.status === 'Approved' ? 'border-green-500' : 'border-red-500';
                     
                     notifList.innerHTML += `
-                        <div class="px-4 py-3 ${bg} border-l-4 ${border} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="document.getElementById('weekSelector').value='${ts.week}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
+                        <div class="px-4 py-3 ${bg} border-l-4 ${border} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="selectWeek('${ts.week}'); toggleNotifications();">
                             <p class="text-sm font-bold ${color}">Timesheet ${ts.status}</p>
                             <p class="text-xs text-gray-700 mt-1">Your timesheet for ${ts.week} was ${ts.status.toLowerCase()} by Admin.</p>
                         </div>
@@ -380,38 +521,36 @@
                 }
             });
 
-            // 2. Scan past weeks for missing/re-opened sheets and current week reminders
-            let startDoj = activeUser.doj ? new Date(activeUser.doj) : new Date(Date.now() - 4 * 604800000);
-            let iterWeek = getWeekString(startDoj);
-            if (iterWeek > currentWeekStr) iterWeek = currentWeekStr;
+            // 2. Scan past valid weeks (From DOJ to Current) to find missing or re-opened timesheets
+            let dojWeekStr = activeUser.doj ? getWeekString(new Date(activeUser.doj)) : getWeekString(new Date(Date.now() - 4 * 604800000));
+            if (dojWeekStr > currentWeekStr) dojWeekStr = currentWeekStr; 
 
-            const weeksArr = [];
-            while(iterWeek <= currentWeekStr) {
-                weeksArr.push(iterWeek);
-                const d = getDatesFromWeek(iterWeek)[0];
+            let iterWeekStr = dojWeekStr;
+            const validPastWeeks = [];
+            while(iterWeekStr <= currentWeekStr) {
+                validPastWeeks.push(iterWeekStr);
+                const d = getDatesFromWeek(iterWeekStr)[0];
                 d.setDate(d.getDate() + 7);
-                iterWeek = getWeekString(d);
+                iterWeekStr = getWeekString(d);
             }
-            weeksArr.reverse();
 
-            weeksArr.forEach(w => {
+            validPastWeeks.forEach(w => {
                 const ts = myTimesheets.find(t => t.week === w);
-                const isMissing = !ts || ts.status === 'Rejected';
                 
                 if (!ts && w !== currentWeekStr) {
-                    // Past week is totally missing (never submitted, or Admin deleted/re-opened it)
+                    // It's a past week, but no timesheet exists. (Never submitted, or Admin Re-opened/Deleted it)
                     notifCount++;
                     notifList.innerHTML += `
-                        <div class="px-4 py-3 bg-yellow-50 border-l-4 border-yellow-500 cursor-pointer hover:bg-yellow-100 transition-colors" onclick="document.getElementById('weekSelector').value='${w}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
-                            <p class="text-sm font-bold text-yellow-700">Missing Timesheet</p>
-                            <p class="text-xs text-yellow-700 mt-1">Action required: Timesheet for past week (${w}) is open or was re-opened by Admin.</p>
+                        <div class="px-4 py-3 bg-red-50 border-l-4 border-red-500 cursor-pointer hover:bg-red-100 transition-colors" onclick="selectWeek('${w}'); toggleNotifications();">
+                            <p class="text-sm font-bold text-red-700">Missing / Re-opened Timesheet</p>
+                            <p class="text-xs text-red-700 mt-1">Action required: Timesheet for past week (${w}) is open. Please submit.</p>
                         </div>
                     `;
                 } else if (!ts && w === currentWeekStr && (dayOfWeek === 5 || dayOfWeek === 6)) {
-                    // Current week Friday/Saturday reminder
+                    // Friday or Saturday of the Current Week reminder
                     notifCount++;
                     notifList.innerHTML += `
-                        <div class="px-4 py-3 bg-orange-50 border-l-4 border-orange-500 cursor-pointer hover:bg-orange-100 transition-colors" onclick="document.getElementById('weekSelector').value='${w}'; document.getElementById('weekSelector').dispatchEvent(new Event('change')); window.toggleNotifications();">
+                        <div class="px-4 py-3 bg-orange-50 border-l-4 border-orange-500 cursor-pointer hover:bg-orange-100 transition-colors" onclick="selectWeek('${w}'); toggleNotifications();">
                             <p class="text-sm font-bold text-orange-700">Action Required</p>
                             <p class="text-xs text-orange-700 mt-1">Reminder: Please submit your timesheet for the current week (${w}).</p>
                         </div>
@@ -419,60 +558,12 @@
                 }
             });
 
-            // Badge UI Update
             if (notifCount === 0) {
                 notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
                 badge.classList.add('hidden');
             } else {
                 badge.textContent = notifCount;
                 badge.classList.remove('hidden');
-            }
-        };
-
-        // --- Dropdown Logic ---
-        const generateWeekOptions = () => {
-            const weekSelector = document.getElementById('weekSelector');
-            const currentVal = weekSelector.value;
-            weekSelector.innerHTML = '';
-
-            const currentWeekStr = getWeekString(new Date());
-            let startDoj = activeUser.doj ? new Date(activeUser.doj) : new Date(Date.now() - 4 * 604800000);
-            let iterWeek = getWeekString(startDoj);
-            if (iterWeek > currentWeekStr) iterWeek = currentWeekStr;
-
-            const weeksArr = [];
-            while(iterWeek <= currentWeekStr) {
-                weeksArr.push(iterWeek);
-                const d = getDatesFromWeek(iterWeek)[0];
-                d.setDate(d.getDate() + 7);
-                iterWeek = getWeekString(d);
-            }
-            weeksArr.reverse();
-
-            weeksArr.forEach(w => {
-                const ts = myTimesheets.find(t => t.week === w);
-                let statusIcon = '🔴'; 
-                let statusText = 'Open';
-                
-                if (ts) {
-                    if (ts.status === 'Approved') { statusIcon = '🟢'; statusText = 'Approved'; } 
-                    else if (ts.status === 'Rejected') { statusIcon = '🔴'; statusText = 'Rejected (Fix & Resubmit)'; } 
-                    else { statusIcon = '🟠'; statusText = 'Pending Approval'; }
-                }
-
-                const rangeText = getWeekRangeText(w);
-                const isCurrent = w === currentWeekStr ? ' [Current]' : '';
-                
-                const option = document.createElement('option');
-                option.value = w;
-                option.textContent = `${statusIcon} ${w} : ${rangeText} - ${statusText} ${isCurrent}`;
-                weekSelector.appendChild(option);
-            });
-
-            if (currentVal && weeksArr.includes(currentVal)) {
-                weekSelector.value = currentVal;
-            } else if (weeksArr.length > 0) {
-                weekSelector.value = weeksArr[0];
             }
         };
 
@@ -513,7 +604,7 @@
             const hrsValue = data ? data.hours : '8';
             const projValue = data && data.project ? data.project : '';
 
-            // Secure Lock applied directly via `readonly` and `disabled` if isSubmitted is true
+            // Note: Secure Lock via 'readonly' and 'disabled' dynamically applied
             tr.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap align-top"></td>
                 <td class="px-6 py-3 align-top">
@@ -547,7 +638,7 @@
             const projInput = tr.querySelector('.project-input');
             
             const applyLeaveLogic = () => {
-                if (typeSelect.value !== 'Regular Work' && typeSelect.value !== 'Overtime') {
+                if (typeSelect.value !== 'Regular Work') {
                     projInput.value = 'On Leave';
                     projInput.readOnly = true;
                     projInput.classList.add('bg-gray-100', 'text-gray-500');
@@ -582,6 +673,16 @@
             const dojWarning = document.getElementById('dojWarning');
             const timesheetForm = document.getElementById('timesheetForm');
             
+            const dojWeekStr = activeUser.doj ? getWeekString(new Date(activeUser.doj)) : '0000-W00';
+            if (weekStr < dojWeekStr && activeUser.doj) {
+                dojWarning.classList.remove('hidden');
+                timesheetForm.classList.add('hidden');
+                document.getElementById('dojWarningDate').textContent = new Date(activeUser.doj).toLocaleDateString();
+                document.getElementById('submittedBanner').classList.add('hidden');
+                document.getElementById('prefillWarning').classList.add('hidden');
+                return;
+            }
+
             dojWarning.classList.add('hidden');
             timesheetForm.classList.remove('hidden');
 
@@ -591,12 +692,11 @@
             const tbodys = table.querySelectorAll('tbody');
             tbodys.forEach(t => t.remove());
 
-            // Initialize default blank rows instantly
             daysOfWeek.forEach((day, index) => {
                 window.addEntryRow(index, day, formatDate(dates[index]));
             });
 
-            // Prefill / Verification Logic
+            // Prefill Logic
             const currentData = myTimesheets.find(ts => ts.week === weekStr);
             if (!currentData) {
                 const approvedSheets = myTimesheets.filter(ts => ts.status === 'Approved').sort((a,b) => b.week.localeCompare(a.week));
@@ -626,28 +726,29 @@
             calculateTotals();
         };
 
-        // Handles locking the fields if Submitted/Approved
+        // --- Status Lock Enforcement ---
         const checkSubmissionStatus = (weekStr) => {
-            const form = document.getElementById('timesheetForm');
             const submitBtn = document.getElementById('submitBtn');
             const banner = document.getElementById('submittedBanner');
             const dates = getDatesFromWeek(weekStr);
             const data = myTimesheets.find(ts => ts.week === weekStr);
             
-            // If it exists and hasn't been rejected, it is strictly locked
             if (data && data.status !== 'Rejected') {
+                // If Timesheet exists and isn't actively rejected, Lock Everything
                 banner.classList.remove('hidden');
                 if (data.status === 'Approved') {
-                    banner.className = "bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center";
-                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-green-800">Timesheet Approved</h3><p class="text-sm text-green-600 mt-1">Your hours for this week have been approved and locked.</p>`;
+                    banner.className = "bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center shadow-sm";
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-green-800">Timesheet Approved & Locked</h3><p class="text-sm text-green-600 mt-1">Your hours for this week have been processed. Contact Admin to request changes.</p>`;
                 } else {
-                    banner.className = "bg-orange-50 border border-orange-200 p-4 mb-6 rounded-lg text-center";
-                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending</h3><p class="text-sm text-orange-600 mt-1">Your hours have been submitted and are pending Admin approval.</p>`;
+                    banner.className = "bg-orange-50 border border-orange-200 p-4 mb-6 rounded-lg text-center shadow-sm";
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending Approval</h3><p class="text-sm text-orange-600 mt-1">Your hours are locked while awaiting Admin review.</p>`;
                 }
 
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = "Locked";
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.innerHTML = "Timesheet Locked";
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400', 'hover:bg-gray-400');
+                submitBtn.classList.remove('bg-brand-orange', 'hover:bg-brand-orange-hover');
+                
                 document.getElementById('declaration').disabled = true;
                 document.getElementById('declaration').checked = true;
 
@@ -655,7 +756,6 @@
                     const tbody = document.getElementById(`day-tbody-${index}`);
                     tbody.innerHTML = ''; 
                     if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                        // isSubmitted = true securely locks the rows
                         data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, true));
                     } else if (data.entries && data.entries[day]) {
                         window.addEntryRow(index, day, formatDate(dates[index]), data.entries[day], true);
@@ -674,34 +774,36 @@
                     justBox.value = '';
                 }
                 justBox.disabled = true;
+                justBox.classList.add('bg-gray-50');
 
             } else {
-                // Timesheet is Open or Rejected
+                // Not submitted OR Rejected -> Form is Open and Editable
                 banner.classList.add('hidden');
-                if (data && data.status === 'Rejected') {
-                    banner.classList.remove('hidden');
-                    banner.className = "bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center";
-                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Rejected</h3><p class="text-sm text-red-600 mt-1">Please correct your hours and submit again.</p>`;
-                }
-
+                
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = "<span>Submit Weekly Timesheet</span>";
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400', 'hover:bg-gray-400');
+                submitBtn.classList.add('bg-brand-orange', 'hover:bg-brand-orange-hover');
+                
                 document.getElementById('declaration').disabled = false;
                 document.getElementById('declaration').checked = false;
                 
                 const justBlock = document.getElementById('justificationBlock');
                 const justBox = document.getElementById('justification');
                 justBox.disabled = false;
+                justBox.classList.remove('bg-gray-50');
                 justBox.value = '';
                 justBlock.classList.add('hidden');
                 
                 if (data && data.status === 'Rejected') {
+                    banner.classList.remove('hidden');
+                    banner.className = "bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center shadow-sm";
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Rejected</h3><p class="text-sm text-red-600 mt-1">Please correct your hours below and submit again.</p>`;
+                    
                     daysOfWeek.forEach((day, index) => {
                         const tbody = document.getElementById(`day-tbody-${index}`);
                         tbody.innerHTML = ''; 
                         if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                            // isSubmitted = false ensures they can edit it
                             data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, false));
                         }
                     });
@@ -734,7 +836,7 @@
             }
         };
 
-        // --- Toast & Base UI Utility ---
+        // --- Toast Utility ---
         window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
         const showToast = (message, type = 'success') => {
             const toast = document.getElementById('toast');
@@ -755,9 +857,7 @@
             setTimeout(window.hideToast, 4000);
         };
 
-        // --- Bind Events ---
-        document.getElementById('weekSelector').addEventListener('change', (e) => window.renderTimesheetGrid(e.target.value));
-
+        // --- Submit Event ---
         document.getElementById('timesheetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!fbUser) { showToast("Not connected to database. Please wait or check config.", "error"); return; }
@@ -819,14 +919,7 @@
         });
 
         // ==========================================
-        // 2. INITIALIZE INSTANT UI (Before Database Loads)
-        // ==========================================
-        generateWeekOptions();
-        window.renderTimesheetGrid(document.getElementById('weekSelector').value || getWeekString(new Date()));
-
-
-        // ==========================================
-        // 3. FIREBASE CONNECTION 
+        // 2. FIREBASE CONNECTION 
         // ==========================================
         // ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE ⚠️
         const firebaseConfig = {
@@ -852,10 +945,17 @@
                     unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
                         myTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })).filter(ts => ts.empId === activeUser.empId);
                         
-                        generateWeekOptions();
+                        generateCalendarList();
                         updateLeaveSummary();
                         updateNotifications();
-                        window.renderTimesheetGrid(document.getElementById('weekSelector').value);
+                        
+                        // Fallback render if something goes wrong
+                        if(!document.getElementById('weekSelector').value) {
+                            const dSel = getWeekString(new Date()) >= (activeUser.doj ? getWeekString(new Date(activeUser.doj)) : '0000') ? getWeekString(new Date()) : getWeekString(new Date(activeUser.doj));
+                            window.selectWeek(dSel);
+                        } else {
+                            window.renderTimesheetGrid(document.getElementById('weekSelector').value);
+                        }
                     }, (error) => console.error("Database sync error: ", error));
                 } else {
                     if (unsubscribeTimesheets) unsubscribeTimesheets();
