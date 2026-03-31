@@ -21,7 +21,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Access Denied Overlay (Hidden by default) -->
+    <!-- Access Denied Overlay -->
     <div id="accessDenied" class="fixed inset-0 bg-white z-[999] hidden flex-col items-center justify-center">
         <svg class="w-20 h-20 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         <h2 class="text-3xl font-bold text-gray-900 mb-2">Access Denied</h2>
@@ -66,7 +66,6 @@
                 <p class="text-gray-600 mt-1">Manage client records and generate monthly invoices.</p>
             </div>
             
-            <!-- Navigation Tabs -->
             <div class="flex bg-gray-200 p-1 rounded-lg shadow-inner">
                 <button id="tab-btn-clients" class="px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm" onclick="switchTab('clients')">
                     Client Directory
@@ -77,11 +76,9 @@
             </div>
         </div>
 
-        <!-- ============================== -->
-        <!-- TAB 1: CLIENT MANAGEMENT       -->
-        <!-- ============================== -->
+        <!-- TAB 1: CLIENT MANAGEMENT -->
         <div id="tab-clients" class="grid grid-cols-1 lg:grid-cols-3 gap-8 transition-all">
-            <!-- Add Client Form -->
+            <!-- Form -->
             <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
                 <h3 id="formTitle" class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"></path></svg>
@@ -104,10 +101,19 @@
                         <textarea id="clientAddress" required rows="3" placeholder="Full billing address..." 
                             class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all"></textarea>
                     </div>
-                    <div>
-                        <label for="engagementDate" class="block text-sm font-medium text-gray-700 mb-1">Engagement Start Date</label>
-                        <input type="date" id="engagementDate" required 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="engagementDate" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                            <input type="date" id="engagementDate" required 
+                                class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-sm">
+                        </div>
+                        <div>
+                            <label for="clientStatus" class="block text-sm font-medium text-gray-700 mb-1">Account Status</label>
+                            <select id="clientStatus" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-sm">
+                                <option value="active" selected>Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="flex gap-2 pt-4">
@@ -122,7 +128,7 @@
                 </form>
             </div>
 
-            <!-- Client List Display -->
+            <!-- Table -->
             <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">
@@ -142,12 +148,13 @@
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Code</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client Details</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Status</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Registered</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Metadata</th>
                                 <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="clientsList" class="bg-white divide-y divide-gray-100">
+                        <tbody id="clientsList" class="bg-white divide-y divide-gray-100 text-sm">
                             <!-- Populated by JS -->
                         </tbody>
                     </table>
@@ -158,15 +165,11 @@
             </div>
         </div>
 
-        <!-- ============================== -->
-        <!-- TAB 2: INVOICE GENERATOR       -->
-        <!-- ============================== -->
         <div id="tab-invoices" class="hidden bg-white p-12 rounded-xl shadow-sm border border-gray-200 text-center">
             <svg class="w-16 h-16 text-brand-blue/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             <h3 class="text-xl font-bold text-gray-900 mb-2">Invoice Generator (Coming Soon)</h3>
             <p class="text-gray-600 max-w-md mx-auto">This module will allow you to generate professional PDF invoices based on employee timesheet data and client billing rates.</p>
         </div>
-
     </main>
 
     <!-- Toast Notifications -->
@@ -179,31 +182,28 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Config
         const firebaseConfig = {
-  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
-  authDomain: "stratedge-time.firebaseapp.com",
-  projectId: "stratedge-time",
-  storageBucket: "stratedge-time.firebasestorage.app",
-  messagingSenderId: "550779977682",
-  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
-};
+            apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+            authDomain: "stratedge-time.firebaseapp.com",
+            projectId: "stratedge-time",
+            storageBucket: "stratedge-time.firebasestorage.app",
+            messagingSenderId: "550779977682",
+            appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+        };
         const appId = 'stratedge-time-recorder';
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Session & State
         const sessionUser = sessionStorage.getItem('stratedge_active_user');
         const activeUser = sessionUser ? JSON.parse(sessionUser) : null;
         let fbUser = null;
         let allClients = [];
         let unsubscribeClients = null;
 
-        // --- Auth Guard ---
         if (!activeUser || activeUser.role !== 'Admin') {
             document.getElementById('accessDenied').classList.remove('hidden');
         }
@@ -213,7 +213,6 @@
             window.location.href = 'index.html';
         };
 
-        // --- UI Utils ---
         window.switchTab = (tabName) => {
             const btnClients = document.getElementById('tab-btn-clients');
             const btnInvoices = document.getElementById('tab-btn-invoices');
@@ -223,15 +222,13 @@
             if (tabName === 'clients') {
                 btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm";
                 btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900";
-                tabClients.classList.remove('hidden');
-                tabClients.classList.add('grid');
+                tabClients.classList.replace('hidden', 'grid');
                 tabInvoices.classList.add('hidden');
             } else {
                 btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm";
                 btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900";
                 tabInvoices.classList.remove('hidden');
-                tabClients.classList.remove('grid');
-                tabClients.classList.add('hidden');
+                tabClients.classList.replace('grid', 'hidden');
             }
         };
 
@@ -253,13 +250,10 @@
             setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
         };
 
-        // --- Client Logic ---
-
         const generateNextClientCode = () => {
             if (allClients.length === 0) return 'C0001';
             const codes = allClients.map(c => parseInt((c.clientCode || 'C0000').substring(1)) || 0);
-            const maxCode = Math.max(...codes);
-            const nextNum = maxCode + 1;
+            const nextNum = Math.max(...codes) + 1;
             return `C${nextNum.toString().padStart(4, '0')}`;
         };
 
@@ -267,7 +261,6 @@
             const tbody = document.getElementById('clientsList');
             const empty = document.getElementById('emptyState');
             const search = document.getElementById('clientSearch').value.toLowerCase();
-            
             tbody.innerHTML = '';
             
             const filtered = allClients.filter(c => 
@@ -282,21 +275,22 @@
                 filtered.forEach(client => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50 transition-colors group";
-                    
-                    // Format Created Date
                     const createdDate = client.createdAt ? new Date(client.createdAt).toLocaleString(undefined, {
                         month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
                     }) : 'N/A';
 
+                    const statusBadge = client.status === 'inactive' 
+                        ? '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-bold uppercase">Inactive</span>'
+                        : '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold uppercase">Active</span>';
+
                     tr.innerHTML = `
-                        <td class="px-4 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 bg-blue-50 text-brand-blue text-xs font-bold rounded-md border border-blue-100 uppercase">${client.clientCode}</span>
-                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap font-mono text-xs font-bold text-brand-blue">${client.clientCode}</td>
                         <td class="px-4 py-4">
-                            <div class="text-sm font-bold text-gray-900">${client.name}</div>
-                            <div class="text-xs text-gray-500 mt-0.5 line-clamp-1 italic">${client.address}</div>
+                            <div class="font-bold text-gray-900">${client.name}</div>
+                            <div class="text-[10px] text-gray-500 line-clamp-1 italic">${client.address}</div>
                         </td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td class="px-4 py-4 text-center">${statusBadge}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-xs text-gray-600">
                             ${new Date(client.engagementDate).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })}
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap">
@@ -305,7 +299,7 @@
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap text-right">
                             <button onclick="editClient('${client.id}')" class="text-brand-blue hover:text-blue-700 font-bold text-xs mr-3">EDIT</button>
-                            <button onclick="deleteClient('${client.id}')" class="text-red-400 hover:text-red-600 font-bold text-xs">DELETE</button>
+                            <button onclick="deleteClient('${client.id}')" class="text-red-400 hover:text-red-600 font-bold text-xs">DEL</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -326,10 +320,11 @@
             document.getElementById('clientName').value = c.name;
             document.getElementById('clientAddress').value = c.address;
             document.getElementById('engagementDate').value = c.engagementDate;
+            document.getElementById('clientStatus').value = c.status || 'active';
 
             document.getElementById('formTitle').innerHTML = `
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                Update Client Info
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Update Client
             `;
             document.getElementById('submitBtn').innerHTML = "Save Changes";
             document.getElementById('cancelBtn').classList.remove('hidden');
@@ -341,19 +336,19 @@
             document.getElementById('clientCode').value = generateNextClientCode();
             document.getElementById('formTitle').innerHTML = `
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"></path></svg>
-                Register New Client
+                Register Client
             `;
             document.getElementById('submitBtn').innerHTML = "Register Client";
             document.getElementById('cancelBtn').classList.add('hidden');
         };
 
         window.deleteClient = async (id) => {
-            if (!confirm("Are you sure? This will remove the client record permanently.")) return;
+            if (!confirm("Permanently delete this client?")) return;
             try {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'clients', id));
-                showToast("Client deleted successfully.");
+                showToast("Client record removed.");
             } catch (error) {
-                showToast("Delete failed: " + error.message, 'error');
+                showToast("Error: " + error.message, 'error');
             }
         };
 
@@ -364,51 +359,45 @@
             const editId = document.getElementById('editingId').value;
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.classList.add('opacity-50');
 
             const payload = {
                 name: document.getElementById('clientName').value.trim(),
                 address: document.getElementById('clientAddress').value.trim(),
                 engagementDate: document.getElementById('engagementDate').value,
+                status: document.getElementById('clientStatus').value,
                 updatedAt: Date.now()
             };
 
             try {
                 if (editId) {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'clients', editId), payload);
-                    showToast("Client updated successfully.");
+                    showToast("Changes saved.");
                 } else {
-                    const code = generateNextClientCode();
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), {
                         ...payload,
-                        clientCode: code,
+                        clientCode: generateNextClientCode(),
                         addedBy: activeUser.empId,
                         createdAt: Date.now()
                     });
-                    showToast("New client registered successfully!");
+                    showToast("Client added.");
                 }
                 resetForm();
             } catch (error) {
-                showToast("Storage error: " + error.message, 'error');
+                showToast("Error: " + error.message, 'error');
             } finally {
                 btn.disabled = false;
-                btn.classList.remove('opacity-50');
             }
         });
 
-        const startListeners = () => {
-            if (!fbUser) return;
-            const clientRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
-            unsubscribeClients = onSnapshot(clientRef, (snapshot) => {
-                allClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderClients();
-            });
-        };
-
         onAuthStateChanged(auth, (user) => {
             fbUser = user;
-            if (user) startListeners();
-            else if (unsubscribeClients) unsubscribeClients();
+            if (user) {
+                const clientRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
+                unsubscribeClients = onSnapshot(clientRef, (snapshot) => {
+                    allClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderClients();
+                });
+            } else if (unsubscribeClients) unsubscribeClients();
         });
 
         signInAnonymously(auth);
