@@ -6,6 +6,12 @@
     <title>Stratedge | Pay Calculation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
     <script>
         tailwind.config = {
             theme: {
@@ -62,38 +68,51 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-            <!-- Left: Input Form -->
-            <div class="md:col-span-5 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
-                <h3 class="text-lg font-bold text-brand-blue mb-4 border-b pb-2">Calculation Parameters</h3>
-                <form id="calcForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Employee</label>
-                        <select id="empSelect" required onchange="handleEmpSelection()" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
-                            <option value="" disabled selected>-- Select Employee --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Select Month</label>
-                        <input type="month" id="payMonth" required class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Monthly Salary (INR)</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-2 text-gray-500 font-bold">₹</span>
-                            <input type="number" id="basePay" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-bold text-brand-blue text-sm">
+            <!-- Left: Input Form & History -->
+            <div class="md:col-span-5 flex flex-col gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-bold text-brand-blue mb-4 border-b pb-2">Calculation Parameters</h3>
+                    <form id="calcForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Employee</label>
+                            <select id="empSelect" required onchange="handleEmpSelection()" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
+                                <option value="" disabled selected>-- Select Employee --</option>
+                            </select>
                         </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Select Month</label>
+                            <input type="month" id="payMonth" required class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Monthly Salary (INR)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2 text-gray-500 font-bold">₹</span>
+                                <input type="number" id="basePay" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-bold text-brand-blue text-sm">
+                            </div>
+                        </div>
+                        <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4 flex justify-center items-center gap-2">
+                            Calculate & Save Pay
+                        </button>
+                    </form>
+                </div>
+
+                <!-- History sub-panel -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow">
+                    <h3 class="text-sm font-bold text-gray-900 mb-4 border-b pb-2 flex justify-between">
+                        Past Records 
+                        <span id="recordCount" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">0 Total</span>
+                    </h3>
+                    <div id="payRecordList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scroll">
+                        <!-- JS injected -->
                     </div>
-                    <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4">
-                        Calculate Pay
-                    </button>
-                </form>
+                </div>
             </div>
 
             <!-- Right: Results Panel -->
             <div class="md:col-span-7">
                 <div id="resultsEmpty" class="bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 p-8 text-center">
                     <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <p class="font-medium">Select parameters and click calculate to view the payslip breakdown.</p>
+                    <p class="font-medium">Select parameters and click calculate to generate the record and view payslip breakdown.</p>
                 </div>
 
                 <div id="resultsPanel" class="hidden bg-white p-6 rounded-xl shadow-lg border border-brand-blue/20">
@@ -177,7 +196,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, doc, setDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // 1. INIT & AUTH
@@ -204,6 +223,7 @@
 
         let allEmployees = [];
         let allTimesheets = [];
+        let allPayRecords = [];
         let pendingCalcData = null; // Stores data if admin needs to confirm warning
 
         window.logout = () => {
@@ -248,18 +268,28 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
                     allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
                     const sel = document.getElementById('empSelect');
+                    const currentSelection = sel.value;
                     sel.innerHTML = '<option value="" disabled selected>-- Select Employee --</option>';
                     allEmployees.sort((a,b)=>a.name.localeCompare(b.name)).forEach(emp => {
                         sel.innerHTML += `<option value="${emp.empId}">${emp.name} (${emp.empId})</option>`;
                     });
+                    if(currentSelection) sel.value = currentSelection;
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
                     allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
                 });
                 
+                // Fetch Past Pay Records
+                onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'pay_records'), orderBy('updatedAt', 'desc')), s => {
+                    allPayRecords = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderPayRecords();
+                });
+                
                 // Set default month to current
-                const now = new Date();
-                document.getElementById('payMonth').value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
+                if (!document.getElementById('payMonth').value) {
+                    const now = new Date();
+                    document.getElementById('payMonth').value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
+                }
             }
         });
         signInAnonymously(auth);
@@ -274,13 +304,58 @@
             }
         };
 
+        window.renderPayRecords = () => {
+            const list = document.getElementById('payRecordList');
+            document.getElementById('recordCount').textContent = `${allPayRecords.length} Total`;
+            list.innerHTML = '';
+            if (allPayRecords.length === 0) {
+                list.innerHTML = '<div class="text-center py-4 text-gray-400 text-sm italic">No records found.</div>';
+            } else {
+                allPayRecords.forEach(rec => {
+                    const div = document.createElement('div');
+                    div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30 cursor-pointer";
+                    div.onclick = () => loadPayRecord(rec.id);
+                    div.innerHTML = `
+                        <div class="overflow-hidden">
+                            <div class="text-[10px] font-bold text-brand-blue uppercase">${rec.monthVal}</div>
+                            <div class="font-bold text-sm truncate text-gray-800">${rec.empName}</div>
+                            <div class="text-[10px] text-gray-500 font-medium mt-0.5">Net Pay: ₹${rec.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
+                        </div>
+                        <div class="flex gap-1.5 ml-2">
+                            <button onclick="event.stopPropagation(); deletePayRecord('${rec.id}')" class="p-1 hover:bg-red-100 rounded text-red-600 transition-colors" title="Delete record">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        };
+
+        window.loadPayRecord = (id) => {
+            const rec = allPayRecords.find(r => r.id === id);
+            if (!rec) return;
+            document.getElementById('empSelect').value = rec.empId;
+            document.getElementById('payMonth').value = rec.monthVal;
+            document.getElementById('basePay').value = rec.basePay;
+            // Instantly recalculate and preview without the modal warning (forceProceed = true)
+            runCalculation(true); 
+        };
+
+        window.deletePayRecord = async (id) => {
+            if(confirm('Delete this pay record?')) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', id));
+                showToast("Record deleted.");
+            }
+        };
+
         // --- CORE CALCULATION ENGINE ---
         document.getElementById('calcForm').addEventListener('submit', (e) => {
             e.preventDefault();
             runCalculation(false);
         });
 
-        const runCalculation = (forceProceed) => {
+        const runCalculation = async (forceProceed) => {
             const empId = document.getElementById('empSelect').value;
             const monthVal = document.getElementById('payMonth').value; // YYYY-MM
             const basePayStr = document.getElementById('basePay').value;
@@ -292,13 +367,16 @@
 
             const [selYear, selMonth] = monthVal.split('-').map(Number);
             
-            // 1. Calculate Target Hours for the Month
+            // 1. Calculate Target Hours for the Month and Identify Broken Months
             const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
             let actualMonthStart = new Date(selYear, selMonth - 1, 1);
-            if (dojDate > actualMonthStart) actualMonthStart = dojDate;
-            const monthEnd = new Date(selYear, selMonth, 0); 
             
-            const monthGoalDays = actualMonthStart > monthEnd ? 0 : getMonSatDays(actualMonthStart, monthEnd);
+            if (dojDate > actualMonthStart) {
+                actualMonthStart = dojDate; // Joined midway this month
+            }
+            const actualMonthEnd = new Date(selYear, selMonth, 0); 
+            
+            const monthGoalDays = actualMonthStart > actualMonthEnd ? 0 : getMonSatDays(actualMonthStart, actualMonthEnd);
             const monthGoalHours = monthGoalDays * 8;
 
             if (monthGoalHours === 0) {
@@ -376,7 +454,20 @@
             const deductionAmount = totalLWPHours * hourlyRate;
             const finalPay = Math.max(0, basePay - deductionAmount);
 
-            // 6. Render UI
+            // 6. Save Record to Database Automatically
+            const recordId = `${empId}_${monthVal}`;
+            const payload = {
+                empId, empName: emp.name, monthVal, basePay, finalPay, 
+                shortfallHours, chargeableSL, chargeableEL, deductionAmount,
+                updatedAt: Date.now()
+            };
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), payload);
+            } catch (err) {
+                console.error("Failed to save pay record", err);
+            }
+
+            // 7. Render UI
             document.getElementById('resultsEmpty').classList.add('hidden');
             document.getElementById('resultsPanel').classList.remove('hidden');
 
@@ -410,11 +501,14 @@
             }
             document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
 
-            // Save state for PDF
+            // Save state for PDF Generation
             window.currentPayslip = {
                 emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, finalPay, 
-                deductions: deductionAmount, hourlyRate, shortfallHours, chargeableSL, chargeableEL
+                deductions: deductionAmount, hourlyRate, shortfallHours, chargeableSL, chargeableEL,
+                actualStart: actualMonthStart, actualEnd: actualMonthEnd
             };
+            
+            if(!forceProceed) showToast("Pay calculated and record saved.", "success");
         };
 
         window.cancelCalculation = () => {
@@ -438,23 +532,40 @@
             // Brand Header
             doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(65, 105, 225).text("STRATEDGE", m, y);
             doc.setFontSize(10).setTextColor(150).text("COMMUNICATIONS PVT LTD", m, y + 6);
+            
+            doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
+            doc.text(`CIN: U70200WB2025PTC277733`, m, y + 12);
+            doc.text(`PAN: [TO BE PROVIDED]`, m, y + 16);
+
             doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
             doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
             doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
             
             y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 15;
 
-            // Title & Employee Info
+            // Accurate Date Period Formatting
+            const startDateStr = new Date(ps.actualStart).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const endDateStr = new Date(ps.actualEnd).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            // Title & Dates
             doc.setFontSize(14).setFont("helvetica", "bold").setTextColor(40).text("PAYSLIP", m, y);
-            doc.setFontSize(10).setTextColor(100).text(`For the month of ${ps.monthStr}`, m, y + 5);
+            doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text(`For the period: ${startDateStr} to ${endDateStr}`, m, y + 5);
             
             y += 20;
+            
+            // Detailed Employee Information Block
             doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
+            
             doc.text(`Employee Name:`, m, y); doc.setFont("helvetica", "normal").text(ps.emp.name, m + 35, y);
             doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
-            doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation, m + 35, y + 12);
+            doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation || 'N/A', m + 35, y + 12);
+            
+            doc.setFont("helvetica", "bold").text(`Department:`, m, y + 18); doc.setFont("helvetica", "normal").text(ps.emp.department || 'N/A', m + 35, y + 18);
+            doc.setFont("helvetica", "bold").text(`Date of Joining:`, m, y + 24); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 35, y + 24);
+            doc.setFont("helvetica", "bold").text(`Email ID:`, m, y + 30); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 35, y + 30);
 
-            y += 25;
+            y += 45;
+            
             // Table Header
             doc.setFillColor(245).rect(m, y, 170, 10, 'F');
             doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
