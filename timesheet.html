@@ -505,7 +505,8 @@
         // --- YTD Leave Calculation ---
         const updateLeaveSummary = () => {
             let sl = 0, el = 0, ph = 0;
-            const currentYear = new Date().getFullYear().toString();
+            const currentYearNum = new Date().getFullYear();
+            const currentYear = currentYearNum.toString();
 
             myTimesheets.forEach(ts => {
                 // Calculate only from approved timesheets in the current year
@@ -521,6 +522,32 @@
                     });
                 }
             });
+
+            // Calculate Pro-rated Limits for EL and SL based on DOJ
+            let slLimit = 5;
+            let elLimit = 12;
+            const phLimit = 12;
+
+            if (activeUser.doj) {
+                const dojDate = new Date(activeUser.doj);
+                if (dojDate.getFullYear() === currentYearNum) {
+                    const endOfYear = new Date(currentYearNum, 11, 31);
+                    const startOfYear = new Date(currentYearNum, 0, 1);
+                    
+                    const daysWorked = Math.floor((endOfYear - dojDate) / (1000 * 60 * 60 * 24)) + 1;
+                    const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+                    
+                    const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
+                    
+                    // Round to the next highest integer value always
+                    slLimit = Math.ceil(5 * ratio);
+                    elLimit = Math.ceil(12 * ratio);
+                } else if (dojDate.getFullYear() > currentYearNum) {
+                    // Edge case: DOJ is in the future
+                    slLimit = 0;
+                    elLimit = 0;
+                }
+            }
 
             // Convert hours to days, display max limits, and warn if exceeded
             const formatLeave = (elId, hrs, limit) => {
@@ -538,9 +565,9 @@
                 }
             };
 
-            formatLeave('leaveSL', sl, 5);
-            formatLeave('leaveEL', el, 12);
-            formatLeave('leavePH', ph, 12);
+            formatLeave('leaveSL', sl, slLimit);
+            formatLeave('leaveEL', el, elLimit);
+            formatLeave('leavePH', ph, phLimit);
         };
 
         // --- Active Notification Scanning ---
