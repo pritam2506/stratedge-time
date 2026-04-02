@@ -170,6 +170,59 @@
         </div>
     </main>
 
+    <!-- Modal: View Employee -->
+    <div id="viewEmployeeModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold">View Employee Details</h3>
+                <button onclick="closeModal('viewEmployeeModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                    <div class="col-span-2 pb-2 border-b">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Employee ID</p>
+                        <p class="font-bold text-brand-blue text-xl font-mono mt-1" id="viewEmpId"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Full Name</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserName"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Role</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserRole"></p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Address</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserEmail"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Designation</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDesig"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Department</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDept"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Phone</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserPhone"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Date of Joining</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDOJ"></p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Date of Birth</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDOB"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+                <button onclick="closeModal('viewEmployeeModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Edit Employee -->
     <div id="editEmployeeModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
@@ -217,29 +270,27 @@
                 <div>
                     <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsMonthLabel">Current Month</h4>
                     <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
-                        <div class="flex justify-between items-center mb-1"><div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Hours Logged</div><div id="stat-m-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border">0% Goal</div></div>
+                        <div class="flex justify-between items-center mb-1"><div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div><div id="stat-m-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div></div>
                         <div id="stat-m-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
-                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-m-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-blue-50 p-3 rounded-lg border"><div>Work Hours</div><div id="stat-m-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
-                        <div class="bg-orange-50 p-3 rounded-lg border"><div>Sick Leave</div><div id="stat-m-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
-                        <div class="bg-purple-50 p-3 rounded-lg border"><div>Earned Leave</div><div id="stat-m-el" class="text-2xl font-black text-purple-600">0.0</div></div>
-                        <div class="bg-gray-50 p-3 rounded-lg border"><div>Public Holiday</div><div id="stat-m-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
+                    <div class="grid grid-cols-2 gap-4 mb-6 text-center sm:text-left">
+                        <div class="bg-blue-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Work Hours</div><div id="stat-m-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
+                        <div class="bg-orange-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Sick Leave</div><div id="stat-m-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
+                        <div class="bg-purple-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Earned Leave</div><div id="stat-m-el" class="text-2xl font-black text-purple-600">0.0</div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Public Holiday</div><div id="stat-m-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
                     </div>
                 </div>
                 <div>
                     <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsYtdLabel">Year To Date</h4>
                     <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
-                        <div class="flex justify-between items-center mb-1"><div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Hours Logged</div><div id="stat-y-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border">0% Goal</div></div>
+                        <div class="flex justify-between items-center mb-1"><div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div><div id="stat-y-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div></div>
                         <div id="stat-y-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
-                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-y-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-blue-50 p-3 rounded-lg border"><div>Work Hours</div><div id="stat-y-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
-                        <div class="bg-orange-50 p-3 rounded-lg border"><div>Sick Leave</div><div id="stat-y-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
-                        <div class="bg-purple-50 p-3 rounded-lg border"><div>Earned Leave</div><div id="stat-y-el" class="text-2xl font-black text-purple-600">0.0</div></div>
-                        <div class="bg-gray-50 p-3 rounded-lg border"><div>Public Holiday</div><div id="stat-y-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
+                    <div class="grid grid-cols-2 gap-4 text-center sm:text-left">
+                        <div class="bg-blue-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Work Hours</div><div id="stat-y-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
+                        <div class="bg-orange-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Sick Leave</div><div id="stat-y-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
+                        <div class="bg-purple-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Earned Leave</div><div id="stat-y-el" class="text-2xl font-black text-purple-600">0.0</div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Public Holiday</div><div id="stat-y-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
                     </div>
                 </div>
             </div>
@@ -362,26 +413,48 @@
             const userTS = allTimesheets.filter(ts => ts.empId === id && ts.status === 'Approved');
             const now = new Date();
             let monthly = { work: 0, SL: 0, EL: 0, PH: 0 }, ytd = { work: 0, SL: 0, EL: 0, PH: 0 };
+            
             userTS.forEach(ts => {
-                if (!ts.week.startsWith(now.getFullYear())) return;
+                if (!ts.week || !ts.week.startsWith(now.getFullYear().toString())) return;
                 const dates = getDatesFromWeek(ts.week);
+                
                 ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
-                    const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
-                    entries.forEach(e => {
-                        const h = parseFloat(e.hours) || 0;
-                        if (e.type.includes('Work')) ytd.work += h; else if (e.type.includes('SL')) ytd.SL += h; else if (e.type.includes('EL')) ytd.EL += h; else if (e.type.includes('PH')) ytd.PH += h;
-                        if (dates[idx].getMonth() === now.getMonth()) {
-                            if (e.type.includes('Work')) monthly.work += h; else if (e.type.includes('SL')) monthly.SL += h; else if (e.type.includes('EL')) monthly.EL += h; else if (e.type.includes('PH')) monthly.PH += h;
-                        }
-                    });
+                    if(ts.entries && ts.entries[day]) {
+                        const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                        entries.forEach(e => {
+                            if(!e) return;
+                            const h = parseFloat(e.hours) || 0;
+                            const type = e.type || '';
+                            
+                            if (type.includes('Work')) ytd.work += h; 
+                            else if (type.includes('SL')) ytd.SL += h; 
+                            else if (type.includes('EL')) ytd.EL += h; 
+                            else if (type.includes('PH')) ytd.PH += h;
+                            
+                            if (dates[idx] && dates[idx].getMonth() === now.getMonth()) {
+                                if (type.includes('Work')) monthly.work += h; 
+                                else if (type.includes('SL')) monthly.SL += h; 
+                                else if (type.includes('EL')) monthly.EL += h; 
+                                else if (type.includes('PH')) monthly.PH += h;
+                            }
+                        });
+                    }
                 });
             });
-            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-xs uppercase opacity-50'>days</span> (${h.toFixed(1)}h)`;
+            
+            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-[10px] uppercase opacity-60'>days</span><br><span class='text-sm opacity-80'>${h.toFixed(1)} hrs</span>`;
+            
             document.getElementById('stat-m-total').innerHTML = formatStat(monthly.work + monthly.SL + monthly.EL + monthly.PH);
             document.getElementById('stat-y-total').innerHTML = formatStat(ytd.work + ytd.SL + ytd.EL + ytd.PH);
             document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
             document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
+            document.getElementById('stat-m-el').innerHTML = formatStat(monthly.EL);
+            document.getElementById('stat-m-ph').innerHTML = formatStat(monthly.PH);
             document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
+            document.getElementById('stat-y-sl').innerHTML = formatStat(ytd.SL);
+            document.getElementById('stat-y-el').innerHTML = formatStat(ytd.EL);
+            document.getElementById('stat-y-ph').innerHTML = formatStat(ytd.PH);
+            
             document.getElementById('statsModal').classList.remove('hidden');
         };
 
@@ -390,8 +463,10 @@
             allTimesheets.filter(ts => ts.empId === id).sort((a,b)=>a.week.localeCompare(b.week)).forEach(ts => {
                 const dates = getDatesFromWeek(ts.week);
                 ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, i) => {
-                    const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
-                    entries.forEach(e => { if(parseFloat(e.hours)>0) csv += `${ts.week},${day},${dates[i].toLocaleDateString()},"${e.project}",${e.type},${e.hours}\n`; });
+                    if(ts.entries && ts.entries[day]) {
+                        const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                        entries.forEach(e => { if(e && parseFloat(e.hours)>0) csv += `${ts.week},${day},${dates[i].toLocaleDateString()},"${e.project}",${e.type},${e.hours}\n`; });
+                    }
                 });
             });
             const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
@@ -405,20 +480,24 @@
             const roleF = document.getElementById('filterRole').value;
             const deptF = document.getElementById('filterDept').value;
             tbody.innerHTML = '';
+            
             const filtered = allEmployees.filter(e => {
                 return (e.name.toLowerCase().includes(search) || e.empId.toLowerCase().includes(search)) && (roleF==='' || e.role===roleF) && (deptF==='' || e.department===deptF);
             });
+            
             filtered.forEach(e => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="px-4 py-3"><b>${e.name}</b><br><span class="text-[10px] font-mono text-gray-400">${e.empId}</span></td>
-                    <td class="px-4 py-3 text-xs">${e.email}<br>${e.phone}</td>
-                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.role==='Admin'?'bg-purple-100':'bg-blue-100'}">${e.role}</span><br><span class="text-[10px]">${e.department}</span></td>
-                    <td class="px-4 py-3 text-xs">${e.doj}</td>
-                    <td class="px-4 py-3 text-right">
-                        <button onclick="editUser('${e.id}')" class="text-brand-blue font-bold mr-2">Edit</button>
-                        <button onclick="openStats('${e.empId}', '${e.name}')" class="text-brand-orange font-bold mr-2">Stats</button>
-                        <button onclick="exportYTD('${e.empId}', '${e.name}')" class="text-green-600 font-bold mr-2">Export</button>
-                        <button id="del-btn-${e.id}" onclick="deleteUser('${e.id}')" class="text-red-500 font-bold">Delete</button>
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `<td class="px-4 py-3 whitespace-nowrap"><b>${e.name}</b><br><span class="text-[10px] font-mono text-gray-400">${e.empId}</span></td>
+                    <td class="px-4 py-3 text-xs whitespace-nowrap">${e.email}<br>${e.phone}</td>
+                    <td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.role==='Admin'?'bg-purple-100 text-purple-700':'bg-blue-100 text-brand-blue'}">${e.role}</span><br><span class="text-[10px] text-gray-500">${e.department}</span></td>
+                    <td class="px-4 py-3 text-xs whitespace-nowrap">${e.doj}</td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                        <button onclick="viewUser('${e.id}')" class="text-gray-600 hover:text-gray-900 font-bold mr-3 transition-colors">View</button>
+                        <button onclick="editUser('${e.id}')" class="text-brand-blue font-bold mr-3 transition-colors">Edit</button>
+                        <button onclick="openStats('${e.empId}', '${e.name}')" class="text-brand-orange font-bold mr-3 transition-colors">Stats</button>
+                        <button onclick="exportYTD('${e.empId}', '${e.name}')" class="text-green-600 font-bold mr-3 transition-colors">Export</button>
+                        <button id="del-btn-${e.id}" onclick="deleteUser('${e.id}')" class="text-red-500 font-bold transition-colors">Delete</button>
                     </td>`;
                 tbody.appendChild(tr);
             });
@@ -452,6 +531,21 @@
             });
         };
 
+        window.viewUser = (id) => {
+            const e = allEmployees.find(emp => emp.id === id);
+            if(!e) return;
+            document.getElementById('viewEmpId').textContent = e.empId || '-';
+            document.getElementById('viewUserName').textContent = e.name || '-';
+            document.getElementById('viewUserRole').textContent = e.role || '-';
+            document.getElementById('viewUserEmail').textContent = e.email || '-';
+            document.getElementById('viewUserDesig').textContent = e.designation || '-';
+            document.getElementById('viewUserDept').textContent = e.department || '-';
+            document.getElementById('viewUserPhone').textContent = e.phone || '-';
+            document.getElementById('viewUserDOJ').textContent = e.doj || '-';
+            document.getElementById('viewUserDOB').textContent = e.dob || '-';
+            document.getElementById('viewEmployeeModal').classList.remove('hidden');
+        };
+
         window.reviewTimesheet = (id) => {
             const ts = allTimesheets.find(t => t.id === id);
             currentReviewDocId = id;
@@ -459,10 +553,10 @@
             document.getElementById('reviewTotalHours').textContent = `${ts.totalHours} hrs logged`;
             const tbody = document.getElementById('reviewTableBody'); tbody.innerHTML = '';
             ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(d => {
-                if(ts.entries[d]) {
+                if(ts.entries && ts.entries[d]) {
                     const ents = Array.isArray(ts.entries[d]) ? ts.entries[d] : [ts.entries[d]];
                     ents.forEach(e => {
-                        if(parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="px-4 py-2">${d}</td><td class="px-4 py-2">${e.project}</td><td class="px-4 py-2 text-center font-bold text-brand-blue">${e.hours}</td><td class="px-4 py-2 text-gray-500">${e.type}</td></tr>`;
+                        if(e && parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="px-4 py-2">${d}</td><td class="px-4 py-2">${e.project}</td><td class="px-4 py-2 text-center font-bold text-brand-blue">${e.hours}</td><td class="px-4 py-2 text-gray-500">${e.type}</td></tr>`;
                     });
                 }
             });
@@ -500,11 +594,11 @@
         window.deleteUser = async (id) => {
             const btn = document.getElementById(`del-btn-${id}`);
             if (btn.textContent === "Delete") {
-                btn.textContent = "Sure?"; btn.className = "bg-red-500 text-white px-2 rounded transition-colors";
+                btn.textContent = "Sure?"; btn.className = "bg-red-500 text-white px-2 py-0.5 rounded transition-colors";
                 setTimeout(() => { 
                     if(btn) {
                         btn.textContent = "Delete"; 
-                        btn.className = "text-red-500 font-bold";
+                        btn.className = "text-red-500 font-bold transition-colors";
                     }
                 }, 3000);
                 return;
@@ -593,7 +687,7 @@
                 badge.classList.add('hidden');
             } else {
                 pending.forEach(t => {
-                    list.innerHTML += `<div onclick="switchTab('timesheets'); selectAdminWeek('${t.week}'); toggleNotifications();" class="p-4 hover:bg-blue-50 cursor-pointer text-xs"><b>${t.name}</b> submitted hours for ${t.week}.</div>`;
+                    list.innerHTML += `<div onclick="switchTab('timesheets'); selectAdminWeek('${t.week}'); toggleNotifications();" class="p-4 hover:bg-blue-50 cursor-pointer text-xs text-gray-800 border-b last:border-b-0 transition-colors"><b>${t.name}</b> submitted hours for ${t.week}.</div>`;
                 });
                 badge.textContent = pending.length;
                 badge.classList.remove('hidden');
