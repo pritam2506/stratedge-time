@@ -10,8 +10,8 @@
             theme: {
                 extend: {
                     colors: {
-                        'brand-blue': '#4169E1',
-                        'brand-orange': '#FFA500',
+                        'brand-blue': '#4169E1', // Royal Blue
+                        'brand-orange': '#FFA500', // Orange
                         'brand-orange-hover': '#e69500',
                     }
                 }
@@ -33,9 +33,12 @@
                 <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
             </div>
             <div class="flex items-center gap-4">
+                <!-- Notification Bell -->
                 <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()" title="Notifications">
                     <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    
+                    <!-- Dropdown Panel -->
                     <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
                         <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                             <span class="font-bold text-gray-800 text-sm">Notifications</span>
@@ -66,6 +69,8 @@
                 <h2 class="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
                 <p class="text-gray-600 mt-1">Manage users, view statistics, and approve timesheets.</p>
             </div>
+            
+            <!-- Navigation Tabs -->
             <div class="flex bg-gray-200 p-1 rounded-lg">
                 <button id="tab-btn-employees" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm" onclick="switchTab('employees')">Employees</button>
                 <button id="tab-btn-timesheets" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="switchTab('timesheets')">Timesheet Approvals</button>
@@ -74,6 +79,7 @@
 
         <!-- TAB 1: EMPLOYEE MANAGEMENT -->
         <div id="tab-employees" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Add User Form -->
             <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
                 <h3 class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">Add New User</h3>
                 <form id="addUserForm" class="space-y-4">
@@ -275,7 +281,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
@@ -345,7 +351,7 @@
         const getDatesFromWeek = (w) => {
             const [yStr, wkStr] = w.split('-W');
             const d = new Date(parseInt(yStr), 0, 1 + (parseInt(wkStr) - 1) * 7);
-            const ISOwkStart = d;
+            const ISOwkStart = new Date(d);
             if (d.getDay() <= 4) ISOwkStart.setDate(d.getDate() - d.getDay() + 1);
             else ISOwkStart.setDate(d.getDate() + 8 - d.getDay());
             return Array.from({length:6}, (_,i) => { let dt = new Date(ISOwkStart); dt.setDate(dt.getDate()+i); return dt; });
@@ -424,17 +430,56 @@
             const search = document.getElementById('tsFilterName').value.toLowerCase();
             const wk = document.getElementById('tsFilterWeek').value;
             tbody.innerHTML = '';
+            
             allTimesheets.filter(ts => {
-                return (ts.name.toLowerCase().includes(search)) && (wk==='' || ts.week===wk);
+                const matchesName = (ts.name || '').toLowerCase().includes(search);
+                const matchesWeek = (wk==='' || ts.week===wk);
+                return matchesName && matchesWeek;
             }).forEach(ts => {
+                const dates = getDatesFromWeek(ts.week);
+                const dateRange = `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="px-4 py-3 font-bold">${ts.week}</td>
+                tr.innerHTML = `<td class="px-4 py-3">
+                        <div class="font-bold text-gray-900">${ts.week}</div>
+                        <div class="text-[10px] font-semibold text-gray-400 mt-0.5 uppercase tracking-tighter">${dateRange}</div>
+                    </td>
                     <td class="px-4 py-3">${ts.name}<br><span class="text-[10px] text-gray-400">${ts.empId}</span></td>
                     <td class="px-4 py-3 text-center font-bold">${ts.totalHours}</td>
                     <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${ts.status==='Approved'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${ts.status}</span></td>
-                    <td class="px-4 py-3 text-right"><button onclick="reviewTimesheet('${ts.id}')" class="bg-blue-50 text-brand-blue px-3 py-1 rounded">Review</button></td>`;
+                    <td class="px-4 py-3 text-right"><button onclick="reviewTimesheet('${ts.id}')" class="bg-blue-50 text-brand-blue px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 transition-colors">Review</button></td>`;
                 tbody.appendChild(tr);
             });
+        };
+
+        window.reviewTimesheet = (id) => {
+            const ts = allTimesheets.find(t => t.id === id);
+            currentReviewDocId = id;
+            document.getElementById('reviewEmpDetails').textContent = `${ts.name} (${ts.empId})`;
+            document.getElementById('reviewTotalHours').textContent = `${ts.totalHours} hrs logged`;
+            const tbody = document.getElementById('reviewTableBody'); tbody.innerHTML = '';
+            ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(d => {
+                if(ts.entries[d]) {
+                    const ents = Array.isArray(ts.entries[d]) ? ts.entries[d] : [ts.entries[d]];
+                    ents.forEach(e => {
+                        if(parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="px-4 py-2">${d}</td><td class="px-4 py-2">${e.project}</td><td class="px-4 py-2 text-center font-bold text-brand-blue">${e.hours}</td><td class="px-4 py-2 text-gray-500">${e.type}</td></tr>`;
+                    });
+                }
+            });
+            
+            const badge = document.getElementById('reviewStatusBadge');
+            badge.textContent = ts.status;
+            badge.className = `px-3 py-1 rounded-full text-xs font-bold ${ts.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`;
+            
+            const justBlock = document.getElementById('reviewJustificationBlock');
+            if (ts.justification) {
+                justBlock.classList.remove('hidden');
+                document.getElementById('reviewJustificationText').textContent = ts.justification;
+            } else {
+                justBlock.classList.add('hidden');
+            }
+
+            document.getElementById('reviewModal').classList.remove('hidden');
         };
 
         window.editUser = (id) => {
@@ -455,32 +500,20 @@
         window.deleteUser = async (id) => {
             const btn = document.getElementById(`del-btn-${id}`);
             if (btn.textContent === "Delete") {
-                btn.textContent = "Sure?"; btn.className = "bg-red-500 text-white px-2 rounded";
-                setTimeout(() => { btn.textContent = "Delete"; btn.className = "text-red-500 font-bold"; }, 3000);
+                btn.textContent = "Sure?"; btn.className = "bg-red-500 text-white px-2 rounded transition-colors";
+                setTimeout(() => { 
+                    if(btn) {
+                        btn.textContent = "Delete"; 
+                        btn.className = "text-red-500 font-bold";
+                    }
+                }, 3000);
                 return;
             }
             await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id));
             showToast("User removed.");
         };
 
-        window.reviewTimesheet = (id) => {
-            const ts = allTimesheets.find(t => t.id === id);
-            currentReviewDocId = id;
-            document.getElementById('reviewEmpDetails').textContent = `${ts.name} (${ts.empId})`;
-            document.getElementById('reviewTotalHours').textContent = `${ts.totalHours} hrs logged`;
-            const tbody = document.getElementById('reviewTableBody'); tbody.innerHTML = '';
-            ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(d => {
-                if(ts.entries[d]) {
-                    const ents = Array.isArray(ts.entries[d]) ? ts.entries[d] : [ts.entries[d]];
-                    ents.forEach(e => {
-                        if(parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="p-2">${d}</td><td class="p-2">${e.project}</td><td class="p-2 text-center font-bold">${e.hours}</td><td class="p-2">${e.type}</td></tr>`;
-                    });
-                }
-            });
-            document.getElementById('reviewModal').classList.remove('hidden');
-        };
-
-        // --- SUBMIT ---
+        // --- SUBMIT HANDLERS ---
         document.getElementById('addUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -530,19 +563,66 @@
             showToast("TS Deleted."); closeModal('reviewModal');
         };
 
+        // --- NOTIFICATIONS & WEEK FILTER ---
+        window.toggleNotifications = () => document.getElementById('notifDropdown').classList.toggle('hidden');
+        window.toggleAdminWeekDropdown = () => document.getElementById('adminWeekDropdown').classList.toggle('hidden');
+        
+        window.selectAdminWeek = (w) => {
+            document.getElementById('tsFilterWeek').value = w;
+            document.getElementById('adminWeekSelectorDisplay').textContent = w === '' ? 'All Weeks' : w;
+            document.getElementById('adminWeekDropdown').classList.add('hidden');
+            renderTimesheets();
+        };
+
+        const generateAdminCalendarList = () => {
+            const dropdown = document.getElementById('adminWeekDropdown');
+            dropdown.innerHTML = `<div onclick="selectAdminWeek('')" class="p-2 hover:bg-gray-100 cursor-pointer text-sm font-bold">All Weeks</div>`;
+            const uniqueWeeks = [...new Set(allTimesheets.map(t => t.week))].sort().reverse();
+            uniqueWeeks.forEach(w => {
+                dropdown.innerHTML += `<div onclick="selectAdminWeek('${w}')" class="p-2 hover:bg-gray-100 cursor-pointer text-sm border-t">${w}</div>`;
+            });
+        };
+
+        const updateNotifications = () => {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notificationBadge');
+            const pending = allTimesheets.filter(t => t.status === 'Submitted' && !readNotifIds.has(t.id));
+            list.innerHTML = '';
+            if (pending.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-xs text-gray-500">No new submissions.</p>';
+                badge.classList.add('hidden');
+            } else {
+                pending.forEach(t => {
+                    list.innerHTML += `<div onclick="switchTab('timesheets'); selectAdminWeek('${t.week}'); toggleNotifications();" class="p-4 hover:bg-blue-50 cursor-pointer text-xs"><b>${t.name}</b> submitted hours for ${t.week}.</div>`;
+                });
+                badge.textContent = pending.length;
+                badge.classList.remove('hidden');
+            }
+        };
+
         // --- INIT ---
         onAuthStateChanged(auth, u => {
             currentUser = u;
             if (u) {
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); renderEmployees(); });
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); renderTimesheets(); });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
+                    allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
+                    renderEmployees(); 
+                });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
+                    allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
+                    generateAdminCalendarList();
+                    renderTimesheets(); 
+                    updateNotifications();
+                });
             }
         });
         signInAnonymously(auth);
 
-        window.toggleNotifications = () => document.getElementById('notifDropdown').classList.toggle('hidden');
-        window.toggleAdminWeekDropdown = () => document.getElementById('adminWeekDropdown').classList.toggle('hidden');
-        window.markAllRead = () => { showToast("All notifications cleared."); document.getElementById('notifDropdown').classList.add('hidden'); };
+        window.markAllRead = () => {
+            allTimesheets.filter(t => t.status === 'Submitted').forEach(t => readNotifIds.add(t.id));
+            updateNotifications();
+            document.getElementById('notifDropdown').classList.add('hidden');
+        };
     </script>
 </body>
 </html>
