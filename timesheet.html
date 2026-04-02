@@ -910,8 +910,8 @@
                 daysOfWeek.forEach((day, index) => {
                     const rowDate = dates[index];
                     const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                    const tbody = document.getElementById(`day-tbody-${index}`);
-                    tbody.innerHTML = ''; 
+                    let tbody = document.getElementById(`day-tbody-${index}`);
+                    if (tbody) tbody.innerHTML = ''; 
                     
                     if (holidayInfo) {
                         window.addEntryRow(index, day, formatDate(rowDate), null, true, holidayInfo);
@@ -963,13 +963,17 @@
                     daysOfWeek.forEach((day, index) => {
                         const rowDate = dates[index];
                         const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                        const tbody = document.getElementById(`day-tbody-${index}`);
-                        tbody.innerHTML = ''; 
+                        let tbody = document.getElementById(`day-tbody-${index}`);
+                        if (tbody) tbody.innerHTML = ''; 
                         
                         if (holidayInfo) {
                             window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
                         } else if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
                             data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo));
+                        } else if (data.entries && data.entries[day]) {
+                            window.addEntryRow(index, day, formatDate(rowDate), data.entries[day], false, holidayInfo);
+                        } else {
+                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: '', type: 'Regular Work'}, false, holidayInfo);
                         }
                     });
                     if (data.justification) {
