@@ -61,15 +61,15 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
         <div class="mb-8 border-b pb-4">
             <h2 class="text-3xl font-bold text-gray-900">Monthly Pay Calculation</h2>
-            <p class="text-gray-600 mt-1">Generate payslips with automated LWP and timesheet validation.</p>
+            <p class="text-gray-600 mt-1">Review timesheets, confirm automated LWP, and generate validated payslips.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
             <!-- Left: Input Form & History -->
-            <div class="md:col-span-5 flex flex-col gap-6">
+            <div class="md:col-span-4 flex flex-col gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h3 class="text-lg font-bold text-brand-blue mb-4 border-b pb-2">Calculation Parameters</h3>
                     <form id="calcForm" class="space-y-4">
@@ -91,7 +91,7 @@
                             </div>
                         </div>
                         <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4 flex justify-center items-center gap-2">
-                            Calculate & Save Pay
+                            Preview Calculation
                         </button>
                     </form>
                 </div>
@@ -109,59 +109,116 @@
             </div>
 
             <!-- Right: Results Panel -->
-            <div class="md:col-span-7">
-                <div id="resultsEmpty" class="bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+            <div class="md:col-span-8">
+                <div id="resultsEmpty" class="bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 p-8 text-center">
                     <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <p class="font-medium">Select parameters and click calculate to generate the record and view payslip breakdown.</p>
+                    <p class="font-medium">Select parameters and click "Preview Calculation" to view the detailed breakdown.</p>
                 </div>
 
                 <div id="resultsPanel" class="hidden bg-white p-6 rounded-xl shadow-lg border border-brand-blue/20">
-                    <div class="flex justify-between items-center border-b pb-4 mb-4">
+                    <div class="flex justify-between items-start border-b pb-4 mb-4">
                         <div>
-                            <h3 class="text-xl font-black text-gray-900" id="resEmpName">John Doe</h3>
-                            <p class="text-xs font-bold text-gray-500" id="resMonthLabel">PAYSLIP FOR OCT 2026</p>
+                            <h3 class="text-2xl font-black text-gray-900" id="resEmpName">John Doe</h3>
+                            <p class="text-sm font-bold text-gray-500" id="resMonthLabel">PAYSLIP FOR OCT 2026</p>
+                            <p class="text-xs text-gray-400 mt-1" id="resPeriodLabel">Period: -- to --</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Net Payable</p>
-                            <p class="text-2xl font-black text-brand-blue" id="resNetPay">₹0</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Net Payable</p>
+                            <p class="text-3xl font-black text-brand-blue" id="resNetPay">₹0</p>
                         </div>
                     </div>
                     
-                    <div class="space-y-4 text-sm">
-                        <!-- Stats Row -->
-                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
-                            <div><span class="text-gray-500 text-xs block">Target Hours</span><span class="font-bold" id="resTargetHrs">0</span></div>
-                            <div><span class="text-gray-500 text-xs block">Logged Hours</span><span class="font-bold text-brand-blue" id="resLoggedHrs">0</span></div>
-                            <div><span class="text-gray-500 text-xs block">Excess Leaves</span><span class="font-bold text-red-500" id="resExcessLeaves">0 hrs</span></div>
-                        </div>
-
-                        <!-- Earnings -->
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Earnings</h4>
-                            <div class="flex justify-between items-center font-semibold text-gray-800">
-                                <span>Basic Monthly Pay</span>
-                                <span id="resBasePay">₹0</span>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm mb-6">
+                        <!-- Monthly Time Summary -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <h4 class="text-xs font-bold text-brand-blue uppercase tracking-widest mb-3 border-b pb-1">Monthly Time Summary</h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 font-medium">Target Total</span>
+                                    <span class="font-bold text-gray-900" id="resMonthlyTarget">0 hrs (0 days)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 font-medium">Logged Total</span>
+                                    <span class="font-bold text-gray-900" id="resMonthlyLogged">0 hrs (0 days)</span>
+                                </div>
+                                <div class="border-t border-gray-200 pt-2 flex justify-between">
+                                    <span class="text-gray-500">Regular Work</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlyWork">0 hrs (0 days)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Leaves Taken (All)</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlyLeaves">0 hrs (0 days)</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Deductions -->
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-t pt-3">Deductions (Leave Without Pay)</h4>
-                            <div id="deductionList" class="space-y-1.5 text-gray-700">
-                                <!-- JS injected -->
-                            </div>
-                            <div class="flex justify-between items-center font-bold text-red-600 mt-2 border-t border-red-100 pt-2">
-                                <span>Total Deductions</span>
-                                <span id="resTotalDed">- ₹0</span>
+                        <!-- YTD Leave Summary -->
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                            <h4 class="text-xs font-bold text-brand-blue uppercase tracking-widest mb-3 border-b border-blue-200 pb-1">YTD Leave Summary</h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 font-medium">Sick Leave (SL)</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-gray-900" id="resYtdSlHrs">0 / 0 hrs</span><br>
+                                        <span class="text-[10px] text-gray-500" id="resYtdSlDays">(0 / 0 days)</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 font-medium">Earned Leave (EL)</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-gray-900" id="resYtdElHrs">0 / 0 hrs</span><br>
+                                        <span class="text-[10px] text-gray-500" id="resYtdElDays">(0 / 0 days)</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 font-medium">Public Holiday (PH)</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-gray-900" id="resYtdPhHrs">0 / 0 hrs</span><br>
+                                        <span class="text-[10px] text-gray-500" id="resYtdPhDays">(0 / 0 days)</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-8 pt-4 border-t flex justify-end">
-                        <button onclick="downloadPDF()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg shadow transition-all flex items-center gap-2 text-sm">
+                    <!-- Earnings -->
+                    <div class="mb-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Earnings</h4>
+                        <div class="flex justify-between items-center font-semibold text-gray-800 text-sm bg-gray-50 p-3 rounded border border-gray-100">
+                            <span>Basic Monthly Pay</span>
+                            <span id="resBasePay">₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Deductions -->
+                    <div class="mb-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-t pt-4">Deductions (Leave Without Pay)</h4>
+                        <div id="deductionList" class="space-y-2 text-gray-700 text-sm bg-red-50/50 p-3 rounded border border-red-100">
+                            <!-- JS injected -->
+                        </div>
+                        <div class="flex justify-between items-center font-bold text-red-600 mt-2 p-3 bg-red-50 rounded border border-red-100">
+                            <span>Total Deductions</span>
+                            <span id="resTotalDed">- ₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-8 pt-4 border-t flex justify-end gap-3" id="actionPanel">
+                        <button id="editBtn" onclick="editParameters()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">
+                            Edit Parameters
+                        </button>
+                        <button id="confirmBtn" onclick="confirmAndSavePay()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow transition-all flex items-center gap-2 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Confirm Calculations & Save
+                        </button>
+                        <button id="pdfBtn" onclick="downloadPDF()" class="hidden bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg shadow transition-all flex items-center gap-2 text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                             Download Payslip PDF
                         </button>
+                    </div>
+                    
+                    <div id="confirmedBadge" class="hidden text-center mt-3 text-sm font-bold text-green-600 bg-green-50 p-2 rounded-lg border border-green-200">
+                        Record Confirmed & Saved to Database
                     </div>
                 </div>
             </div>
@@ -170,7 +227,7 @@
 
     <!-- Warning Modal for Shortfall -->
     <div id="warningModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all">
             <div class="p-6 text-center">
                 <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -178,11 +235,13 @@
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Incomplete Timesheet</h3>
                 <p class="text-sm text-gray-600 mb-4" id="warningText">Employee has only logged <span class="font-bold text-gray-900">X hrs</span> out of the required <span class="font-bold text-gray-900">Y hrs</span> for this month.</p>
                 <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-700 text-left mb-6">
-                    <strong>Consequence:</strong> If you proceed, the <span id="warningShortfall" class="font-bold">Z hrs</span> deficit will be automatically calculated as Leave Without Pay (LWP) and deducted proportionally from the salary.
+                    <strong>Standard Process:</strong> If you proceed with LWP, the <span id="warningShortfall" class="font-bold">Z hrs</span> deficit will be automatically calculated as Leave Without Pay and deducted proportionally from the salary.<br><br>
+                    <strong>Bypass Option:</strong> You may choose to bypass this shortfall if the missing hours are approved. No shortfall deduction will occur.
                 </div>
-                <div class="flex gap-3">
-                    <button onclick="cancelCalculation()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">Cancel & Review</button>
-                    <button onclick="proceedCalculation()" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Proceed with LWP</button>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="cancelCalculation()" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+                    <button onclick="bypassCalculation()" class="flex-1 px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Bypass Shortfall</button>
+                    <button onclick="proceedCalculation()" class="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Proceed with LWP</button>
                 </div>
             </div>
         </div>
@@ -224,7 +283,6 @@
         let allEmployees = [];
         let allTimesheets = [];
         let allPayRecords = [];
-        let pendingCalcData = null; // Stores data if admin needs to confirm warning
 
         window.logout = () => {
             sessionStorage.removeItem('stratedge_active_user');
@@ -315,9 +373,15 @@
                     const div = document.createElement('div');
                     div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30 cursor-pointer";
                     div.onclick = () => loadPayRecord(rec.id);
+                    
+                    let statusBadge = '';
+                    if (rec.bypassedShortfall) {
+                        statusBadge = `<span class="bg-yellow-100 text-yellow-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Bypassed</span>`;
+                    }
+                    
                     div.innerHTML = `
                         <div class="overflow-hidden">
-                            <div class="text-[10px] font-bold text-brand-blue uppercase">${rec.monthVal}</div>
+                            <div class="text-[10px] font-bold text-brand-blue uppercase flex items-center">${rec.monthVal} ${statusBadge}</div>
                             <div class="font-bold text-sm truncate text-gray-800">${rec.empName}</div>
                             <div class="text-[10px] text-gray-500 font-medium mt-0.5">Net Pay: ₹${rec.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
                         </div>
@@ -338,24 +402,35 @@
             document.getElementById('empSelect').value = rec.empId;
             document.getElementById('payMonth').value = rec.monthVal;
             document.getElementById('basePay').value = rec.basePay;
-            // Instantly recalculate and preview without the modal warning (forceProceed = true)
-            runCalculation(true); 
+            
+            // Run calculation with the saved bypass status
+            runCalculation(true, rec.bypassedShortfall, true); 
         };
 
         window.deletePayRecord = async (id) => {
             if(confirm('Delete this pay record?')) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', id));
                 showToast("Record deleted.");
+                
+                // Clear UI if the deleted record is currently shown
+                const activeId = `${document.getElementById('empSelect').value}_${document.getElementById('payMonth').value}`;
+                if (id === activeId) {
+                    document.getElementById('resultsEmpty').classList.remove('hidden');
+                    document.getElementById('resultsPanel').classList.add('hidden');
+                }
             }
         };
 
         // --- CORE CALCULATION ENGINE ---
         document.getElementById('calcForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            runCalculation(false);
+            runCalculation(false, false, false);
         });
 
-        const runCalculation = async (forceProceed) => {
+        // forceProceed: Skip the modal if we already made a choice or are loading a past record.
+        // bypassShortfall: True if the admin chose to ignore shortfall logic.
+        // isViewingPast: True if we clicked a record from history, auto-shows PDF button.
+        const runCalculation = async (forceProceed, bypassShortfall, isViewingPast) => {
             const empId = document.getElementById('empSelect').value;
             const monthVal = document.getElementById('payMonth').value; // YYYY-MM
             const basePayStr = document.getElementById('basePay').value;
@@ -388,8 +463,8 @@
             const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
             
             let loggedInMonth = 0;
-            let slInMonth = 0; let elInMonth = 0;
-            let ytdSL = 0; let ytdEL = 0;
+            let workInMonth = 0; let slInMonth = 0; let elInMonth = 0; let phInMonth = 0;
+            let ytdSL = 0; let ytdEL = 0; let ytdPH = 0;
 
             userTS.forEach(ts => {
                 if (!ts.week) return;
@@ -411,34 +486,40 @@
                                 // Accumulate YTD Leaves (Up to this month)
                                 if (type.includes('SL')) ytdSL += h;
                                 if (type.includes('EL')) ytdEL += h;
+                                if (type.includes('PH')) ytdPH += h;
 
                                 // Accumulate Specific Month Data
                                 if (isExactlySelectedMonth) {
                                     loggedInMonth += h;
+                                    if (type.includes('Work')) workInMonth += h;
                                     if (type.includes('SL')) slInMonth += h;
                                     if (type.includes('EL')) elInMonth += h;
+                                    if (type.includes('PH')) phInMonth += h;
                                 }
                             });
                         }
                     }
                 });
             });
+            const leavesInMonth = slInMonth + elInMonth + phInMonth;
 
             // 3. Shortfall Check
-            const shortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
+            const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
             
-            if (shortfallHours > 0 && !forceProceed) {
+            if (actualShortfallHours > 0 && !forceProceed) {
                 // Halt and show warning
-                pendingCalcData = { emp, selYear, selMonth, basePay, monthGoalHours, loggedInMonth, shortfallHours, ytdSL, ytdEL, slInMonth, elInMonth };
                 document.getElementById('warningText').innerHTML = `Employee has only logged <span class="font-bold text-gray-900">${loggedInMonth.toFixed(1)} hrs</span> out of the required <span class="font-bold text-gray-900">${monthGoalHours} hrs</span> for this month.`;
-                document.getElementById('warningShortfall').textContent = `${shortfallHours.toFixed(1)} hrs`;
+                document.getElementById('warningShortfall').textContent = `${actualShortfallHours.toFixed(1)} hrs`;
                 document.getElementById('warningModal').classList.remove('hidden');
                 return;
             }
 
+            const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
+
             // 4. Calculate Excess Leaves LWP
             const slLimitHrs = (emp.slLimit || 5) * 8;
             const elLimitHrs = (emp.elLimit || 12) * 8;
+            const phLimitHrs = (emp.phLimit || 12) * 8;
 
             const excessSLTotal = Math.max(0, ytdSL - slLimitHrs);
             const excessELTotal = Math.max(0, ytdEL - elLimitHrs);
@@ -450,75 +531,133 @@
 
             // 5. Final Pay Math
             const hourlyRate = basePay / monthGoalHours;
-            const totalLWPHours = shortfallHours + totalExcessLeaveHrs;
+            const totalLWPHours = chargeableShortfall + totalExcessLeaveHrs;
             const deductionAmount = totalLWPHours * hourlyRate;
             const finalPay = Math.max(0, basePay - deductionAmount);
 
-            // 6. Save Record to Database Automatically
-            const recordId = `${empId}_${monthVal}`;
-            const payload = {
-                empId, empName: emp.name, monthVal, basePay, finalPay, 
-                shortfallHours, chargeableSL, chargeableEL, deductionAmount,
-                updatedAt: Date.now()
-            };
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), payload);
-            } catch (err) {
-                console.error("Failed to save pay record", err);
-            }
-
-            // 7. Render UI
+            // 6. UI Update: Top Header
             document.getElementById('resultsEmpty').classList.add('hidden');
             document.getElementById('resultsPanel').classList.remove('hidden');
 
             const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
             document.getElementById('resEmpName').textContent = emp.name;
             document.getElementById('resMonthLabel').textContent = `PAYSLIP FOR ${monthNames[selMonth-1]} ${selYear}`;
+            
+            const startD = actualMonthStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const endD = actualMonthEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            document.getElementById('resPeriodLabel').textContent = `Period: ${startD} to ${endD}`;
+            
             document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
             
-            document.getElementById('resTargetHrs').textContent = `${monthGoalHours} hrs`;
-            document.getElementById('resLoggedHrs').textContent = `${loggedInMonth.toFixed(1)} hrs`;
-            document.getElementById('resExcessLeaves').textContent = `${totalExcessLeaveHrs.toFixed(1)} hrs`;
+            // UI Update: Monthly Stats
+            const d = (hrs) => (hrs/8).toFixed(1);
+            document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${monthGoalDays} days)`;
+            document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
+            document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
+            document.getElementById('resMonthlyLeaves').textContent = `${leavesInMonth.toFixed(1)} hrs (${d(leavesInMonth)} days)`;
+
+            // UI Update: YTD Leave Stats
+            document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`;
+            document.getElementById('resYtdSlDays').textContent = `(${d(ytdSL)} / ${d(slLimitHrs)} days)`;
+            document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`;
+            document.getElementById('resYtdElDays').textContent = `(${d(ytdEL)} / ${d(elLimitHrs)} days)`;
+            document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
+            document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
+
             document.getElementById('resBasePay').textContent = `₹${basePay.toLocaleString('en-IN')}`;
 
+            // UI Update: Deductions Breakdown
             const dedList = document.getElementById('deductionList');
             dedList.innerHTML = '';
+            
+            if (actualShortfallHours > 0 && bypassShortfall) {
+                dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but explicitly Bypassed.</span><span>₹0</span></div>`;
+            }
+
             if (totalLWPHours === 0) {
-                dedList.innerHTML = '<div class="text-gray-400 italic text-xs">No deductions. 100% adherence.</div>';
+                dedList.innerHTML += '<div class="text-gray-400 italic text-xs p-2">No active deductions applied for this period.</div>';
             } else {
-                if (shortfallHours > 0) {
-                    const amt = shortfallHours * hourlyRate;
-                    dedList.innerHTML += `<div class="flex justify-between"><span>Shortfall LWP (${shortfallHours.toFixed(1)} hrs)</span><span>- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
-                }
-                if (chargeableSL > 0) {
-                    const amt = chargeableSL * hourlyRate;
-                    dedList.innerHTML += `<div class="flex justify-between"><span>Excess Sick Leave (${chargeableSL.toFixed(1)} hrs)</span><span>- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
-                }
-                if (chargeableEL > 0) {
-                    const amt = chargeableEL * hourlyRate;
-                    dedList.innerHTML += `<div class="flex justify-between"><span>Excess Earned Leave (${chargeableEL.toFixed(1)} hrs)</span><span>- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
-                }
+                const addRow = (label, hrs, rate) => {
+                    const amt = hrs * rate;
+                    return `<div class="flex justify-between items-center py-1">
+                        <div>
+                            <span class="block font-medium">${label}</span>
+                            <span class="text-xs text-red-400">(${hrs.toFixed(1)} hrs × ₹${rate.toFixed(2)}/hr)</span>
+                        </div>
+                        <span class="font-semibold">- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
+                    </div>`;
+                };
+
+                if (chargeableShortfall > 0) dedList.innerHTML += addRow("Shortfall LWP", chargeableShortfall, hourlyRate);
+                if (chargeableSL > 0) dedList.innerHTML += addRow("Excess Sick Leave", chargeableSL, hourlyRate);
+                if (chargeableEL > 0) dedList.innerHTML += addRow("Excess Earned Leave", chargeableEL, hourlyRate);
             }
             document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+
+            // Save payload state for confirmation
+            window.pendingPayload = {
+                empId, empName: emp.name, monthVal, basePay, finalPay, 
+                shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
+                bypassedShortfall: bypassShortfall, updatedAt: Date.now()
+            };
 
             // Save state for PDF Generation
             window.currentPayslip = {
                 emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, finalPay, 
-                deductions: deductionAmount, hourlyRate, shortfallHours, chargeableSL, chargeableEL,
+                deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
                 actualStart: actualMonthStart, actualEnd: actualMonthEnd
             };
-            
-            if(!forceProceed) showToast("Pay calculated and record saved.", "success");
+
+            // Set Button State
+            if (isViewingPast) {
+                document.getElementById('confirmBtn').classList.add('hidden');
+                document.getElementById('pdfBtn').classList.remove('hidden');
+                document.getElementById('confirmedBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('confirmBtn').classList.remove('hidden');
+                document.getElementById('pdfBtn').classList.add('hidden');
+                document.getElementById('confirmedBadge').classList.add('hidden');
+            }
         };
 
         window.cancelCalculation = () => {
-            pendingCalcData = null;
             document.getElementById('warningModal').classList.add('hidden');
         };
 
         window.proceedCalculation = () => {
             document.getElementById('warningModal').classList.add('hidden');
-            runCalculation(true);
+            runCalculation(true, false, false);
+        };
+
+        window.bypassCalculation = () => {
+            document.getElementById('warningModal').classList.add('hidden');
+            runCalculation(true, true, false);
+        };
+
+        window.editParameters = () => {
+            // Focus on the select field, acts as a UI hint
+            document.getElementById('empSelect').focus();
+            showToast("Update parameters on the left and recalculate.", "info");
+        };
+
+        window.confirmAndSavePay = async () => {
+            if (!window.pendingPayload) return;
+            const p = window.pendingPayload;
+            const recordId = `${p.empId}_${p.monthVal}`;
+            
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), p);
+                
+                // Swap Buttons
+                document.getElementById('confirmBtn').classList.add('hidden');
+                document.getElementById('pdfBtn').classList.remove('hidden');
+                document.getElementById('confirmedBadge').classList.remove('hidden');
+                
+                showToast("Pay record confirmed and saved successfully!", "success");
+            } catch (err) {
+                console.error("Failed to save pay record", err);
+                showToast("Failed to save record.", "error");
+            }
         };
 
         // --- PDF GENERATOR ---
