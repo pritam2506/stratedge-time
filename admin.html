@@ -240,12 +240,12 @@
                     <input type="hidden" id="editDocId">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth</label>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth <span class="text-gray-400 font-normal italic">(Updating DOB will regenerate ID)</span></label>
                             <input type="date" id="editUserDOB" required class="w-full px-4 py-2 border rounded-lg text-sm">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Employee ID</label>
-                            <input type="text" id="editEmpId" readonly class="w-full px-4 py-2 bg-gray-100 border rounded-lg font-bold text-brand-blue">
+                            <input type="text" id="editEmpId" readonly class="w-full px-4 py-2 bg-gray-100 border rounded-lg font-bold text-brand-blue outline-none cursor-not-allowed">
                         </div>
                         <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Name</label><input type="text" id="editUserName" required class="w-full px-4 py-2 border rounded-lg"></div>
                         <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Role</label><select id="editUserRole" required class="w-full px-4 py-2 border rounded-lg"><option value="Employee">Employee</option><option value="Admin">Admin</option></select></div>
@@ -273,11 +273,15 @@
             </div>
             <div class="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                    <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsMonthLabel">Current Month</h4>
+                    <div class="flex justify-between items-center mb-3 border-b pb-1">
+                        <h4 class="text-lg font-bold text-brand-blue">Monthly Stats</h4>
+                        <select id="statsMonthSelector" onchange="updateMonthlyStats()" class="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded px-2 py-1 outline-none cursor-pointer hover:bg-indigo-100 transition-colors"></select>
+                    </div>
+                    
                     <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
                         <div class="flex justify-between items-center mb-1">
                             <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div>
-                            <div id="stat-m-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border">0% Goal</div>
+                            <div id="stat-m-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div>
                         </div>
                         <div id="stat-m-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
                         <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-m-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
@@ -290,11 +294,11 @@
                     </div>
                 </div>
                 <div>
-                    <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsYtdLabel">Year To Date</h4>
+                    <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1 mt-[26px]">Year To Date</h4>
                     <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
                         <div class="flex justify-between items-center mb-1">
                             <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div>
-                            <div id="stat-y-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border">0% Goal</div>
+                            <div id="stat-y-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div>
                         </div>
                         <div id="stat-y-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
                         <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-y-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
@@ -366,6 +370,7 @@
         let allTimesheets = [];
         let readNotifIds = new Set();
         let currentReviewDocId = null;
+        let currentStatsEmpId = null; 
 
         // --- ID GENERATION LOGIC ---
         const generateID = (role, dob) => {
@@ -421,17 +426,50 @@
             return Array.from({length:6}, (_,i) => { let dt = new Date(ISOwkStart); dt.setDate(dt.getDate()+i); return dt; });
         };
 
+        const getMonSatDays = (start, end) => {
+            let count = 0;
+            let cur = new Date(start); cur.setHours(0,0,0,0);
+            let endCopy = new Date(end); endCopy.setHours(23,59,59,999);
+            while (cur <= endCopy) {
+                if (cur.getDay() !== 0) count++;
+                cur.setDate(cur.getDate() + 1);
+            }
+            return count;
+        };
+
         // --- STATS & EXPORT ---
         window.openStats = (id, name) => {
+            currentStatsEmpId = id;
             const emp = allEmployees.find(e => e.empId === id);
             const userTS = allTimesheets.filter(ts => ts.empId === id && ts.status === 'Approved');
             const now = new Date();
-            let monthly = { work: 0, SL: 0, EL: 0, PH: 0 }, ytd = { work: 0, SL: 0, EL: 0, PH: 0 };
             
+            // Initialize Month Selector
+            const selector = document.getElementById('statsMonthSelector');
+            selector.innerHTML = '';
+            
+            const dojDate = (emp && emp.doj) ? new Date(emp.doj) : new Date(now.getFullYear(), 0, 1);
+            let iterDate = new Date(dojDate.getFullYear(), dojDate.getMonth(), 1);
+            const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            if (iterDate > endDate) iterDate = endDate; 
+            
+            while (iterDate <= endDate) {
+                const val = `${iterDate.getFullYear()}-${(iterDate.getMonth()+1).toString().padStart(2, '0')}`;
+                const label = iterDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = label;
+                selector.appendChild(opt);
+                iterDate.setMonth(iterDate.getMonth() + 1);
+            }
+            selector.value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
+
+            // CALCULATE YTD
+            let ytd = { work: 0, SL: 0, EL: 0, PH: 0 };
             userTS.forEach(ts => {
                 if (!ts.week || !ts.week.startsWith(now.getFullYear().toString())) return;
                 const dates = getDatesFromWeek(ts.week);
-                
                 ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
                     if(ts.entries && ts.entries[day]) {
                         const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
@@ -439,64 +477,23 @@
                             if(!e) return;
                             const h = parseFloat(e.hours) || 0;
                             const type = e.type || '';
-                            
                             if (type.includes('Work')) ytd.work += h; 
                             else if (type.includes('SL')) ytd.SL += h; 
                             else if (type.includes('EL')) ytd.EL += h; 
                             else if (type.includes('PH')) ytd.PH += h;
-                            
-                            if (dates[idx] && dates[idx].getMonth() === now.getMonth()) {
-                                if (type.includes('Work')) monthly.work += h; 
-                                else if (type.includes('SL')) monthly.SL += h; 
-                                else if (type.includes('EL')) monthly.EL += h; 
-                                else if (type.includes('PH')) monthly.PH += h;
-                            }
                         });
                     }
                 });
             });
 
-            // Calculate Mon-Sat Working Days Goal
-            const getMonSatDays = (start, end) => {
-                let count = 0;
-                let cur = new Date(start); cur.setHours(0,0,0,0);
-                let endCopy = new Date(end); endCopy.setHours(23,59,59,999);
-                while (cur <= endCopy) {
-                    if (cur.getDay() !== 0) count++;
-                    cur.setDate(cur.getDate() + 1);
-                }
-                return count;
-            };
-
-            const dojDate = (emp && emp.doj) ? new Date(emp.doj) : new Date(now.getFullYear(), 0, 1);
-            let actualMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            if (dojDate > actualMonthStart) actualMonthStart = dojDate;
-            const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0); 
-            
             let actualYtdStart = new Date(now.getFullYear(), 0, 1);
             if (dojDate > actualYtdStart) actualYtdStart = dojDate;
-
-            const monthGoalDays = actualMonthStart > monthEnd ? 0 : getMonSatDays(actualMonthStart, monthEnd);
-            
-            // Calculate till the end of the current calendar year for YTD goal
             const ytdEnd = new Date(now.getFullYear(), 11, 31);
             const ytdGoalDays = actualYtdStart > ytdEnd ? 0 : getMonSatDays(actualYtdStart, ytdEnd);
-            
-            const monthGoalHours = monthGoalDays * 8;
             const ytdGoalHours = ytdGoalDays * 8;
-
-            const mTotal = monthly.work + monthly.SL + monthly.EL + monthly.PH;
             const yTotal = ytd.work + ytd.SL + ytd.EL + ytd.PH;
-
-            const mPct = monthGoalHours > 0 ? Math.min((mTotal / monthGoalHours) * 100, 100).toFixed(0) : 0;
             const yPct = ytdGoalHours > 0 ? Math.min((yTotal / ytdGoalHours) * 100, 100).toFixed(0) : 0;
             
-            const mProg = document.getElementById('stat-m-prog');
-            mProg.classList.remove('hidden');
-            mProg.textContent = `${mPct}% of Goal (${monthGoalHours}h)`;
-            document.getElementById('stat-m-bar').style.width = `${mPct}%`;
-            document.getElementById('stat-m-bar').className = `h-1.5 rounded-full transition-all duration-500 ${mPct >= 100 ? 'bg-green-500' : 'bg-indigo-600'}`;
-
             const yProg = document.getElementById('stat-y-prog');
             yProg.classList.remove('hidden');
             yProg.textContent = `${yPct}% of Goal (${ytdGoalHours}h)`;
@@ -504,19 +501,69 @@
             document.getElementById('stat-y-bar').className = `h-1.5 rounded-full transition-all duration-500 ${yPct >= 100 ? 'bg-green-500' : 'bg-indigo-600'}`;
 
             const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-[10px] uppercase opacity-60'>days</span><br><span class='text-sm opacity-80'>${h.toFixed(1)} hrs</span>`;
-            
-            document.getElementById('stat-m-total').innerHTML = formatStat(mTotal);
             document.getElementById('stat-y-total').innerHTML = formatStat(yTotal);
-            document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
-            document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
-            document.getElementById('stat-m-el').innerHTML = formatStat(monthly.EL);
-            document.getElementById('stat-m-ph').innerHTML = formatStat(monthly.PH);
             document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
             document.getElementById('stat-y-sl').innerHTML = formatStat(ytd.SL);
             document.getElementById('stat-y-el').innerHTML = formatStat(ytd.EL);
             document.getElementById('stat-y-ph').innerHTML = formatStat(ytd.PH);
             
+            window.updateMonthlyStats();
+            
             document.getElementById('statsModal').classList.remove('hidden');
+        };
+
+        window.updateMonthlyStats = () => {
+            if (!currentStatsEmpId) return;
+            const emp = allEmployees.find(e => e.empId === currentStatsEmpId);
+            const userTS = allTimesheets.filter(ts => ts.empId === currentStatsEmpId && ts.status === 'Approved');
+            
+            const [selYear, selMonth] = document.getElementById('statsMonthSelector').value.split('-').map(Number);
+            let monthly = { work: 0, SL: 0, EL: 0, PH: 0 };
+            
+            userTS.forEach(ts => {
+                if (!ts.week) return;
+                const dates = getDatesFromWeek(ts.week);
+                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
+                    if(ts.entries && ts.entries[day]) {
+                        const entryDate = dates[idx];
+                        if (entryDate && entryDate.getFullYear() === selYear && (entryDate.getMonth() + 1) === selMonth) {
+                            const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                            entries.forEach(e => {
+                                if(!e) return;
+                                const h = parseFloat(e.hours) || 0;
+                                const type = e.type || '';
+                                if (type.includes('Work')) monthly.work += h; 
+                                else if (type.includes('SL')) monthly.SL += h; 
+                                else if (type.includes('EL')) monthly.EL += h; 
+                                else if (type.includes('PH')) monthly.PH += h;
+                            });
+                        }
+                    }
+                });
+            });
+
+            const dojDate = (emp && emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
+            let actualMonthStart = new Date(selYear, selMonth - 1, 1);
+            if (dojDate > actualMonthStart) actualMonthStart = dojDate;
+            const monthEnd = new Date(selYear, selMonth, 0); 
+            
+            const monthGoalDays = actualMonthStart > monthEnd ? 0 : getMonSatDays(actualMonthStart, monthEnd);
+            const monthGoalHours = monthGoalDays * 8;
+            const mTotal = monthly.work + monthly.SL + monthly.EL + monthly.PH;
+            const mPct = monthGoalHours > 0 ? Math.min((mTotal / monthGoalHours) * 100, 100).toFixed(0) : 0;
+
+            const mProg = document.getElementById('stat-m-prog');
+            mProg.classList.remove('hidden');
+            mProg.textContent = `${mPct}% of Goal (${monthGoalHours}h)`;
+            document.getElementById('stat-m-bar').style.width = `${mPct}%`;
+            document.getElementById('stat-m-bar').className = `h-1.5 rounded-full transition-all duration-500 ${mPct >= 100 ? 'bg-green-500' : 'bg-indigo-600'}`;
+
+            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-[10px] uppercase opacity-60'>days</span><br><span class='text-sm opacity-80'>${h.toFixed(1)} hrs</span>`;
+            document.getElementById('stat-m-total').innerHTML = formatStat(mTotal);
+            document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
+            document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
+            document.getElementById('stat-m-el').innerHTML = formatStat(monthly.EL);
+            document.getElementById('stat-m-ph').innerHTML = formatStat(monthly.PH);
         };
 
         window.exportYTD = (id, name) => {
