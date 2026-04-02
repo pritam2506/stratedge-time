@@ -686,7 +686,7 @@
                 }
             } catch (err) {
                 console.error("Preview Calculation Error:", err);
-                showToast("Error processing calculation.", "error");
+                showToast(`Calculation Error: ${err.message || err}`, "error");
             }
         };
 
