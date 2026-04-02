@@ -10,8 +10,8 @@
             theme: {
                 extend: {
                     colors: {
-                        'brand-blue': '#4169E1', // Royal Blue
-                        'brand-orange': '#FFA500', // Orange
+                        'brand-blue': '#4169E1',
+                        'brand-orange': '#FFA500',
                         'brand-orange-hover': '#e69500',
                     }
                 }
@@ -33,20 +33,15 @@
                 <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
             </div>
             <div class="flex items-center gap-4">
-                <!-- Notification Bell -->
                 <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()" title="Notifications">
                     <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
-                    
-                    <!-- Dropdown Panel -->
                     <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
                         <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                             <span class="font-bold text-gray-800 text-sm">Notifications</span>
                             <button onclick="markAllRead()" class="text-xs text-brand-blue hover:text-blue-700 font-semibold transition-colors">Mark all as read</button>
                         </div>
-                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
-                            <!-- Populated by JS -->
-                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100"></div>
                     </div>
                 </div>
 
@@ -55,9 +50,7 @@
                     Client & Invoicing Portal
                 </button>
 
-                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">
-                    Admin Portal
-                </div>
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">Admin Portal</div>
                 <button onclick="window.location.href='index.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     Logout
@@ -68,289 +61,222 @@
 
     <!-- Main Content -->
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        
         <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h2 class="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
                 <p class="text-gray-600 mt-1">Manage users, view statistics, and approve timesheets.</p>
             </div>
-            
-            <!-- Navigation Tabs -->
             <div class="flex bg-gray-200 p-1 rounded-lg">
-                <button id="tab-btn-employees" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm" onclick="switchTab('employees')">
-                    Employees
-                </button>
-                <button id="tab-btn-timesheets" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="switchTab('timesheets')">
-                    Timesheet Approvals
-                </button>
+                <button id="tab-btn-employees" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm" onclick="switchTab('employees')">Employees</button>
+                <button id="tab-btn-timesheets" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="switchTab('timesheets')">Timesheet Approvals</button>
             </div>
         </div>
 
-        <!-- ============================== -->
-        <!-- TAB 1: EMPLOYEE MANAGEMENT     -->
-        <!-- ============================== -->
+        <!-- TAB 1: EMPLOYEE MANAGEMENT -->
         <div id="tab-employees" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Add User Form -->
             <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
-                <h3 class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                    Add New User
-                </h3>
+                <h3 class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">Add New User</h3>
                 <form id="addUserForm" class="space-y-4">
                     <div>
                         <label for="userName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        <input type="text" id="userName" required placeholder="John Doe" 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                        <input type="text" id="userName" required placeholder="John Doe" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none">
                     </div>
                     <div>
                         <label for="userDOB" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                        <input type="date" id="userDOB" required 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-sm">
+                        <input type="date" id="userDOB" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none text-sm">
                     </div>
                     <div>
                         <label for="userRole" class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
-                        <select id="userRole" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                        <select id="userRole" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none">
                             <option value="Employee" selected>Employee</option>
                             <option value="Admin">Admin</option>
                         </select>
                     </div>
                     <div>
-                        <label for="empId" class="block text-sm font-medium text-gray-700 mb-1">Employee ID <span class="text-[10px] text-gray-400 font-normal uppercase">(Auto-generated)</span></label>
-                        <input type="text" id="empId" readonly placeholder="Will generate after DOB..." 
-                            class="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-brand-blue font-bold outline-none cursor-not-allowed transition-all">
+                        <label for="empId" class="block text-sm font-medium text-gray-700 mb-1">Employee ID <span class="text-[10px] text-gray-400 uppercase">(Auto-gen)</span></label>
+                        <input type="text" id="empId" readonly placeholder="Enter DOB first..." class="w-full px-4 py-2 bg-gray-50 border rounded-lg font-bold text-brand-blue outline-none cursor-not-allowed">
                     </div>
                     <div>
-                        <label for="userEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <input type="email" id="userEmail" required placeholder="john.doe@stratedge.com" 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                        <label for="userEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="userEmail" required placeholder="email@example.com" class="w-full px-4 py-2 border rounded-lg outline-none">
                     </div>
                     <div>
                         <label for="userDesig" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                        <input type="text" id="userDesig" required placeholder="e.g. Graphic Designer" 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                        <input type="text" id="userDesig" required placeholder="e.g. Designer" class="w-full px-4 py-2 border rounded-lg outline-none">
                     </div>
                     <div>
                         <label for="userDept" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                        <select id="userDept" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
-                            <option value="" disabled selected>Select Department...</option>
+                        <select id="userDept" required class="w-full px-4 py-2 border rounded-lg outline-none">
+                            <option value="" disabled selected>Select Dept...</option>
                             <option value="Design">Design</option>
                             <option value="Marketing">Marketing</option>
                             <option value="Founder's office">Founder's office</option>
                         </select>
                     </div>
                     <div>
-                        <label for="userPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <input type="tel" id="userPhone" required placeholder="e.g. +1 234 567 8900" 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all">
+                        <label for="userPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input type="tel" id="userPhone" required placeholder="+91 ..." class="w-full px-4 py-2 border rounded-lg outline-none">
                     </div>
                     <div>
-                        <label for="userDOJ" class="block text-sm font-medium text-gray-700 mb-1">Date of Joining</label>
-                        <input type="date" id="userDOJ" required 
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all text-sm">
+                        <label for="userDOJ" class="block text-sm font-medium text-gray-700 mb-1">Joining Date</label>
+                        <input type="date" id="userDOJ" required class="w-full px-4 py-2 border rounded-lg text-sm">
                     </div>
-                    
-                    <button type="submit" id="submitBtn" 
-                        class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center mt-6">
-                        <span>Add Employee</span>
-                    </button>
+                    <button type="submit" id="submitBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm">Add Employee</button>
                 </form>
             </div>
 
-            <!-- Users List -->
             <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                        Current Employees
-                    </h3>
+                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">Current Employees</h3>
                     <span id="userCount" class="bg-blue-100 text-brand-blue text-xs font-bold px-3 py-1.5 rounded-full">0 Employees</span>
                 </div>
-                
-                <!-- Employee Filters -->
                 <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div class="flex-1">
-                        <label for="filterName" class="sr-only">Search Employee</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </div>
-                            <input type="text" id="filterName" oninput="renderEmployees()" placeholder="Search by name or ID..." class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors">
-                        </div>
-                    </div>
-                    <div class="sm:w-40">
-                        <label for="filterRole" class="sr-only">Filter by Role</label>
-                        <select id="filterRole" onchange="renderEmployees()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors text-gray-700">
-                            <option value="">All Roles</option>
-                            <option value="Employee">Employee</option>
-                            <option value="Admin">Admin</option>
-                        </select>
-                    </div>
-                    <div class="sm:w-48">
-                        <label for="filterDept" class="sr-only">Filter by Department</label>
-                        <select id="filterDept" onchange="renderEmployees()" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors text-gray-700">
-                            <option value="">All Departments</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Founder's office">Founder's office</option>
-                        </select>
-                    </div>
+                    <input type="text" id="filterName" oninput="renderEmployees()" placeholder="Search by name or ID..." class="flex-1 px-4 py-2 border rounded-md text-sm outline-none">
+                    <select id="filterRole" onchange="renderEmployees()" class="sm:w-40 px-3 py-2 border rounded-md text-sm text-gray-700"><option value="">All Roles</option><option value="Employee">Employee</option><option value="Admin">Admin</option></select>
+                    <select id="filterDept" onchange="renderEmployees()" class="sm:w-48 px-3 py-2 border rounded-md text-sm text-gray-700"><option value="">All Depts</option><option value="Design">Design</option><option value="Marketing">Marketing</option><option value="Founder's office">Founder's office</option></select>
                 </div>
-
-                <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                <div class="overflow-x-auto border border-gray-200 rounded-lg text-sm">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role/Dept</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersList" class="bg-white divide-y divide-gray-200">
-                            <!-- Populated by JS -->
-                        </tbody>
+                        <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Employee</th><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Contact</th><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Role/Dept</th><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Joined</th><th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th></tr></thead>
+                        <tbody id="usersList" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ============================== -->
-        <!-- TAB 2: TIMESHEET APPROVALS     -->
-        <!-- ============================== -->
+        <!-- TAB 2: TIMESHEET APPROVALS -->
         <div id="tab-timesheets" class="hidden bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div class="flex justify-between items-center mb-4 border-b pb-3">
-                <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                    Timesheet Approvals
-                </h3>
-            </div>
-            
-            <!-- Timesheet Filters -->
+            <h3 class="text-xl font-semibold text-brand-blue mb-4 border-b pb-3 flex items-center gap-2">Timesheet Approvals</h3>
             <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                <div class="flex-1">
-                    <label for="tsFilterName" class="sr-only">Search Employee</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </div>
-                        <input type="text" id="tsFilterName" oninput="renderTimesheets()" placeholder="Search by employee name..." class="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue transition-colors">
-                    </div>
-                </div>
-                
-                <!-- Custom Calendar Week Selector Dropdown -->
+                <input type="text" id="tsFilterName" oninput="renderTimesheets()" placeholder="Search employee..." class="flex-1 px-4 py-2.5 border rounded-md text-sm outline-none">
                 <div class="w-full sm:w-72 relative">
-                    <label class="sr-only">Calendar Week Filter</label>
-                    <button id="adminWeekSelectorBtn" type="button" onclick="toggleAdminWeekDropdown()" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-md flex justify-between items-center hover:bg-gray-50 focus:ring-2 focus:ring-brand-blue outline-none transition-all shadow-sm text-sm text-gray-700">
-                        <div id="adminWeekSelectorDisplay" class="flex items-center gap-2 font-medium">
-                            All Weeks
-                        </div>
-                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    
-                    <!-- Calendar Popover List -->
-                    <div id="adminWeekDropdown" class="hidden absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl right-0 p-2">
-                        <!-- Injected dynamically via JS -->
-                    </div>
+                    <button id="adminWeekSelectorBtn" onclick="toggleAdminWeekDropdown()" class="w-full px-4 py-2.5 bg-white border rounded-md flex justify-between items-center text-sm text-gray-700"><span id="adminWeekSelectorDisplay">All Weeks</span><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                    <div id="adminWeekDropdown" class="hidden absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-white border rounded-lg shadow-xl right-0 p-2"></div>
                     <input type="hidden" id="tsFilterWeek" value="">
                 </div>
             </div>
-            
-            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+            <div class="overflow-x-auto border border-gray-200 rounded-lg text-sm">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Week</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="timesheetsList" class="bg-white divide-y divide-gray-200">
-                        <!-- Populated by JS -->
-                    </tbody>
+                    <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Week</th><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Employee</th><th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Total Hours</th><th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Status</th><th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th></tr></thead>
+                    <tbody id="timesheetsList" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
             </div>
         </div>
-
     </main>
 
     <!-- Modal: Edit Employee -->
-    <div id="editEmployeeModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div id="editEmployeeModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold text-gray-900">Edit Employee Record</h3>
-                <button onclick="closeModal('editEmployeeModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold">Edit Employee</h3>
+                <button onclick="closeModal('editEmployeeModal')" class="text-gray-400">✕</button>
             </div>
             <div class="p-6 overflow-y-auto">
                 <form id="editEmployeeForm" class="space-y-4">
                     <input type="hidden" id="editDocId">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1 text-xs">Date of Birth <span class="text-gray-400 font-normal italic">(Updating DOB will regenerate ID)</span></label>
-                            <input type="date" id="editUserDOB" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth</label>
+                            <input type="date" id="editUserDOB" required class="w-full px-4 py-2 border rounded-lg text-sm">
                         </div>
                         <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-                            <input type="text" id="editEmpId" readonly class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-brand-blue font-bold outline-none cursor-not-allowed">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Employee ID</label>
+                            <input type="text" id="editEmpId" readonly class="w-full px-4 py-2 bg-gray-100 border rounded-lg font-bold text-brand-blue">
                         </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                            <input type="text" id="editUserName" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
-                            <select id="editUserRole" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
-                                <option value="Employee">Employee</option>
-                                <option value="Admin">Admin</option>
-                            </select>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <input type="email" id="editUserEmail" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                            <input type="text" id="editUserDesig" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                            <select id="editUserDept" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
-                                <option value="Design">Design</option>
-                                <option value="Marketing">Marketing</option>
-                                <option value="Founder's office">Founder's office</option>
-                            </select>
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                            <input type="tel" id="editUserPhone" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all">
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Joining</label>
-                            <input type="date" id="editUserDOJ" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm">
-                        </div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Name</label><input type="text" id="editUserName" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Role</label><select id="editUserRole" required class="w-full px-4 py-2 border rounded-lg"><option value="Employee">Employee</option><option value="Admin">Admin</option></select></div>
+                        <div class="col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Email</label><input type="email" id="editUserEmail" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Designation</label><input type="text" id="editUserDesig" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Dept</label><select id="editUserDept" required class="w-full px-4 py-2 border rounded-lg"><option value="Design">Design</option><option value="Marketing">Marketing</option><option value="Founder's office">Founder's office</option></select></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Phone</label><input type="tel" id="editUserPhone" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Joined</label><input type="date" id="editUserDOJ" required class="w-full px-4 py-2 border rounded-lg text-sm"></div>
                     </div>
                 </form>
             </div>
-            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-                <button onclick="closeModal('editEmployeeModal')" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors">Cancel</button>
-                <button type="submit" id="editSubmitBtn" form="editEmployeeForm" class="px-4 py-2 bg-brand-blue text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">Save Changes</button>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button onclick="closeModal('editEmployeeModal')" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
+                <button type="submit" form="editEmployeeForm" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm">Save Changes</button>
             </div>
         </div>
     </div>
 
-    <!-- Stats Modal, Review Modal, Toast etc stay as is -->
+    <!-- Modal: Employee Stats -->
+    <div id="statsModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold" id="statsModalTitle">Employee Statistics</h3>
+                <button onclick="closeModal('statsModal')" class="text-gray-400 text-2xl">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsMonthLabel">Current Month</h4>
+                    <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-1"><div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Hours Logged</div><div id="stat-m-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border">0% Goal</div></div>
+                        <div id="stat-m-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
+                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-m-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-blue-50 p-3 rounded-lg border"><div>Work Hours</div><div id="stat-m-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
+                        <div class="bg-orange-50 p-3 rounded-lg border"><div>Sick Leave</div><div id="stat-m-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
+                        <div class="bg-purple-50 p-3 rounded-lg border"><div>Earned Leave</div><div id="stat-m-el" class="text-2xl font-black text-purple-600">0.0</div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><div>Public Holiday</div><div id="stat-m-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1" id="statsYtdLabel">Year To Date</h4>
+                    <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-1"><div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Hours Logged</div><div id="stat-y-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border">0% Goal</div></div>
+                        <div id="stat-y-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
+                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-y-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-3 rounded-lg border"><div>Work Hours</div><div id="stat-y-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
+                        <div class="bg-orange-50 p-3 rounded-lg border"><div>Sick Leave</div><div id="stat-y-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
+                        <div class="bg-purple-50 p-3 rounded-lg border"><div>Earned Leave</div><div id="stat-y-el" class="text-2xl font-black text-purple-600">0.0</div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><div>Public Holiday</div><div id="stat-y-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 text-right text-xs text-gray-500">* Approved hours only. 1 day = 8 hrs.</div>
+        </div>
+    </div>
 
-    <!-- Firebase Implementation -->
+    <!-- Modal: Review Timesheet -->
+    <div id="reviewModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 id="reviewModalTitle" class="text-xl font-bold">Review Timesheet</h3>
+                <button onclick="closeModal('reviewModal')" class="text-gray-400 text-2xl">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="flex justify-between items-end mb-4">
+                    <div><p id="reviewEmpDetails" class="text-sm text-gray-500"></p><p id="reviewTotalHours" class="text-2xl font-bold text-brand-blue"></p></div>
+                    <div id="reviewStatusBadge" class="px-3 py-1 rounded-full text-xs font-bold"></div>
+                </div>
+                <div id="reviewJustificationBlock" class="bg-red-50 p-4 rounded-lg mb-6 hidden"><h4 class="text-xs font-bold text-red-800">Justification:</h4><p id="reviewJustificationText" class="text-sm text-red-700 italic"></p></div>
+                <table class="min-w-full divide-y border text-sm rounded-lg overflow-hidden">
+                    <thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Day</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Project</th><th class="px-4 py-2 text-center text-xs text-gray-500 uppercase">Hours</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Type</th></tr></thead>
+                    <tbody id="reviewTableBody" class="divide-y"></tbody>
+                </table>
+            </div>
+            <div id="reviewActions" class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button id="btnDeleteTs" class="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm mr-auto">Delete / Re-open</button>
+                <button id="btnReject" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm">Reject</button>
+                <button id="btnApprove" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
+        <div id="toastMessage" class="text-sm font-semibold"></div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration (Matching previously provided)
         const firebaseConfig = {
             apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
             authDomain: "stratedge-time.firebaseapp.com",
@@ -366,222 +292,257 @@
         const db = getFirestore(app);
 
         let currentUser = null;
-        let unsubscribeEmps = null;
-        let unsubscribeTimesheets = null;
-        
         let allEmployees = [];
         let allTimesheets = [];
+        let readNotifIds = new Set();
         let currentReviewDocId = null;
-        let readNotifIds = new Set(); 
-
-        const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         // --- ID GENERATION LOGIC ---
         const generateID = (role, dob) => {
             if (!dob) return "";
             const prefix = role === "Admin" ? "AD" : "E";
-            
-            // Format DOB to YYDDMM
             const date = new Date(dob);
             const yy = date.getFullYear().toString().slice(-2);
             const dd = date.getDate().toString().padStart(2, '0');
             const mm = (date.getMonth() + 1).toString().padStart(2, '0');
-            
-            // Incremental sequence (Total users + 1)
             const seq = (allEmployees.length + 1).toString().padStart(4, '0');
-            
             return `${prefix}${yy}${dd}${mm}${seq}`;
         };
 
-        // Listeners for ID generation in Add Form
-        const userRoleSelect = document.getElementById('userRole');
-        const userDobInput = document.getElementById('userDOB');
-        const empIdDisplay = document.getElementById('empId');
-
-        const updateAddFormId = () => {
-            const id = generateID(userRoleSelect.value, userDobInput.value);
-            empIdDisplay.value = id;
+        const updateID = (formPrefix) => {
+            const roleEl = document.getElementById(formPrefix === 'add' ? 'userRole' : 'editUserRole');
+            const dobEl = document.getElementById(formPrefix === 'add' ? 'userDOB' : 'editUserDOB');
+            const idEl = document.getElementById(formPrefix === 'add' ? 'empId' : 'editEmpId');
+            idEl.value = generateID(roleEl.value, dobEl.value);
         };
 
-        userRoleSelect.addEventListener('change', updateAddFormId);
-        userDobInput.addEventListener('change', updateAddFormId);
+        ['userRole', 'userDOB'].forEach(id => document.getElementById(id).addEventListener('change', () => updateID('add')));
+        ['editUserRole', 'editUserDOB'].forEach(id => document.getElementById(id).addEventListener('change', () => updateID('edit')));
 
-        // Listeners for ID generation in Edit Form
-        const editRoleSelect = document.getElementById('editUserRole');
-        const editDobInput = document.getElementById('editUserDOB');
-        const editEmpIdDisplay = document.getElementById('editEmpId');
-
-        const updateEditFormId = () => {
-            const id = generateID(editRoleSelect.value, editDobInput.value);
-            editEmpIdDisplay.value = id;
+        // --- UI CORE ---
+        window.switchTab = (tab) => {
+            const tabs = ['employees', 'timesheets'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+                document.getElementById(`tab-${t}`).classList.toggle('grid', t === tab);
+                document.getElementById(`tab-btn-${t}`).className = t === tab 
+                    ? "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm"
+                    : "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
+            });
         };
 
-        editRoleSelect.addEventListener('change', updateEditFormId);
-        editDobInput.addEventListener('change', updateEditFormId);
-
-        // --- UI UTILS ---
-        window.toggleNotifications = () => document.getElementById('notifDropdown').classList.toggle('hidden');
-        window.toggleAdminWeekDropdown = () => document.getElementById('adminWeekDropdown').classList.toggle('hidden');
-        window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
-        
-        const showToast = (message, type = 'success') => {
+        const showToast = (msg, type='success') => {
             const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = message;
+            document.getElementById('toastMessage').textContent = msg;
+            toast.className = `fixed bottom-4 right-4 transform transition-all z-[100] flex items-center p-4 rounded-lg shadow-xl border bg-white ${type === 'error' ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`;
             toast.classList.remove('translate-y-full', 'opacity-0');
-            setTimeout(window.hideToast, 4000);
+            setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
         };
 
-        window.switchTab = (tabName) => {
-            const btnEmp = document.getElementById('tab-btn-employees');
-            const btnTime = document.getElementById('tab-btn-timesheets');
-            const tabEmp = document.getElementById('tab-employees');
-            const tabTime = document.getElementById('tab-timesheets');
-            if (tabName === 'employees') {
-                btnEmp.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm";
-                btnTime.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900";
-                tabEmp.classList.replace('hidden', 'grid');
-                tabTime.classList.add('hidden');
-            } else {
-                btnTime.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm";
-                btnEmp.className = "px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900";
-                tabTime.classList.remove('hidden');
-                tabEmp.classList.replace('grid', 'hidden');
-            }
+        window.closeModal = (m) => document.getElementById(m).classList.add('hidden');
+
+        // --- DATE UTILS ---
+        const getDatesFromWeek = (w) => {
+            const [yStr, wkStr] = w.split('-W');
+            const d = new Date(parseInt(yStr), 0, 1 + (parseInt(wkStr) - 1) * 7);
+            const ISOwkStart = d;
+            if (d.getDay() <= 4) ISOwkStart.setDate(d.getDate() - d.getDay() + 1);
+            else ISOwkStart.setDate(d.getDate() + 8 - d.getDay());
+            return Array.from({length:6}, (_,i) => { let dt = new Date(ISOwkStart); dt.setDate(dt.getDate()+i); return dt; });
         };
 
-        window.closeModal = (modalId) => document.getElementById(modalId).classList.add('hidden');
+        // --- STATS & EXPORT ---
+        window.openStats = (id, name) => {
+            const userTS = allTimesheets.filter(ts => ts.empId === id && ts.status === 'Approved');
+            const now = new Date();
+            let monthly = { work: 0, SL: 0, EL: 0, PH: 0 }, ytd = { work: 0, SL: 0, EL: 0, PH: 0 };
+            userTS.forEach(ts => {
+                if (!ts.week.startsWith(now.getFullYear())) return;
+                const dates = getDatesFromWeek(ts.week);
+                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
+                    const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                    entries.forEach(e => {
+                        const h = parseFloat(e.hours) || 0;
+                        if (e.type.includes('Work')) ytd.work += h; else if (e.type.includes('SL')) ytd.SL += h; else if (e.type.includes('EL')) ytd.EL += h; else if (e.type.includes('PH')) ytd.PH += h;
+                        if (dates[idx].getMonth() === now.getMonth()) {
+                            if (e.type.includes('Work')) monthly.work += h; else if (e.type.includes('SL')) monthly.SL += h; else if (e.type.includes('EL')) monthly.EL += h; else if (e.type.includes('PH')) monthly.PH += h;
+                        }
+                    });
+                });
+            });
+            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-xs uppercase opacity-50'>days</span> (${h.toFixed(1)}h)`;
+            document.getElementById('stat-m-total').innerHTML = formatStat(monthly.work + monthly.SL + monthly.EL + monthly.PH);
+            document.getElementById('stat-y-total').innerHTML = formatStat(ytd.work + ytd.SL + ytd.EL + ytd.PH);
+            document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
+            document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
+            document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
+            document.getElementById('statsModal').classList.remove('hidden');
+        };
 
-        // --- DATA RENDERERS ---
+        window.exportYTD = (id, name) => {
+            let csv = "Week,Day,Date,Project,Type,Hours\n";
+            allTimesheets.filter(ts => ts.empId === id).sort((a,b)=>a.week.localeCompare(b.week)).forEach(ts => {
+                const dates = getDatesFromWeek(ts.week);
+                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, i) => {
+                    const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                    entries.forEach(e => { if(parseFloat(e.hours)>0) csv += `${ts.week},${day},${dates[i].toLocaleDateString()},"${e.project}",${e.type},${e.hours}\n`; });
+                });
+            });
+            const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+            link.download = `TS_${name}_${new Date().getFullYear()}.csv`; link.click();
+        };
+
+        // --- RENDERING ---
         window.renderEmployees = () => {
             const tbody = document.getElementById('usersList');
-            const countSpan = document.getElementById('userCount');
+            const search = document.getElementById('filterName').value.toLowerCase();
+            const roleF = document.getElementById('filterRole').value;
+            const deptF = document.getElementById('filterDept').value;
             tbody.innerHTML = '';
-            
-            const filterName = document.getElementById('filterName').value.toLowerCase();
-            const filterRole = document.getElementById('filterRole').value;
-            const filterDept = document.getElementById('filterDept').value;
-
-            const filtered = allEmployees.filter(emp => {
-                const matchName = (emp.name || '').toLowerCase().includes(filterName) || (emp.empId || '').toLowerCase().includes(filterName);
-                const matchRole = filterRole === '' || emp.role === filterRole;
-                const matchDept = filterDept === '' || emp.department === filterDept;
-                return matchName && matchRole && matchDept;
+            const filtered = allEmployees.filter(e => {
+                return (e.name.toLowerCase().includes(search) || e.empId.toLowerCase().includes(search)) && (roleF==='' || e.role===roleF) && (deptF==='' || e.department===deptF);
             });
-
-            filtered.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0)).forEach(emp => {
+            filtered.forEach(e => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <div class="text-sm font-bold text-gray-900">${emp.name}</div>
-                        <div class="text-[10px] text-gray-500 font-mono">ID: ${emp.empId}</div>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${emp.email}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${emp.role === 'Admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-brand-blue'}">${emp.role}</span>
-                        <div class="text-[10px] text-gray-400 mt-0.5">${emp.department}</div>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${emp.doj || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-right">
-                        <button onclick="editUser('${emp.id}')" class="text-brand-blue hover:underline text-xs font-bold mr-3">EDIT</button>
-                        <button onclick="deleteUser('${emp.id}')" id="del-btn-${emp.id}" class="text-red-500 hover:underline text-xs font-bold">DELETE</button>
-                    </td>
-                `;
+                tr.innerHTML = `<td class="px-4 py-3"><b>${e.name}</b><br><span class="text-[10px] font-mono text-gray-400">${e.empId}</span></td>
+                    <td class="px-4 py-3 text-xs">${e.email}<br>${e.phone}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.role==='Admin'?'bg-purple-100':'bg-blue-100'}">${e.role}</span><br><span class="text-[10px]">${e.department}</span></td>
+                    <td class="px-4 py-3 text-xs">${e.doj}</td>
+                    <td class="px-4 py-3 text-right">
+                        <button onclick="editUser('${e.id}')" class="text-brand-blue font-bold mr-2">Edit</button>
+                        <button onclick="openStats('${e.empId}', '${e.name}')" class="text-brand-orange font-bold mr-2">Stats</button>
+                        <button onclick="exportYTD('${e.empId}', '${e.name}')" class="text-green-600 font-bold mr-2">Export</button>
+                        <button id="del-btn-${e.id}" onclick="deleteUser('${e.id}')" class="text-red-500 font-bold">Delete</button>
+                    </td>`;
                 tbody.appendChild(tr);
             });
-            countSpan.textContent = `${allEmployees.length} Employees`;
+            document.getElementById('userCount').textContent = `${allEmployees.length} Employees`;
         };
 
-        // Other utility functions (Timesheet rendering, stats etc) stay as provided in your original logic...
-        // [Logic truncated for brevity but remains functionally identical to your snippet]
+        window.renderTimesheets = () => {
+            const tbody = document.getElementById('timesheetsList');
+            const search = document.getElementById('tsFilterName').value.toLowerCase();
+            const wk = document.getElementById('tsFilterWeek').value;
+            tbody.innerHTML = '';
+            allTimesheets.filter(ts => {
+                return (ts.name.toLowerCase().includes(search)) && (wk==='' || ts.week===wk);
+            }).forEach(ts => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-4 py-3 font-bold">${ts.week}</td>
+                    <td class="px-4 py-3">${ts.name}<br><span class="text-[10px] text-gray-400">${ts.empId}</span></td>
+                    <td class="px-4 py-3 text-center font-bold">${ts.totalHours}</td>
+                    <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${ts.status==='Approved'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${ts.status}</span></td>
+                    <td class="px-4 py-3 text-right"><button onclick="reviewTimesheet('${ts.id}')" class="bg-blue-50 text-brand-blue px-3 py-1 rounded">Review</button></td>`;
+                tbody.appendChild(tr);
+            });
+        };
 
-        window.editUser = (docId) => {
-            const emp = allEmployees.find(e => e.id === docId);
-            if (!emp) return;
-            document.getElementById('editDocId').value = emp.id;
-            document.getElementById('editUserName').value = emp.name || '';
-            document.getElementById('editUserDOB').value = emp.dob || '';
-            document.getElementById('editUserRole').value = emp.role || 'Employee';
-            document.getElementById('editEmpId').value = emp.empId || '';
-            document.getElementById('editUserEmail').value = emp.email || '';
-            document.getElementById('editUserDesig').value = emp.designation || '';
-            document.getElementById('editUserDept').value = emp.department || '';
-            document.getElementById('editUserPhone').value = emp.phone || '';
-            document.getElementById('editUserDOJ').value = emp.doj || '';
+        window.editUser = (id) => {
+            const e = allEmployees.find(emp => emp.id === id);
+            document.getElementById('editDocId').value = e.id;
+            document.getElementById('editUserName').value = e.name;
+            document.getElementById('editUserDOB').value = e.dob || "";
+            document.getElementById('editUserRole').value = e.role;
+            document.getElementById('editEmpId').value = e.empId;
+            document.getElementById('editUserEmail').value = e.email;
+            document.getElementById('editUserDesig').value = e.designation;
+            document.getElementById('editUserDept').value = e.department;
+            document.getElementById('editUserPhone').value = e.phone;
+            document.getElementById('editUserDOJ').value = e.doj;
             document.getElementById('editEmployeeModal').classList.remove('hidden');
         };
 
-        // --- SUBMIT HANDLERS ---
+        window.deleteUser = async (id) => {
+            const btn = document.getElementById(`del-btn-${id}`);
+            if (btn.textContent === "Delete") {
+                btn.textContent = "Sure?"; btn.className = "bg-red-500 text-white px-2 rounded";
+                setTimeout(() => { btn.textContent = "Delete"; btn.className = "text-red-500 font-bold"; }, 3000);
+                return;
+            }
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id));
+            showToast("User removed.");
+        };
+
+        window.reviewTimesheet = (id) => {
+            const ts = allTimesheets.find(t => t.id === id);
+            currentReviewDocId = id;
+            document.getElementById('reviewEmpDetails').textContent = `${ts.name} (${ts.empId})`;
+            document.getElementById('reviewTotalHours').textContent = `${ts.totalHours} hrs logged`;
+            const tbody = document.getElementById('reviewTableBody'); tbody.innerHTML = '';
+            ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(d => {
+                if(ts.entries[d]) {
+                    const ents = Array.isArray(ts.entries[d]) ? ts.entries[d] : [ts.entries[d]];
+                    ents.forEach(e => {
+                        if(parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="p-2">${d}</td><td class="p-2">${e.project}</td><td class="p-2 text-center font-bold">${e.hours}</td><td class="p-2">${e.type}</td></tr>`;
+                    });
+                }
+            });
+            document.getElementById('reviewModal').classList.remove('hidden');
+        };
+
+        // --- SUBMIT ---
         document.getElementById('addUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-
             const payload = {
-                name: document.getElementById('userName').value.trim(),
+                name: document.getElementById('userName').value,
                 dob: document.getElementById('userDOB').value,
                 role: document.getElementById('userRole').value,
                 empId: document.getElementById('empId').value,
-                email: document.getElementById('userEmail').value.trim(),
-                designation: document.getElementById('userDesig').value.trim(),
+                email: document.getElementById('userEmail').value,
+                designation: document.getElementById('userDesig').value,
                 department: document.getElementById('userDept').value,
-                phone: document.getElementById('userPhone').value.trim(),
+                phone: document.getElementById('userPhone').value,
                 doj: document.getElementById('userDOJ').value,
                 createdAt: Date.now()
             };
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), payload);
-                showToast("Employee added successfully!");
-                e.target.reset();
-            } catch (error) {
-                showToast("Error: " + error.message, 'error');
-            } finally {
-                btn.disabled = false;
-            }
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), payload);
+            showToast("Employee registered.");
+            e.target.reset(); updateID('add');
         });
 
         document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const docId = document.getElementById('editDocId').value;
+            const id = document.getElementById('editDocId').value;
             const payload = {
-                name: document.getElementById('editUserName').value.trim(),
+                name: document.getElementById('editUserName').value,
                 dob: document.getElementById('editUserDOB').value,
                 role: document.getElementById('editUserRole').value,
                 empId: document.getElementById('editEmpId').value,
-                email: document.getElementById('editUserEmail').value.trim(),
-                designation: document.getElementById('editUserDesig').value.trim(),
+                email: document.getElementById('editUserEmail').value,
+                designation: document.getElementById('editUserDesig').value,
                 department: document.getElementById('editUserDept').value,
-                phone: document.getElementById('editUserPhone').value.trim(),
+                phone: document.getElementById('editUserPhone').value,
                 doj: document.getElementById('editUserDOJ').value
             };
-
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId), payload);
-                showToast("Employee updated!");
-                closeModal('editEmployeeModal');
-            } catch (error) {
-                showToast("Error: " + error.message, 'error');
-            }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id), payload);
+            showToast("Employee updated.");
+            closeModal('editEmployeeModal');
         });
 
-        // --- INITIALIZATION ---
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) {
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), (snap) => {
-                    allEmployees = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderEmployees();
-                });
-                // Timesheet snapshot listener...
+        const updateTSStatus = async (s) => {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', currentReviewDocId), { status: s });
+            showToast(`Timesheet ${s}.`); closeModal('reviewModal');
+        };
+        document.getElementById('btnApprove').onclick = () => updateTSStatus('Approved');
+        document.getElementById('btnReject').onclick = () => updateTSStatus('Rejected');
+        document.getElementById('btnDeleteTs').onclick = async () => {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', currentReviewDocId));
+            showToast("TS Deleted."); closeModal('reviewModal');
+        };
+
+        // --- INIT ---
+        onAuthStateChanged(auth, u => {
+            currentUser = u;
+            if (u) {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); renderEmployees(); });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); renderTimesheets(); });
             }
         });
         signInAnonymously(auth);
 
-        // Required global exports for onclick attributes
         window.toggleNotifications = () => document.getElementById('notifDropdown').classList.toggle('hidden');
-        window.deleteUser = async (id) => { 
-            if(confirm("Permanently remove this user?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id));
-        };
+        window.toggleAdminWeekDropdown = () => document.getElementById('adminWeekDropdown').classList.toggle('hidden');
+        window.markAllRead = () => { showToast("All notifications cleared."); document.getElementById('notifDropdown').classList.add('hidden'); };
     </script>
 </body>
 </html>
