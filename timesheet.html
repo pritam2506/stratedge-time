@@ -830,6 +830,15 @@
         };
 
         // --- Grid Rendering Logic ---
+        const isBeforeDoj = (rowDate) => {
+            if (!activeUser.doj) return false;
+            const rDate = new Date(rowDate);
+            rDate.setHours(0,0,0,0);
+            const dDate = new Date(activeUser.doj);
+            dDate.setHours(0,0,0,0);
+            return rDate < dDate;
+        };
+
         window.renderTimesheetGrid = async (weekStr) => {
             if (!weekStr) return;
             
@@ -867,9 +876,11 @@
                     daysOfWeek.forEach((day, index) => {
                         const rowDate = dates[index];
                         const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
+                        const beforeDoj = isBeforeDoj(rowDate);
 
-                        // If it's a holiday, we only inject the single locked PH row regardless of the prefilled array.
-                        if (holidayInfo) {
+                        if (beforeDoj) {
+                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
+                        } else if (holidayInfo) {
                             window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
                         } else if (lastApproved.entries && lastApproved.entries[day] && Array.isArray(lastApproved.entries[day])) {
                             lastApproved.entries[day].forEach(entry => {
@@ -884,7 +895,13 @@
                     daysOfWeek.forEach((day, index) => {
                         const rowDate = dates[index];
                         const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                        window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
+                        const beforeDoj = isBeforeDoj(rowDate);
+                        
+                        if (beforeDoj) {
+                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
+                        } else {
+                            window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
+                        }
                     });
                 }
             } else {
@@ -928,10 +945,13 @@
                 daysOfWeek.forEach((day, index) => {
                     const rowDate = dates[index];
                     const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
+                    const beforeDoj = isBeforeDoj(rowDate);
                     let tbody = document.getElementById(`day-tbody-${index}`);
                     if (tbody) tbody.innerHTML = ''; 
                     
-                    if (holidayInfo) {
+                    if (beforeDoj) {
+                        window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
+                    } else if (holidayInfo) {
                         window.addEntryRow(index, day, formatDate(rowDate), null, true, holidayInfo);
                     } else if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
                         data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, true, holidayInfo));
@@ -981,10 +1001,13 @@
                     daysOfWeek.forEach((day, index) => {
                         const rowDate = dates[index];
                         const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
+                        const beforeDoj = isBeforeDoj(rowDate);
                         let tbody = document.getElementById(`day-tbody-${index}`);
                         if (tbody) tbody.innerHTML = ''; 
                         
-                        if (holidayInfo) {
+                        if (beforeDoj) {
+                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
+                        } else if (holidayInfo) {
                             window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
                         } else if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
                             data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo));
