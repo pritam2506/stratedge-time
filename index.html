@@ -51,9 +51,17 @@
                         class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-brand-blue focus:ring-0 outline-none transition-all font-semibold text-gray-800">
                 </div>
 
+                <!-- NEW PASSWORD FIELD -->
+                <div id="passwordContainer">
+                    <label for="empPassword" class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2 ml-1">Password</label>
+                    <input type="password" id="empPassword" required placeholder="DDMMYY" 
+                        class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-brand-blue focus:ring-0 outline-none transition-all font-semibold text-gray-800 tracking-widest">
+                    <p class="text-[10px] text-gray-400 mt-1 ml-1 font-medium">Use your Date of Joining (e.g. 150823 for 15 Aug 2023)</p>
+                </div>
+
                 <div id="errorMessage" class="hidden text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                    Invalid Employee ID. Please try again.
+                    <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    <span id="errorText">Invalid Employee ID. Please try again.</span>
                 </div>
 
                 <button type="submit" id="loginBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-black py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2">
@@ -126,13 +134,30 @@
 
         let fbUser = null;
 
+        const empIdInput = document.getElementById('empId');
+        const pwdContainer = document.getElementById('passwordContainer');
+        const pwdInput = document.getElementById('empPassword');
+        const errorMsg = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        // Dynamically hide/show password field based on Admin ID prefix
+        empIdInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim().toUpperCase();
+            if (val.startsWith('AD')) {
+                pwdContainer.classList.add('hidden');
+                pwdInput.required = false;
+                pwdInput.value = '';
+            } else {
+                pwdContainer.classList.remove('hidden');
+                pwdInput.required = true;
+            }
+        });
+
         // Login Logic
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const empIdInput = document.getElementById('empId');
             const empId = empIdInput.value.trim();
             const btn = document.getElementById('loginBtn');
-            const errorMsg = document.getElementById('errorMessage');
 
             btn.disabled = true;
             btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> VERIFYING...`;
@@ -145,12 +170,28 @@
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    throw new Error("User not found");
+                    throw new Error("User not found. Please verify your Employee ID.");
                 }
 
                 const userData = querySnapshot.docs[0].data();
                 const docId = querySnapshot.docs[0].id;
                 
+                // Password Validation for Employees
+                if (userData.role !== 'Admin') {
+                    const doj = userData.doj;
+                    if (!doj) throw new Error("Account incomplete: No Date of Joining found.");
+                    
+                    const parts = doj.split('-'); // Format is YYYY-MM-DD
+                    if (parts.length !== 3) throw new Error("Account incomplete: Invalid DOJ format.");
+                    
+                    const expectedPwd = `${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
+                    const enteredPwd = pwdInput.value.trim();
+
+                    if (enteredPwd !== expectedPwd) {
+                        throw new Error("Invalid password. Use your DOJ in DDMMYY format.");
+                    }
+                }
+
                 // Store in session
                 sessionStorage.setItem('stratedge_active_user', JSON.stringify({ ...userData, id: docId }));
 
@@ -166,6 +207,7 @@
                 }
             } catch (err) {
                 console.error(err);
+                errorText.textContent = err.message || "An error occurred during login.";
                 errorMsg.classList.remove('hidden');
                 btn.disabled = false;
                 btn.innerHTML = `<span>SECURE LOGIN</span> <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
