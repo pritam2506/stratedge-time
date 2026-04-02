@@ -504,18 +504,54 @@
             document.getElementById('stat-y-total').innerHTML = formatStat(yTotal);
             document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
             
+            // Calculate Limits from DB or fallback
+            const currentYearNum = now.getFullYear();
+            let slLimit = emp.slLimit;
+            let elLimit = emp.elLimit;
+            let phLimit = emp.phLimit;
+
+            if (slLimit === undefined || elLimit === undefined || phLimit === undefined) {
+                slLimit = 5; elLimit = 12; phLimit = 12;
+                if (emp.doj) {
+                    const dDate = new Date(emp.doj);
+                    if (dDate.getFullYear() === currentYearNum) {
+                        const endOfYear = new Date(currentYearNum, 11, 31);
+                        const startOfYear = new Date(currentYearNum, 0, 1);
+                        const daysWorked = Math.floor((endOfYear - dDate) / (1000 * 60 * 60 * 24)) + 1;
+                        const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+                        const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
+                        slLimit = Math.round(5 * ratio);
+                        elLimit = Math.round(12 * ratio);
+                        const dojJustDate = getISODate(dDate);
+                        phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString()) && h.date >= dojJustDate).length;
+                    } else if (dDate.getFullYear() > currentYearNum) {
+                        slLimit = 0; elLimit = 0; phLimit = 0;
+                    } else {
+                        phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString())).length;
+                    }
+                }
+            }
+
             // New dynamic formatter specifically for YTD leaves with limits
             const formatYtdLeave = (elId, h, limit) => {
                 const d = h / 8;
-                const color = d > limit ? 'text-red-600' : 'text-green-600';
+                const isExceeded = d > limit;
+                const color = isExceeded ? 'text-red-600' : 'text-green-600';
                 const el = document.getElementById(elId);
-                el.className = `text-2xl font-black ${color}`;
-                el.innerHTML = `${d.toFixed(1)}<span class="text-sm font-bold text-gray-400">/${limit}</span> <span class='text-[10px] uppercase opacity-60 text-gray-500'>days</span><br><span class='text-sm opacity-80 text-gray-500'>${h.toFixed(1)} hrs</span>`;
+                
+                el.className = `font-black ${color} flex flex-col justify-start`;
+                let html = `<div class="text-2xl">${d.toFixed(1)}<span class="text-sm font-bold text-gray-400">/${limit}</span> <span class='text-[10px] uppercase opacity-60 text-gray-500'>days</span></div>`;
+                html += `<div class='text-sm opacity-80 text-gray-500'>${h.toFixed(1)} hrs</div>`;
+                
+                if (isExceeded) {
+                    html += `<div class="mt-1"><span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200 shadow-sm leading-none inline-block">Limit Exceeded</span></div>`;
+                }
+                el.innerHTML = html;
             };
 
-            formatYtdLeave('stat-y-sl', ytd.SL, 5);
-            formatYtdLeave('stat-y-el', ytd.EL, 12);
-            formatYtdLeave('stat-y-ph', ytd.PH, 12);
+            formatYtdLeave('stat-y-sl', ytd.SL, slLimit);
+            formatYtdLeave('stat-y-el', ytd.EL, elLimit);
+            formatYtdLeave('stat-y-ph', ytd.PH, phLimit);
             
             window.updateMonthlyStats();
             
