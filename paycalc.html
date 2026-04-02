@@ -764,18 +764,20 @@
             y += 6;
             doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60);
             
+            const d = (hrs) => (hrs/8).toFixed(1);
+            
             // Left Col (Time)
-            doc.text(`Target Total: ${ps.monthGoalHours} hrs`, m, y);
-            doc.text(`Logged Total: ${ps.loggedInMonth.toFixed(1)} hrs`, m, y + 5);
-            doc.text(`Regular Work: ${ps.workInMonth.toFixed(1)} hrs`, m, y + 10);
-            doc.text(`Sick Leave: ${ps.slInMonth.toFixed(1)} hrs`, m, y + 15);
-            doc.text(`Earned Leave: ${ps.elInMonth.toFixed(1)} hrs`, m, y + 20);
-            doc.text(`Public Holiday: ${ps.phInMonth.toFixed(1)} hrs`, m, y + 25);
+            doc.text(`Target Total: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y);
+            doc.text(`Logged Total: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
+            doc.text(`Regular Work: ${ps.workInMonth.toFixed(1)} hrs (${d(ps.workInMonth)} days)`, m, y + 10);
+            doc.text(`Sick Leave: ${ps.slInMonth.toFixed(1)} hrs (${d(ps.slInMonth)} days)`, m, y + 15);
+            doc.text(`Earned Leave: ${ps.elInMonth.toFixed(1)} hrs (${d(ps.elInMonth)} days)`, m, y + 20);
+            doc.text(`Public Holiday: ${ps.phInMonth.toFixed(1)} hrs (${d(ps.phInMonth)} days)`, m, y + 25);
 
             // Right Col (YTD)
-            doc.text(`Sick Leave: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs`, m + 90, y);
-            doc.text(`Earned Leave: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs`, m + 90, y + 5);
-            doc.text(`Public Holiday: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs`, m + 90, y + 10);
+            doc.text(`Sick Leave: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs (${d(ps.ytdSL)} / ${d(ps.slLimitHrs)} days)`, m + 90, y);
+            doc.text(`Earned Leave: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs (${d(ps.ytdEL)} / ${d(ps.elLimitHrs)} days)`, m + 90, y + 5);
+            doc.text(`Public Holiday: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs (${d(ps.ytdPH)} / ${d(ps.phLimitHrs)} days)`, m + 90, y + 10);
 
             y += 35; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
             
@@ -874,9 +876,6 @@
                 document.getElementById('confirmBtn').classList.add('hidden');
                 document.getElementById('pdfBtn').classList.remove('hidden');
                 document.getElementById('confirmedBadge').classList.remove('hidden');
-                
-                // Automatically trigger download
-                pdfDoc.save(`Payslip_${window.currentPayslipData.emp.name}_${window.currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
                 
                 showToast("Pay record confirmed and saved successfully!", "success");
             } catch (err) {
