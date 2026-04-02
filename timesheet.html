@@ -279,6 +279,30 @@
         let readNotifIds = new Set();
         let currentActiveNotifIds = [];
 
+        // Public Holidays Data 2026
+        const publicHolidays2026 = [
+            { date: '2026-01-26', name: 'Republic Day' },
+            { date: '2026-03-03', name: 'Dol Jatra / Holi' },
+            { date: '2026-04-15', name: 'Poila Boishakh' },
+            { date: '2026-08-15', name: 'Independence Day' },
+            { date: '2026-10-02', name: 'Gandhi Jayanti' },
+            { date: '2026-10-18', name: 'Maha Saptami' },
+            { date: '2026-10-19', name: 'Maha Ashtami' },
+            { date: '2026-10-20', name: 'Maha Navami' },
+            { date: '2026-10-21', name: 'Maha Dashami' },
+            { date: '2026-11-08', name: 'Kali Puja' },
+            { date: '2026-11-09', name: 'Diwali' },
+            { date: '2026-12-25', name: 'Christmas Day' }
+        ];
+
+        // Format Date Object to Local YYYY-MM-DD
+        const getISODate = (dateObj) => {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
         // Global UI Click Closers
         window.logout = () => {
             if (unsubscribeTimesheets) unsubscribeTimesheets();
@@ -532,10 +556,11 @@
             // Calculate Pro-rated Limits for EL and SL based on DOJ
             let slLimit = 5;
             let elLimit = 12;
-            const phLimit = 12;
+            let phLimit = 12; // Default limit
 
             if (activeUser.doj) {
                 const dojDate = new Date(activeUser.doj);
+                
                 if (dojDate.getFullYear() === currentYearNum) {
                     const endOfYear = new Date(currentYearNum, 11, 31);
                     const startOfYear = new Date(currentYearNum, 0, 1);
@@ -548,10 +573,19 @@
                     // Round to the nearest integer value always
                     slLimit = Math.round(5 * ratio);
                     elLimit = Math.round(12 * ratio);
+
+                    // Public Holidays Remaining in joining year
+                    const dojJustDate = getISODate(dojDate);
+                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYear) && h.date >= dojJustDate).length;
+
                 } else if (dojDate.getFullYear() > currentYearNum) {
                     // Edge case: DOJ is in the future
                     slLimit = 0;
                     elLimit = 0;
+                    phLimit = 0;
+                } else {
+                    // Past year joiners get all holidays in the current year
+                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYear)).length;
                 }
             }
 
@@ -688,7 +722,7 @@
             });
         };
 
-        window.addEntryRow = (dayIndex, dayName, dateStr, data = null, isSubmitted = false) => {
+        window.addEntryRow = (dayIndex, dayName, dateStr, data = null, isSubmitted = false, holidayInfo = null) => {
             let tbody = document.getElementById(`day-tbody-${dayIndex}`);
             if (!tbody) {
                 tbody = document.createElement('tbody');
@@ -697,6 +731,12 @@
                 tbody.dataset.dateStr = dateStr;
                 tbody.className = "bg-white divide-y divide-gray-100 border-b border-gray-200 group";
                 document.getElementById('timesheetTable').appendChild(tbody);
+            }
+
+            // Force Public Holiday details & Lock if it matches
+            if (holidayInfo && !isSubmitted) {
+                data = { hours: 8, project: holidayInfo.name, type: 'Public Holiday (PH)' };
+                isSubmitted = true;
             }
 
             const tr = document.createElement('tr');
@@ -744,7 +784,7 @@
             
             const applyLeaveLogic = () => {
                 if (typeSelect.value !== 'Regular Work') {
-                    projInput.value = 'On Leave';
+                    if(!holidayInfo) projInput.value = 'On Leave';
                     projInput.readOnly = true;
                     projInput.classList.add('bg-gray-100', 'text-gray-500');
                 } else {
@@ -797,12 +837,9 @@
             const tbodys = table.querySelectorAll('tbody');
             tbodys.forEach(t => t.remove());
 
-            daysOfWeek.forEach((day, index) => {
-                window.addEntryRow(index, day, formatDate(dates[index]));
-            });
-
             // Prefill Logic
             const currentData = myTimesheets.find(ts => ts.week === weekStr);
+            
             if (!currentData) {
                 const approvedSheets = myTimesheets.filter(ts => ts.status === 'Approved').sort((a,b) => b.week.localeCompare(a.week));
                 if (approvedSheets.length > 0) {
@@ -810,21 +847,31 @@
                     document.getElementById('prefillWarning').classList.remove('hidden');
                     
                     daysOfWeek.forEach((day, index) => {
-                        const tbody = document.getElementById(`day-tbody-${index}`);
-                        tbody.innerHTML = '';
-                        if (lastApproved.entries && lastApproved.entries[day] && Array.isArray(lastApproved.entries[day])) {
+                        const rowDate = dates[index];
+                        const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
+
+                        // If it's a holiday, we only inject the single locked PH row regardless of the prefilled array.
+                        if (holidayInfo) {
+                            window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
+                        } else if (lastApproved.entries && lastApproved.entries[day] && Array.isArray(lastApproved.entries[day])) {
                             lastApproved.entries[day].forEach(entry => {
-                                window.addEntryRow(index, day, formatDate(dates[index]), entry, false);
+                                window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo);
                             });
                         } else {
-                            window.addEntryRow(index, day, formatDate(dates[index]), {hours: 8, project: '', type: 'Regular Work'}, false);
+                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 8, project: '', type: 'Regular Work'}, false, holidayInfo);
                         }
                     });
                 } else {
                     document.getElementById('prefillWarning').classList.add('hidden');
+                    daysOfWeek.forEach((day, index) => {
+                        const rowDate = dates[index];
+                        const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
+                        window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
+                    });
                 }
             } else {
                 document.getElementById('prefillWarning').classList.add('hidden');
+                // The rows will be rendered by checkSubmissionStatus based on the existing currentData
             }
 
             checkSubmissionStatus(weekStr);
@@ -861,14 +908,19 @@
                 document.getElementById('declaration').checked = true;
 
                 daysOfWeek.forEach((day, index) => {
+                    const rowDate = dates[index];
+                    const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
                     const tbody = document.getElementById(`day-tbody-${index}`);
                     tbody.innerHTML = ''; 
-                    if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                        data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, true));
+                    
+                    if (holidayInfo) {
+                        window.addEntryRow(index, day, formatDate(rowDate), null, true, holidayInfo);
+                    } else if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
+                        data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, true, holidayInfo));
                     } else if (data.entries && data.entries[day]) {
-                        window.addEntryRow(index, day, formatDate(dates[index]), data.entries[day], true);
+                        window.addEntryRow(index, day, formatDate(rowDate), data.entries[day], true, holidayInfo);
                     } else {
-                        window.addEntryRow(index, day, formatDate(dates[index]), {hours: 0, project: '', type: 'Regular Work'}, true);
+                        window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: '', type: 'Regular Work'}, true, holidayInfo);
                     }
                 });
 
@@ -909,10 +961,15 @@
                     banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Requires Updates</h3><p class="text-sm text-red-600 mt-1">Status: <strong>${data.status}</strong>. Please correct your hours below and submit again.</p>`;
                     
                     daysOfWeek.forEach((day, index) => {
+                        const rowDate = dates[index];
+                        const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
                         const tbody = document.getElementById(`day-tbody-${index}`);
                         tbody.innerHTML = ''; 
-                        if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                            data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(dates[index]), entry, false));
+                        
+                        if (holidayInfo) {
+                            window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
+                        } else if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
+                            data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo));
                         }
                     });
                     if (data.justification) {
@@ -958,7 +1015,7 @@
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-blue-500 bg-blue-100 rounded-lg';
             } else {
-                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
             }
             toast.classList.remove('translate-y-full', 'opacity-0');
