@@ -522,10 +522,25 @@
                 }
             });
 
-            // Convert hours to days (1 day = 8 hours)
-            document.getElementById('leaveSL').textContent = `${(sl / 8).toFixed(1)} days`;
-            document.getElementById('leaveEL').textContent = `${(el / 8).toFixed(1)} days`;
-            document.getElementById('leavePH').textContent = `${(ph / 8).toFixed(1)} days`;
+            // Convert hours to days, display max limits, and warn if exceeded
+            const formatLeave = (elId, hrs, limit) => {
+                const days = hrs / 8;
+                const el = document.getElementById(elId);
+                const isExceeded = days > limit;
+                
+                el.innerHTML = `${days.toFixed(1)} <span class="text-xs ${isExceeded ? 'text-red-400' : 'text-gray-500'} font-medium">/ ${limit} days</span>`;
+                
+                if (isExceeded) {
+                    el.className = "font-bold text-red-600 flex flex-col items-end leading-tight";
+                    el.innerHTML += `<span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded mt-1 border border-red-200 shadow-sm">Limit Exceeded</span>`;
+                } else {
+                    el.className = "font-bold text-gray-800 text-right";
+                }
+            };
+
+            formatLeave('leaveSL', sl, 5);
+            formatLeave('leaveEL', el, 12);
+            formatLeave('leavePH', ph, 12);
         };
 
         // --- Active Notification Scanning ---
@@ -982,13 +997,13 @@
         // 2. FIREBASE CONNECTION 
         // ==========================================
         const firebaseConfig = {
-  apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
-  authDomain: "stratedge-time.firebaseapp.com",
-  projectId: "stratedge-time",
-  storageBucket: "stratedge-time.firebasestorage.app",
-  messagingSenderId: "550779977682",
-  appId: "1:550779977682:web:d4b4983b62876655b3d20b"
-};
+            apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+            authDomain: "stratedge-time.firebaseapp.com",
+            projectId: "stratedge-time",
+            storageBucket: "stratedge-time.firebasestorage.app",
+            messagingSenderId: "550779977682",
+            appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+        };
         const appId = 'stratedge-time-recorder';
 
         let app, auth, db;
