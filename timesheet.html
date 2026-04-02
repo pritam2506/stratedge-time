@@ -140,7 +140,7 @@
                         <!-- Added Callout -->
                         <div class="mt-3 bg-blue-50 border border-blue-100 p-2.5 rounded-lg flex items-start gap-1.5 shadow-sm">
                             <svg class="w-4 h-4 text-brand-blue shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <p class="text-[11px] text-brand-blue font-semibold leading-snug">Note: Leaves are allocated on a pro-rated basis relative to your joining date.</p>
+                            <p class="text-[11px] text-brand-blue font-semibold leading-snug">Note: Earned and Sick leaves are allocated on a pro-rated basis relative to your joining date.</p>
                         </div>
                     </div>
                 </div>
@@ -260,7 +260,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // 1. SESSION VALIDATION & UI SETUP
@@ -586,6 +586,24 @@
                 } else {
                     // Past year joiners get all holidays in the current year
                     phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYear)).length;
+                }
+            }
+
+            // Sync calculated limits to backend if they have changed or are not yet set
+            if (activeUser.slLimit !== slLimit || activeUser.elLimit !== elLimit || activeUser.phLimit !== phLimit) {
+                activeUser.slLimit = slLimit;
+                activeUser.elLimit = elLimit;
+                activeUser.phLimit = phLimit;
+                sessionStorage.setItem('stratedge_active_user', JSON.stringify(activeUser));
+                
+                if (fbUser && activeUser.id) {
+                    const empRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', activeUser.id);
+                    updateDoc(empRef, {
+                        slLimit: slLimit,
+                        elLimit: elLimit,
+                        phLimit: phLimit,
+                        limitsCalculatedYear: currentYearNum
+                    }).catch(err => console.error("Error saving leave limits to backend:", err));
                 }
             }
 
