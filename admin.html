@@ -338,39 +338,39 @@
                 <button id="btnReject" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm">Reject</button>
                 <button id="btnApprove" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm">Approve</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Toast Notifications -->
-    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
-        <div id="toastMessage" class="text-sm font-semibold"></div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
-            authDomain: "stratedge-time.firebaseapp.com",
-            projectId: "stratedge-time",
-            storageBucket: "stratedge-time.firebasestorage.app",
-            messagingSenderId: "550779977682",
-            appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+        const getISODate = (dateObj) => {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
         };
-        const appId = 'stratedge-time-recorder';
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let currentUser = null;
-        let allEmployees = [];
-        let allTimesheets = [];
-        let readNotifIds = new Set();
-        let currentReviewDocId = null;
-        let currentStatsEmpId = null; 
+        // --- LEAVE LIMITS CALCULATOR ---
+        const calculateLeaveLimits = (dojString) => {
+            let slLimit = 5, elLimit = 12, phLimit = 12;
+            const currentYearNum = new Date().getFullYear();
+            if (dojString) {
+                const dojDate = new Date(dojString);
+                if (dojDate.getFullYear() === currentYearNum) {
+                    const endOfYear = new Date(currentYearNum, 11, 31);
+                    const startOfYear = new Date(currentYearNum, 0, 1);
+                    const daysWorked = Math.floor((endOfYear - dojDate) / (1000 * 60 * 60 * 24)) + 1;
+                    const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+                    const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
+                    
+                    slLimit = Math.round(5 * ratio);
+                    elLimit = Math.round(12 * ratio);
+                    
+                    const dojJustDate = getISODate(dojDate);
+                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString()) && h.date >= dojJustDate).length;
+                } else if (dojDate.getFullYear() > currentYearNum) {
+                    slLimit = 0; elLimit = 0; phLimit = 0;
+                } else {
+                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString())).length;
+                }
+            }
+            return { slLimit, elLimit, phLimit, limitsCalculatedYear: currentYearNum };
+        };
 
         // --- ID GENERATION LOGIC ---
         const generateID = (role, dob) => {
@@ -776,6 +776,9 @@
         // --- SUBMIT HANDLERS ---
         document.getElementById('addUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const dojVal = document.getElementById('userDOJ').value;
+            const limits = calculateLeaveLimits(dojVal);
+
             const payload = {
                 name: document.getElementById('userName').value,
                 dob: document.getElementById('userDOB').value,
@@ -785,7 +788,11 @@
                 designation: document.getElementById('userDesig').value,
                 department: document.getElementById('userDept').value,
                 phone: document.getElementById('userPhone').value,
-                doj: document.getElementById('userDOJ').value,
+                doj: dojVal,
+                slLimit: limits.slLimit,
+                elLimit: limits.elLimit,
+                phLimit: limits.phLimit,
+                limitsCalculatedYear: limits.limitsCalculatedYear,
                 createdAt: Date.now()
             };
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), payload);
@@ -796,6 +803,9 @@
         document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('editDocId').value;
+            const dojVal = document.getElementById('editUserDOJ').value;
+            const limits = calculateLeaveLimits(dojVal);
+
             const payload = {
                 name: document.getElementById('editUserName').value,
                 dob: document.getElementById('editUserDOB').value,
@@ -805,7 +815,11 @@
                 designation: document.getElementById('editUserDesig').value,
                 department: document.getElementById('editUserDept').value,
                 phone: document.getElementById('editUserPhone').value,
-                doj: document.getElementById('editUserDOJ').value
+                doj: dojVal,
+                slLimit: limits.slLimit,
+                elLimit: limits.elLimit,
+                phLimit: limits.phLimit,
+                limitsCalculatedYear: limits.limitsCalculatedYear
             };
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id), payload);
             showToast("Employee updated.");
