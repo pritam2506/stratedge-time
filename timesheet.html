@@ -178,13 +178,6 @@
                     </div>
                 </div>
 
-                <!-- DOJ Warning (Safeguard) -->
-                <div id="dojWarning" class="hidden bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center">
-                    <svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <h3 class="text-lg font-bold text-red-800">Invalid Week Selected</h3>
-                    <p class="text-sm text-red-600 mt-1">You cannot log time for weeks prior to your Date of Joining (<span id="dojWarningDate" class="font-bold"></span>).</p>
-                </div>
-
                 <!-- Pre-fill Warning -->
                 <div id="prefillWarning" class="hidden bg-orange-50 border-l-4 border-brand-orange p-4 mb-6 rounded-r-lg">
                     <div class="flex">
@@ -842,20 +835,7 @@
         window.renderTimesheetGrid = async (weekStr) => {
             if (!weekStr) return;
             
-            const dojWarning = document.getElementById('dojWarning');
             const timesheetForm = document.getElementById('timesheetForm');
-            
-            const dojWeekStr = activeUser.doj ? getWeekString(new Date(activeUser.doj)) : '0000-W00';
-            if (weekStr < dojWeekStr && activeUser.doj) {
-                dojWarning.classList.remove('hidden');
-                timesheetForm.classList.add('hidden');
-                document.getElementById('dojWarningDate').textContent = new Date(activeUser.doj).toLocaleDateString();
-                document.getElementById('submittedBanner').classList.add('hidden');
-                document.getElementById('prefillWarning').classList.add('hidden');
-                return;
-            }
-
-            dojWarning.classList.add('hidden');
             timesheetForm.classList.remove('hidden');
 
             const dates = getDatesFromWeek(weekStr);
