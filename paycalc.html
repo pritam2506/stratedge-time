@@ -90,6 +90,19 @@
                                 <input type="number" id="basePay" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-bold text-brand-blue text-sm">
                             </div>
                         </div>
+                        <div>
+                            <label class="flex items-center gap-2 text-sm font-bold text-gray-700 cursor-pointer">
+                                <input type="checkbox" id="hasBonus" class="w-4 h-4 text-brand-blue rounded border-gray-300 focus:ring-brand-blue" onchange="toggleBonusInput()">
+                                Include Bonus Component?
+                            </label>
+                        </div>
+                        <div id="bonusInputContainer" class="hidden">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Bonus Amount (INR)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2 text-gray-500 font-bold">₹</span>
+                                <input type="number" id="bonusAmount" value="0" class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-bold text-brand-blue text-sm">
+                            </div>
+                        </div>
                         <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4 flex justify-center items-center gap-2">
                             Preview Calculation
                         </button>
@@ -122,10 +135,6 @@
                             <p class="text-sm font-bold text-gray-500" id="resMonthLabel">PAYSLIP FOR OCT 2026</p>
                             <p class="text-xs text-gray-400 mt-1" id="resPeriodLabel">Period: -- to --</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Net Payable</p>
-                            <p class="text-3xl font-black text-brand-blue" id="resNetPay">₹0</p>
-                        </div>
                     </div>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm mb-6">
@@ -134,20 +143,28 @@
                             <h4 class="text-xs font-bold text-brand-blue uppercase tracking-widest mb-3 border-b pb-1">Monthly Time Summary</h4>
                             <div class="space-y-2 text-xs">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600 font-medium">Target Total</span>
+                                    <span class="text-gray-600 font-bold">Target Total</span>
                                     <span class="font-bold text-gray-900" id="resMonthlyTarget">0 hrs (0 days)</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600 font-medium">Logged Total</span>
-                                    <span class="font-bold text-gray-900" id="resMonthlyLogged">0 hrs (0 days)</span>
+                                    <span class="text-gray-600 font-bold">Logged Total</span>
+                                    <span class="font-bold text-brand-blue" id="resMonthlyLogged">0 hrs (0 days)</span>
                                 </div>
                                 <div class="border-t border-gray-200 pt-2 flex justify-between">
                                     <span class="text-gray-500">Regular Work</span>
                                     <span class="font-semibold text-gray-800" id="resMonthlyWork">0 hrs (0 days)</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-500">Leaves Taken (All)</span>
-                                    <span class="font-semibold text-gray-800" id="resMonthlyLeaves">0 hrs (0 days)</span>
+                                    <span class="text-gray-500 ml-4">- Sick Leave</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlySL">0 hrs</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 ml-4">- Earned Leave</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlyEL">0 hrs</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 ml-4">- Public Holiday</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlyPH">0 hrs</span>
                                 </div>
                             </div>
                         </div>
@@ -183,16 +200,15 @@
 
                     <!-- Earnings -->
                     <div class="mb-4">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Earnings</h4>
-                        <div class="flex justify-between items-center font-semibold text-gray-800 text-sm bg-gray-50 p-3 rounded border border-gray-100">
-                            <span>Basic Monthly Pay</span>
-                            <span id="resBasePay">₹0</span>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-1">Earnings</h4>
+                        <div id="earningsList" class="space-y-2 text-gray-700 text-sm bg-gray-50 p-3 rounded border border-gray-100">
+                            <!-- JS injected -->
                         </div>
                     </div>
 
                     <!-- Deductions -->
                     <div class="mb-4">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-t pt-4">Deductions (Leave Without Pay)</h4>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-1">Deductions (Leave Without Pay)</h4>
                         <div id="deductionList" class="space-y-2 text-gray-700 text-sm bg-red-50/50 p-3 rounded border border-red-100">
                             <!-- JS injected -->
                         </div>
@@ -200,6 +216,12 @@
                             <span>Total Deductions</span>
                             <span id="resTotalDed">- ₹0</span>
                         </div>
+                    </div>
+
+                    <!-- Grand Total -->
+                    <div class="flex justify-between items-center font-black text-xl text-brand-blue mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200 shadow-sm">
+                        <span>GRAND TOTAL PAYABLE</span>
+                        <span id="resGrandTotal">₹0</span>
                     </div>
 
                     <!-- Action Buttons -->
@@ -297,6 +319,16 @@
             setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
         };
 
+        window.toggleBonusInput = () => {
+            const container = document.getElementById('bonusInputContainer');
+            if (document.getElementById('hasBonus').checked) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('bonusAmount').value = '0';
+            }
+        };
+
         // --- Date Helpers ---
         const getDatesFromWeek = (w) => {
             const [yStr, wkStr] = w.split('-W');
@@ -371,8 +403,7 @@
             } else {
                 allPayRecords.forEach(rec => {
                     const div = document.createElement('div');
-                    div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30 cursor-pointer";
-                    div.onclick = () => loadPayRecord(rec.id);
+                    div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30";
                     
                     let statusBadge = '';
                     if (rec.bypassedShortfall) {
@@ -386,8 +417,11 @@
                             <div class="text-[10px] text-gray-500 font-medium mt-0.5">Net Pay: ₹${rec.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
                         </div>
                         <div class="flex gap-1.5 ml-2">
+                            <button onclick="event.stopPropagation(); loadPayRecord('${rec.id}')" class="px-2 py-1 bg-white border border-gray-300 shadow-sm hover:bg-blue-50 hover:text-blue-600 rounded text-gray-600 text-xs font-bold transition-colors" title="View & Edit">
+                                VIEW
+                            </button>
                             <button onclick="event.stopPropagation(); deletePayRecord('${rec.id}')" class="p-1 hover:bg-red-100 rounded text-red-600 transition-colors" title="Delete record">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
                     `;
@@ -403,7 +437,11 @@
             document.getElementById('payMonth').value = rec.monthVal;
             document.getElementById('basePay').value = rec.basePay;
             
-            // Run calculation with the saved bypass status
+            document.getElementById('hasBonus').checked = (rec.bonusAmount > 0);
+            window.toggleBonusInput();
+            document.getElementById('bonusAmount').value = rec.bonusAmount || 0;
+
+            // Run calculation to populate view state
             runCalculation(true, rec.bypassedShortfall, true); 
         };
 
@@ -427,9 +465,6 @@
             runCalculation(false, false, false);
         });
 
-        // forceProceed: Skip the modal if we already made a choice or are loading a past record.
-        // bypassShortfall: True if the admin chose to ignore shortfall logic.
-        // isViewingPast: True if we clicked a record from history, auto-shows PDF button.
         const runCalculation = async (forceProceed, bypassShortfall, isViewingPast) => {
             const empId = document.getElementById('empSelect').value;
             const monthVal = document.getElementById('payMonth').value; // YYYY-MM
@@ -439,6 +474,11 @@
             const basePay = parseFloat(basePayStr);
             const emp = allEmployees.find(e => e.empId === empId);
             if(!emp) return;
+
+            let bonusAmount = 0;
+            if (document.getElementById('hasBonus').checked) {
+                bonusAmount = parseFloat(document.getElementById('bonusAmount').value) || 0;
+            }
 
             const [selYear, selMonth] = monthVal.split('-').map(Number);
             
@@ -501,7 +541,6 @@
                     }
                 });
             });
-            const leavesInMonth = slInMonth + elInMonth + phInMonth;
 
             // 3. Shortfall Check
             const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
@@ -533,7 +572,7 @@
             const hourlyRate = basePay / monthGoalHours;
             const totalLWPHours = chargeableShortfall + totalExcessLeaveHrs;
             const deductionAmount = totalLWPHours * hourlyRate;
-            const finalPay = Math.max(0, basePay - deductionAmount);
+            const finalPay = Math.max(0, (basePay + bonusAmount) - deductionAmount);
 
             // 6. UI Update: Top Header
             document.getElementById('resultsEmpty').classList.add('hidden');
@@ -547,14 +586,15 @@
             const endD = actualMonthEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             document.getElementById('resPeriodLabel').textContent = `Period: ${startD} to ${endD}`;
             
-            document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
-            
             // UI Update: Monthly Stats
             const d = (hrs) => (hrs/8).toFixed(1);
             document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${monthGoalDays} days)`;
             document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
             document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
-            document.getElementById('resMonthlyLeaves').textContent = `${leavesInMonth.toFixed(1)} hrs (${d(leavesInMonth)} days)`;
+            
+            document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs`;
+            document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs`;
+            document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs`;
 
             // UI Update: YTD Leave Stats
             document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`;
@@ -564,14 +604,28 @@
             document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
             document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
 
-            document.getElementById('resBasePay').textContent = `₹${basePay.toLocaleString('en-IN')}`;
+            // UI Update: Earnings
+            const earnList = document.getElementById('earningsList');
+            earnList.innerHTML = `
+                <div class="flex justify-between items-center py-1">
+                    <span class="font-medium">Basic Pay</span>
+                    <span class="font-semibold">₹${basePay.toLocaleString('en-IN')}</span>
+                </div>
+            `;
+            if (bonusAmount > 0) {
+                earnList.innerHTML += `
+                <div class="flex justify-between items-center py-1 text-brand-blue">
+                    <span class="font-medium">Bonus Component</span>
+                    <span class="font-semibold">+ ₹${bonusAmount.toLocaleString('en-IN')}</span>
+                </div>`;
+            }
 
             // UI Update: Deductions Breakdown
             const dedList = document.getElementById('deductionList');
             dedList.innerHTML = '';
             
             if (actualShortfallHours > 0 && bypassShortfall) {
-                dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but explicitly Bypassed.</span><span>₹0</span></div>`;
+                dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but explicitly Bypassed.</span><span>₹0</span></div>`;
             }
 
             if (totalLWPHours === 0) {
@@ -593,19 +647,22 @@
                 if (chargeableEL > 0) dedList.innerHTML += addRow("Excess Earned Leave", chargeableEL, hourlyRate);
             }
             document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
+            document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
 
             // Save payload state for confirmation
             window.pendingPayload = {
-                empId, empName: emp.name, monthVal, basePay, finalPay, 
+                empId, empName: emp.name, monthVal, basePay, bonusAmount, finalPay, 
                 shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
                 bypassedShortfall: bypassShortfall, updatedAt: Date.now()
             };
 
             // Save state for PDF Generation
             window.currentPayslip = {
-                emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, finalPay, 
+                emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, bonusAmount, finalPay, 
                 deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
-                actualStart: actualMonthStart, actualEnd: actualMonthEnd
+                actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
+                workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
             };
 
             // Set Button State
@@ -635,15 +692,157 @@
         };
 
         window.editParameters = () => {
-            // Focus on the select field, acts as a UI hint
             document.getElementById('empSelect').focus();
-            showToast("Update parameters on the left and recalculate.", "info");
+        };
+
+        const createPDFDocument = (ps) => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const m = 20; const rightAlignX = 190; let y = 20;
+
+            // Brand Header
+            doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(65, 105, 225).text("STRATEDGE", m, y);
+            doc.setFontSize(10).setTextColor(150).text("COMMUNICATIONS PVT LTD", m, y + 6);
+            
+            doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
+            doc.text(`CIN: U70200WB2025PTC277733`, m, y + 12);
+            doc.text(`PAN: ABPCS6820D`, m, y + 16);
+
+            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
+            doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
+            doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
+            
+            y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
+
+            const startDateStr = new Date(ps.actualStart).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const endDateStr = new Date(ps.actualEnd).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const generatedDateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            // Title & Dates
+            doc.setFontSize(14).setFont("helvetica", "bold").setTextColor(40).text("PAYSLIP", m, y);
+            doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text(`For the period: ${startDateStr} to ${endDateStr}`, m, y + 6);
+            doc.setFontSize(8).setTextColor(120).text(`Generated On: ${generatedDateStr}`, rightAlignX, y, {align: 'right'});
+            
+            y += 18;
+            
+            // Detailed Employee Information Block
+            doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
+            doc.text(`Employee Name:`, m, y); doc.setFont("helvetica", "normal").text(ps.emp.name, m + 35, y);
+            doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
+            doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation || 'N/A', m + 35, y + 12);
+            
+            doc.setFont("helvetica", "bold").text(`Department:`, m + 90, y); doc.setFont("helvetica", "normal").text(ps.emp.department || 'N/A', m + 115, y);
+            doc.setFont("helvetica", "bold").text(`Date of Joining:`, m + 90, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 115, y + 6);
+            doc.setFont("helvetica", "bold").text(`Email ID:`, m + 90, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 115, y + 12);
+
+            y += 22; doc.setDrawColor(230).line(m, y, 190, y); y += 10;
+
+            // Summaries Side by Side
+            doc.setFontSize(10).setFont("helvetica", "bold").setTextColor(40);
+            doc.text("MONTHLY TIME SUMMARY", m, y);
+            doc.text("YTD LEAVE SUMMARY", m + 90, y);
+
+            y += 6;
+            doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60);
+            
+            // Left Col (Time)
+            doc.text(`Target Total: ${ps.monthGoalHours} hrs`, m, y);
+            doc.text(`Logged Total: ${ps.loggedInMonth.toFixed(1)} hrs`, m, y + 5);
+            doc.text(`Regular Work: ${ps.workInMonth.toFixed(1)} hrs`, m, y + 10);
+            doc.text(`Sick Leave: ${ps.slInMonth.toFixed(1)} hrs`, m, y + 15);
+            doc.text(`Earned Leave: ${ps.elInMonth.toFixed(1)} hrs`, m, y + 20);
+            doc.text(`Public Holiday: ${ps.phInMonth.toFixed(1)} hrs`, m, y + 25);
+
+            // Right Col (YTD)
+            doc.text(`Sick Leave: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs`, m + 90, y);
+            doc.text(`Earned Leave: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs`, m + 90, y + 5);
+            doc.text(`Public Holiday: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs`, m + 90, y + 10);
+
+            y += 35; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
+            
+            // EARNINGS
+            doc.setFillColor(245).rect(m, y-5, 170, 8, 'F');
+            doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
+            doc.text("EARNINGS", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
+            
+            y += 8;
+            doc.setFont("helvetica", "normal").setTextColor(60);
+            doc.text("Basic Pay", m + 2, y); doc.text(`Rs. ${ps.basePay.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
+            y += 6;
+            if (ps.bonusAmount > 0) {
+                doc.text("Bonus", m + 2, y); doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
+                y += 6;
+            }
+
+            y += 4;
+
+            // DEDUCTIONS
+            doc.setFillColor(253, 242, 242).rect(m, y-5, 170, 8, 'F');
+            doc.setFont("helvetica", "bold").setTextColor(220, 38, 38);
+            doc.text("DEDUCTIONS (Leave Without Pay)", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
+            
+            y += 8;
+            doc.setFont("helvetica", "normal").setTextColor(60);
+            
+            if (ps.deductions === 0) {
+                doc.text("None", m + 2, y); doc.text("-", rightAlignX - 2, y, {align: 'right'});
+                y += 6;
+            } else {
+                if (ps.shortfallHours > 0) {
+                    const amt = ps.shortfallHours * ps.hourlyRate;
+                    doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, m + 2, y);
+                    doc.text(`Rs. ${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+                    y += 6;
+                }
+                if (ps.chargeableSL > 0) {
+                    const amt = ps.chargeableSL * ps.hourlyRate;
+                    doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, m + 2, y);
+                    doc.text(`Rs. ${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+                    y += 6;
+                }
+                if (ps.chargeableEL > 0) {
+                    const amt = ps.chargeableEL * ps.hourlyRate;
+                    doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, m + 2, y);
+                    doc.text(`Rs. ${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+                    y += 6;
+                }
+            }
+
+            y += 6; doc.setDrawColor(230).line(m, y, 190, y); y += 8;
+            
+            // TOTALS
+            doc.setFont("helvetica", "bold");
+            const totalEarnings = ps.basePay + ps.bonusAmount;
+            doc.text("Total Earnings:", m + 2, y); doc.text(`Rs. ${totalEarnings.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
+            y += 6;
+            doc.text("Total Deductions:", m + 2, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            
+            y += 10;
+            doc.setFillColor(235).rect(m, y, 170, 12, 'F');
+            doc.setFontSize(12);
+            doc.text("NET PAYABLE:", m + 5, y + 8); 
+            doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
+
+            // Footer
+            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic");
+            doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" });
+
+            return doc;
         };
 
         window.confirmAndSavePay = async () => {
-            if (!window.pendingPayload) return;
+            if (!window.pendingPayload || !window.currentPayslip) return;
+            
+            const btn = document.getElementById('confirmBtn');
+            btn.innerHTML = "Saving...";
+            btn.disabled = true;
+
             const p = window.pendingPayload;
             const recordId = `${p.empId}_${p.monthVal}`;
+
+            // Generate Base64 PDF to store in DB
+            const pdfDoc = createPDFDocument(window.currentPayslip);
+            p.pdfDataUri = pdfDoc.output('datauristring');
             
             try {
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), p);
@@ -657,99 +856,15 @@
             } catch (err) {
                 console.error("Failed to save pay record", err);
                 showToast("Failed to save record.", "error");
+                btn.innerHTML = "Confirm Calculations & Save";
+                btn.disabled = false;
             }
         };
 
-        // --- PDF GENERATOR ---
         window.downloadPDF = () => {
             if(!window.currentPayslip) return;
-            const ps = window.currentPayslip;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const m = 20; const rightAlignX = 190; let y = 20;
-
-            // Brand Header
-            doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(65, 105, 225).text("STRATEDGE", m, y);
-            doc.setFontSize(10).setTextColor(150).text("COMMUNICATIONS PVT LTD", m, y + 6);
-            
-            doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
-            doc.text(`CIN: U70200WB2025PTC277733`, m, y + 12);
-            doc.text(`PAN: [TO BE PROVIDED]`, m, y + 16);
-
-            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
-            doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
-            doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
-            
-            y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 15;
-
-            // Accurate Date Period Formatting
-            const startDateStr = new Date(ps.actualStart).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const endDateStr = new Date(ps.actualEnd).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-            // Title & Dates
-            doc.setFontSize(14).setFont("helvetica", "bold").setTextColor(40).text("PAYSLIP", m, y);
-            doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text(`For the period: ${startDateStr} to ${endDateStr}`, m, y + 5);
-            
-            y += 20;
-            
-            // Detailed Employee Information Block
-            doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
-            
-            doc.text(`Employee Name:`, m, y); doc.setFont("helvetica", "normal").text(ps.emp.name, m + 35, y);
-            doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
-            doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation || 'N/A', m + 35, y + 12);
-            
-            doc.setFont("helvetica", "bold").text(`Department:`, m, y + 18); doc.setFont("helvetica", "normal").text(ps.emp.department || 'N/A', m + 35, y + 18);
-            doc.setFont("helvetica", "bold").text(`Date of Joining:`, m, y + 24); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 35, y + 24);
-            doc.setFont("helvetica", "bold").text(`Email ID:`, m, y + 30); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 35, y + 30);
-
-            y += 45;
-            
-            // Table Header
-            doc.setFillColor(245).rect(m, y, 170, 10, 'F');
-            doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
-            doc.text("EARNINGS", m + 5, y + 7); doc.text("AMOUNT", 100, y + 7, {align: 'right'});
-            doc.text("DEDUCTIONS", 110, y + 7); doc.text("AMOUNT", rightAlignX - 5, y + 7, {align: 'right'});
-            
-            y += 15;
-            doc.setFont("helvetica", "normal").setTextColor(60);
-            doc.text("Basic Pay", m + 5, y); doc.text(`Rs. ${ps.basePay.toLocaleString('en-IN')}`, 100, y, {align: 'right'});
-            
-            let dedY = y;
-            if (ps.deductions === 0) {
-                doc.text("None", 110, dedY); doc.text("-", rightAlignX - 5, dedY, {align: 'right'});
-            } else {
-                if (ps.shortfallHours > 0) {
-                    doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, 110, dedY);
-                    doc.text(`Rs. ${(ps.shortfallHours * ps.hourlyRate).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, dedY, {align: 'right'});
-                    dedY += 6;
-                }
-                if (ps.chargeableSL > 0) {
-                    doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, 110, dedY);
-                    doc.text(`Rs. ${(ps.chargeableSL * ps.hourlyRate).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, dedY, {align: 'right'});
-                    dedY += 6;
-                }
-                if (ps.chargeableEL > 0) {
-                    doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, 110, dedY);
-                    doc.text(`Rs. ${(ps.chargeableEL * ps.hourlyRate).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, dedY, {align: 'right'});
-                }
-            }
-
-            y = Math.max(y + 10, dedY + 10);
-            doc.setDrawColor(230).line(m, y, 190, y);
-            y += 8;
-            
-            doc.setFont("helvetica", "bold");
-            doc.text("Total Earnings:", m + 5, y); doc.text(`Rs. ${ps.basePay.toLocaleString('en-IN')}`, 100, y, {align: 'right'});
-            doc.text("Total Deductions:", 110, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, y, {align: 'right'});
-            
-            y += 10;
-            doc.setFillColor(235).rect(m, y, 170, 12, 'F');
-            doc.setFontSize(12);
-            doc.text("NET PAY:", m + 5, y + 8); 
-            doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
-
-            doc.save(`Payslip_${ps.emp.name}_${ps.monthStr.replace(' ', '_')}.pdf`);
+            const doc = createPDFDocument(window.currentPayslip);
+            doc.save(`Payslip_${window.currentPayslip.emp.name}_${window.currentPayslip.monthStr.replace(' ', '_')}.pdf`);
         };
     </script>
 </body>
