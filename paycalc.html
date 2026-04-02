@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratedge | Pay Calculation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#4169E1',
+                        'brand-orange': '#FFA500',
+                        'brand-orange-hover': '#e69500',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Access Denied Overlay -->
+    <div id="accessDenied" class="fixed inset-0 bg-white z-[999] hidden flex-col items-center justify-center text-center p-4">
+        <svg class="w-20 h-20 text-red-500 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Access Denied</h2>
+        <p class="text-gray-600 mb-6">Administrator credentials required for this portal.</p>
+        <button onclick="window.location.href='index.html'" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">Return to Login</button>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-brand-blue text-white shadow-md z-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='admin.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 hidden sm:flex border-r border-white/20 pr-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Admin Dashboard
+                </button>
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">Pay Calculation</div>
+                <button onclick="logout()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <div class="mb-8 border-b pb-4">
+            <h2 class="text-3xl font-bold text-gray-900">Monthly Pay Calculation</h2>
+            <p class="text-gray-600 mt-1">Generate payslips with automated LWP and timesheet validation.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <!-- Left: Input Form -->
+            <div class="md:col-span-5 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
+                <h3 class="text-lg font-bold text-brand-blue mb-4 border-b pb-2">Calculation Parameters</h3>
+                <form id="calcForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Employee</label>
+                        <select id="empSelect" required onchange="handleEmpSelection()" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
+                            <option value="" disabled selected>-- Select Employee --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Select Month</label>
+                        <input type="month" id="payMonth" required class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Monthly Salary (INR)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500 font-bold">₹</span>
+                            <input type="number" id="basePay" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-bold text-brand-blue text-sm">
+                        </div>
+                    </div>
+                    <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4">
+                        Calculate Pay
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right: Results Panel -->
+            <div class="md:col-span-7">
+                <div id="resultsEmpty" class="bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                    <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p class="font-medium">Select parameters and click calculate to view the payslip breakdown.</p>
+                </div>
+
+                <div id="resultsPanel" class="hidden bg-white p-6 rounded-xl shadow-lg border border-brand-blue/20">
+                    <div class="flex justify-between items-center border-b pb-4 mb-4">
+                        <div>
+                            <h3 class="text-xl font-black text-gray-900" id="resEmpName">John Doe</h3>
+                            <p class="text-xs font-bold text-gray-500" id="resMonthLabel">PAYSLIP FOR OCT 2026</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Net Payable</p>
+                            <p class="text-2xl font-black text-brand-blue" id="resNetPay">₹0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4 text-sm">
+                        <!-- Stats Row -->
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <div><span class="text-gray-500 text-xs block">Target Hours</span><span class="font-bold" id="resTargetHrs">0</span></div>
+                            <div><span class="text-gray-500 text-xs block">Logged Hours</span><span class="font-bold text-brand-blue" id="resLoggedHrs">0</span></div>
+                            <div><span class="text-gray-500 text-xs block">Excess Leaves</span><span class="font-bold text-red-500" id="resExcessLeaves">0 hrs</span></div>
+                        </div>
+
+                        <!-- Earnings -->
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Earnings</h4>
+                            <div class="flex justify-between items-center font-semibold text-gray-800">
+                                <span>Basic Monthly Pay</span>
+                                <span id="resBasePay">₹0</span>
+                            </div>
+                        </div>
+
+                        <!-- Deductions -->
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-t pt-3">Deductions (Leave Without Pay)</h4>
+                            <div id="deductionList" class="space-y-1.5 text-gray-700">
+                                <!-- JS injected -->
+                            </div>
+                            <div class="flex justify-between items-center font-bold text-red-600 mt-2 border-t border-red-100 pt-2">
+                                <span>Total Deductions</span>
+                                <span id="resTotalDed">- ₹0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-4 border-t flex justify-end">
+                        <button onclick="downloadPDF()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg shadow transition-all flex items-center gap-2 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download Payslip PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Warning Modal for Shortfall -->
+    <div id="warningModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Incomplete Timesheet</h3>
+                <p class="text-sm text-gray-600 mb-4" id="warningText">Employee has only logged <span class="font-bold text-gray-900">X hrs</span> out of the required <span class="font-bold text-gray-900">Y hrs</span> for this month.</p>
+                <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-700 text-left mb-6">
+                    <strong>Consequence:</strong> If you proceed, the <span id="warningShortfall" class="font-bold">Z hrs</span> deficit will be automatically calculated as Leave Without Pay (LWP) and deducted proportionally from the salary.
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="cancelCalculation()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">Cancel & Review</button>
+                    <button onclick="proceedCalculation()" class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Proceed with LWP</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
+        <div id="toastMessage" class="text-sm font-semibold"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // 1. INIT & AUTH
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+            authDomain: "stratedge-time.firebaseapp.com",
+            projectId: "stratedge-time",
+            storageBucket: "stratedge-time.firebasestorage.app",
+            messagingSenderId: "550779977682",
+            appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+        };
+        const appId = 'stratedge-time-recorder';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const sessionUser = sessionStorage.getItem('stratedge_active_user');
+        const activeUser = sessionUser ? JSON.parse(sessionUser) : null;
+        if (!activeUser || activeUser.role !== 'Admin') {
+            document.getElementById('accessDenied').classList.remove('hidden');
+        }
+
+        let allEmployees = [];
+        let allTimesheets = [];
+        let pendingCalcData = null; // Stores data if admin needs to confirm warning
+
+        window.logout = () => {
+            sessionStorage.removeItem('stratedge_active_user');
+            window.location.href = 'index.html';
+        };
+
+        const showToast = (msg, type='success') => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.className = `fixed bottom-4 right-4 transform transition-all z-[100] flex items-center p-4 rounded-lg shadow-xl border bg-white ${type === 'error' ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`;
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
+        };
+
+        // --- Date Helpers ---
+        const getDatesFromWeek = (w) => {
+            const [yStr, wkStr] = w.split('-W');
+            const d = new Date(parseInt(yStr), 0, 1 + (parseInt(wkStr) - 1) * 7);
+            const ISOwkStart = new Date(d);
+            if (d.getDay() <= 4) ISOwkStart.setDate(d.getDate() - d.getDay() + 1);
+            else ISOwkStart.setDate(d.getDate() + 8 - d.getDay());
+            return Array.from({length:6}, (_,i) => { let dt = new Date(ISOwkStart); dt.setDate(dt.getDate()+i); return dt; });
+        };
+
+        const getMonSatDays = (start, end) => {
+            let count = 0;
+            let cur = new Date(start); cur.setHours(0,0,0,0);
+            let endCopy = new Date(end); endCopy.setHours(23,59,59,999);
+            while (cur <= endCopy) {
+                if (cur.getDay() !== 0) count++;
+                cur.setDate(cur.getDate() + 1);
+            }
+            return count;
+        };
+
+        // ==========================================
+        // 2. UI & LOGIC
+        // ==========================================
+        onAuthStateChanged(auth, u => {
+            if (u) {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
+                    allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
+                    const sel = document.getElementById('empSelect');
+                    sel.innerHTML = '<option value="" disabled selected>-- Select Employee --</option>';
+                    allEmployees.sort((a,b)=>a.name.localeCompare(b.name)).forEach(emp => {
+                        sel.innerHTML += `<option value="${emp.empId}">${emp.name} (${emp.empId})</option>`;
+                    });
+                });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
+                    allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
+                });
+                
+                // Set default month to current
+                const now = new Date();
+                document.getElementById('payMonth').value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
+            }
+        });
+        signInAnonymously(auth);
+
+        window.handleEmpSelection = () => {
+            const empId = document.getElementById('empSelect').value;
+            const emp = allEmployees.find(e => e.empId === empId);
+            if (emp && emp.pay) {
+                document.getElementById('basePay').value = emp.pay;
+            } else {
+                document.getElementById('basePay').value = '';
+            }
+        };
+
+        // --- CORE CALCULATION ENGINE ---
+        document.getElementById('calcForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            runCalculation(false);
+        });
+
+        const runCalculation = (forceProceed) => {
+            const empId = document.getElementById('empSelect').value;
+            const monthVal = document.getElementById('payMonth').value; // YYYY-MM
+            const basePayStr = document.getElementById('basePay').value;
+            
+            if(!empId || !monthVal || !basePayStr) return;
+            const basePay = parseFloat(basePayStr);
+            const emp = allEmployees.find(e => e.empId === empId);
+            if(!emp) return;
+
+            const [selYear, selMonth] = monthVal.split('-').map(Number);
+            
+            // 1. Calculate Target Hours for the Month
+            const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
+            let actualMonthStart = new Date(selYear, selMonth - 1, 1);
+            if (dojDate > actualMonthStart) actualMonthStart = dojDate;
+            const monthEnd = new Date(selYear, selMonth, 0); 
+            
+            const monthGoalDays = actualMonthStart > monthEnd ? 0 : getMonSatDays(actualMonthStart, monthEnd);
+            const monthGoalHours = monthGoalDays * 8;
+
+            if (monthGoalHours === 0) {
+                showToast("Employee joined after this month. No pay applicable.", "error");
+                return;
+            }
+
+            // 2. Fetch Timesheets and Accumulate Stats
+            const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
+            
+            let loggedInMonth = 0;
+            let slInMonth = 0; let elInMonth = 0;
+            let ytdSL = 0; let ytdEL = 0;
+
+            userTS.forEach(ts => {
+                if (!ts.week) return;
+                const dates = getDatesFromWeek(ts.week);
+                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
+                    if(ts.entries && ts.entries[day]) {
+                        const entryDate = dates[idx];
+                        const isCurrentYear = entryDate.getFullYear() === selYear;
+                        const isUpToSelectedMonth = entryDate.getMonth() + 1 <= selMonth;
+                        const isExactlySelectedMonth = entryDate.getMonth() + 1 === selMonth;
+
+                        if (isCurrentYear && isUpToSelectedMonth) {
+                            const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                            entries.forEach(e => {
+                                if(!e) return;
+                                const h = parseFloat(e.hours) || 0;
+                                const type = e.type || '';
+                                
+                                // Accumulate YTD Leaves (Up to this month)
+                                if (type.includes('SL')) ytdSL += h;
+                                if (type.includes('EL')) ytdEL += h;
+
+                                // Accumulate Specific Month Data
+                                if (isExactlySelectedMonth) {
+                                    loggedInMonth += h;
+                                    if (type.includes('SL')) slInMonth += h;
+                                    if (type.includes('EL')) elInMonth += h;
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+
+            // 3. Shortfall Check
+            const shortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
+            
+            if (shortfallHours > 0 && !forceProceed) {
+                // Halt and show warning
+                pendingCalcData = { emp, selYear, selMonth, basePay, monthGoalHours, loggedInMonth, shortfallHours, ytdSL, ytdEL, slInMonth, elInMonth };
+                document.getElementById('warningText').innerHTML = `Employee has only logged <span class="font-bold text-gray-900">${loggedInMonth.toFixed(1)} hrs</span> out of the required <span class="font-bold text-gray-900">${monthGoalHours} hrs</span> for this month.`;
+                document.getElementById('warningShortfall').textContent = `${shortfallHours.toFixed(1)} hrs`;
+                document.getElementById('warningModal').classList.remove('hidden');
+                return;
+            }
+
+            // 4. Calculate Excess Leaves LWP
+            const slLimitHrs = (emp.slLimit || 5) * 8;
+            const elLimitHrs = (emp.elLimit || 12) * 8;
+
+            const excessSLTotal = Math.max(0, ytdSL - slLimitHrs);
+            const excessELTotal = Math.max(0, ytdEL - elLimitHrs);
+
+            // We only deduct excess leaves that were physically taken *during this specific month*
+            const chargeableSL = Math.min(excessSLTotal, slInMonth);
+            const chargeableEL = Math.min(excessELTotal, elInMonth);
+            const totalExcessLeaveHrs = chargeableSL + chargeableEL;
+
+            // 5. Final Pay Math
+            const hourlyRate = basePay / monthGoalHours;
+            const totalLWPHours = shortfallHours + totalExcessLeaveHrs;
+            const deductionAmount = totalLWPHours * hourlyRate;
+            const finalPay = Math.max(0, basePay - deductionAmount);
+
+            // 6. Render UI
+            document.getElementById('resultsEmpty').classList.add('hidden');
+            document.getElementById('resultsPanel').classList.remove('hidden');
+
+            const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            document.getElementById('resEmpName').textContent = emp.name;
+            document.getElementById('resMonthLabel').textContent = `PAYSLIP FOR ${monthNames[selMonth-1]} ${selYear}`;
+            document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
+            
+            document.getElementById('resTargetHrs').textContent = `${monthGoalHours} hrs`;
+            document.getElementById('resLoggedHrs').textContent = `${loggedInMonth.toFixed(1)} hrs`;
+            document.getElementById('resExcessLeaves').textContent = `${totalExcessLeaveHrs.toFixed(1)} hrs`;
+            document.getElementById('resBasePay').textContent = `₹${basePay.toLocaleString('en-IN')}`;
+
+            const dedList = document.getElementById('deductionList');
+            dedList.innerHTML = '';
+            if (totalLWPHours === 0) {
+                dedList.innerHTML = '<div class="text-gray-400 italic text-xs">No deductions. 100% adherence.</div>';
+            } else {
+                if (shortfallHours > 0) {
+                    const amt = shortfallHours * hourlyRate;
+                    dedList.innerHTML += `<div class="flex justify-between"><span>Shortfall LWP (${shortfallHours.toFixed(1)} hrs)</span><span>- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
+                }
+                if (chargeableSL > 0) {
+                    const amt = chargeableSL * hourlyRate;
+                    dedList.innerHTML += `<div class="flex justify-between"><span>Excess Sick Leave (${chargeableSL.toFixed(1)} hrs)</span><span>- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
+                }
+                if (chargeableEL > 0) {
+                    const amt = chargeableEL * hourlyRate;
+                    dedList.innerHTML += `<div class="flex justify-between"><span>Excess Earned Leave (${chargeableEL.toFixed(1)} hrs)</span><span>- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
+                }
+            }
+            document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+
+            // Save state for PDF
+            window.currentPayslip = {
+                emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, finalPay, 
+                deductions: deductionAmount, hourlyRate, shortfallHours, chargeableSL, chargeableEL
+            };
+        };
+
+        window.cancelCalculation = () => {
+            pendingCalcData = null;
+            document.getElementById('warningModal').classList.add('hidden');
+        };
+
+        window.proceedCalculation = () => {
+            document.getElementById('warningModal').classList.add('hidden');
+            runCalculation(true);
+        };
+
+        // --- PDF GENERATOR ---
+        window.downloadPDF = () => {
+            if(!window.currentPayslip) return;
+            const ps = window.currentPayslip;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const m = 20; const rightAlignX = 190; let y = 20;
+
+            // Brand Header
+            doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(65, 105, 225).text("STRATEDGE", m, y);
+            doc.setFontSize(10).setTextColor(150).text("COMMUNICATIONS PVT LTD", m, y + 6);
+            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
+            doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
+            doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
+            
+            y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 15;
+
+            // Title & Employee Info
+            doc.setFontSize(14).setFont("helvetica", "bold").setTextColor(40).text("PAYSLIP", m, y);
+            doc.setFontSize(10).setTextColor(100).text(`For the month of ${ps.monthStr}`, m, y + 5);
+            
+            y += 20;
+            doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
+            doc.text(`Employee Name:`, m, y); doc.setFont("helvetica", "normal").text(ps.emp.name, m + 35, y);
+            doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
+            doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation, m + 35, y + 12);
+
+            y += 25;
+            // Table Header
+            doc.setFillColor(245).rect(m, y, 170, 10, 'F');
+            doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
+            doc.text("EARNINGS", m + 5, y + 7); doc.text("AMOUNT", 100, y + 7, {align: 'right'});
+            doc.text("DEDUCTIONS", 110, y + 7); doc.text("AMOUNT", rightAlignX - 5, y + 7, {align: 'right'});
+            
+            y += 15;
+            doc.setFont("helvetica", "normal").setTextColor(60);
+            doc.text("Basic Pay", m + 5, y); doc.text(`Rs. ${ps.basePay.toLocaleString('en-IN')}`, 100, y, {align: 'right'});
+            
+            let dedY = y;
+            if (ps.deductions === 0) {
+                doc.text("None", 110, dedY); doc.text("-", rightAlignX - 5, dedY, {align: 'right'});
+            } else {
+                if (ps.shortfallHours > 0) {
+                    doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, 110, dedY);
+                    doc.text(`Rs. ${(ps.shortfallHours * ps.hourlyRate).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, dedY, {align: 'right'});
+                    dedY += 6;
+                }
+                if (ps.chargeableSL > 0) {
+                    doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, 110, dedY);
+                    doc.text(`Rs. ${(ps.chargeableSL * ps.hourlyRate).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, dedY, {align: 'right'});
+                    dedY += 6;
+                }
+                if (ps.chargeableEL > 0) {
+                    doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, 110, dedY);
+                    doc.text(`Rs. ${(ps.chargeableEL * ps.hourlyRate).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, dedY, {align: 'right'});
+                }
+            }
+
+            y = Math.max(y + 10, dedY + 10);
+            doc.setDrawColor(230).line(m, y, 190, y);
+            y += 8;
+            
+            doc.setFont("helvetica", "bold");
+            doc.text("Total Earnings:", m + 5, y); doc.text(`Rs. ${ps.basePay.toLocaleString('en-IN')}`, 100, y, {align: 'right'});
+            doc.text("Total Deductions:", 110, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 5, y, {align: 'right'});
+            
+            y += 10;
+            doc.setFillColor(235).rect(m, y, 170, 12, 'F');
+            doc.setFontSize(12);
+            doc.text("NET PAY:", m + 5, y + 8); 
+            doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
+
+            doc.save(`Payslip_${ps.emp.name}_${ps.monthStr.replace(' ', '_')}.pdf`);
+        };
+    </script>
+</body>
+</html>
