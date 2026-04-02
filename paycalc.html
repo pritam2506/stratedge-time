@@ -306,9 +306,9 @@
         let allTimesheets = [];
         let allPayRecords = [];
         
-        // Memory-safe variables to hold current calculation state
-        let pendingPayloadData = null;
-        let currentPayslipData = null;
+        // Memory-safe global variables to hold current calculation state robustly
+        window.pendingPayloadData = null;
+        window.currentPayslipData = null;
 
         window.logout = () => {
             sessionStorage.removeItem('stratedge_active_user');
@@ -469,219 +469,224 @@
             runCalculation(false, false, false);
         });
 
-        const runCalculation = (forceProceed, bypassShortfall, isViewingPast) => {
-            const empId = document.getElementById('empSelect').value;
-            const monthVal = document.getElementById('payMonth').value; // YYYY-MM
-            const basePayStr = document.getElementById('basePay').value;
-            
-            if(!empId || !monthVal || !basePayStr) return;
-            const basePay = parseFloat(basePayStr);
-            const emp = allEmployees.find(e => e.empId === empId);
-            if(!emp) return;
+        const runCalculation = async (forceProceed, bypassShortfall, isViewingPast) => {
+            try {
+                const empId = document.getElementById('empSelect').value;
+                const monthVal = document.getElementById('payMonth').value; // YYYY-MM
+                const basePayStr = document.getElementById('basePay').value;
+                
+                if(!empId || !monthVal || !basePayStr) return;
+                const basePay = parseFloat(basePayStr);
+                const emp = allEmployees.find(e => e.empId === empId);
+                if(!emp) return;
 
-            let bonusAmount = 0;
-            if (document.getElementById('hasBonus').checked) {
-                bonusAmount = parseFloat(document.getElementById('bonusAmount').value) || 0;
-            }
+                let bonusAmount = 0;
+                if (document.getElementById('hasBonus').checked) {
+                    bonusAmount = parseFloat(document.getElementById('bonusAmount').value) || 0;
+                }
 
-            const [selYear, selMonth] = monthVal.split('-').map(Number);
-            
-            // 1. Calculate Target Hours for the Month and Identify Broken Months
-            const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
-            let actualMonthStart = new Date(selYear, selMonth - 1, 1);
-            
-            if (dojDate > actualMonthStart) {
-                actualMonthStart = dojDate; // Joined midway this month
-            }
-            const actualMonthEnd = new Date(selYear, selMonth, 0); 
-            
-            const monthGoalDays = actualMonthStart > actualMonthEnd ? 0 : getMonSatDays(actualMonthStart, actualMonthEnd);
-            const monthGoalHours = monthGoalDays * 8;
+                const [selYear, selMonth] = monthVal.split('-').map(Number);
+                
+                // 1. Calculate Target Hours for the Month and Identify Broken Months
+                const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
+                let actualMonthStart = new Date(selYear, selMonth - 1, 1);
+                
+                if (dojDate > actualMonthStart) {
+                    actualMonthStart = dojDate; // Joined midway this month
+                }
+                const actualMonthEnd = new Date(selYear, selMonth, 0); 
+                
+                const monthGoalDays = actualMonthStart > actualMonthEnd ? 0 : getMonSatDays(actualMonthStart, actualMonthEnd);
+                const monthGoalHours = monthGoalDays * 8;
 
-            if (monthGoalHours === 0) {
-                showToast("Employee joined after this month. No pay applicable.", "error");
-                return;
-            }
+                if (monthGoalHours === 0) {
+                    showToast("Employee joined after this month. No pay applicable.", "error");
+                    return;
+                }
 
-            // 2. Fetch Timesheets and Accumulate Stats
-            const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
-            
-            let loggedInMonth = 0;
-            let workInMonth = 0; let slInMonth = 0; let elInMonth = 0; let phInMonth = 0;
-            let ytdSL = 0; let ytdEL = 0; let ytdPH = 0;
+                // 2. Fetch Timesheets and Accumulate Stats
+                const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
+                
+                let loggedInMonth = 0;
+                let workInMonth = 0; let slInMonth = 0; let elInMonth = 0; let phInMonth = 0;
+                let ytdSL = 0; let ytdEL = 0; let ytdPH = 0;
 
-            userTS.forEach(ts => {
-                if (!ts.week) return;
-                const dates = getDatesFromWeek(ts.week);
-                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
-                    if(ts.entries && ts.entries[day]) {
-                        const entryDate = dates[idx];
-                        const isCurrentYear = entryDate.getFullYear() === selYear;
-                        const isUpToSelectedMonth = entryDate.getMonth() + 1 <= selMonth;
-                        const isExactlySelectedMonth = entryDate.getMonth() + 1 === selMonth;
+                userTS.forEach(ts => {
+                    if (!ts.week) return;
+                    const dates = getDatesFromWeek(ts.week);
+                    ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
+                        if(ts.entries && ts.entries[day]) {
+                            const entryDate = dates[idx];
+                            const isCurrentYear = entryDate.getFullYear() === selYear;
+                            const isUpToSelectedMonth = entryDate.getMonth() + 1 <= selMonth;
+                            const isExactlySelectedMonth = entryDate.getMonth() + 1 === selMonth;
 
-                        if (isCurrentYear && isUpToSelectedMonth) {
-                            const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
-                            entries.forEach(e => {
-                                if(!e) return;
-                                const h = parseFloat(e.hours) || 0;
-                                const type = e.type || '';
-                                
-                                // Accumulate YTD Leaves (Up to this month)
-                                if (type.includes('SL')) ytdSL += h;
-                                if (type.includes('EL')) ytdEL += h;
-                                if (type.includes('PH')) ytdPH += h;
+                            if (isCurrentYear && isUpToSelectedMonth) {
+                                const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                                entries.forEach(e => {
+                                    if(!e) return;
+                                    const h = parseFloat(e.hours) || 0;
+                                    const type = e.type || '';
+                                    
+                                    // Accumulate YTD Leaves (Up to this month)
+                                    if (type.includes('SL')) ytdSL += h;
+                                    if (type.includes('EL')) ytdEL += h;
+                                    if (type.includes('PH')) ytdPH += h;
 
-                                // Accumulate Specific Month Data
-                                if (isExactlySelectedMonth) {
-                                    loggedInMonth += h;
-                                    if (type.includes('Work')) workInMonth += h;
-                                    if (type.includes('SL')) slInMonth += h;
-                                    if (type.includes('EL')) elInMonth += h;
-                                    if (type.includes('PH')) phInMonth += h;
-                                }
-                            });
+                                    // Accumulate Specific Month Data
+                                    if (isExactlySelectedMonth) {
+                                        loggedInMonth += h;
+                                        if (type.includes('Work')) workInMonth += h;
+                                        if (type.includes('SL')) slInMonth += h;
+                                        if (type.includes('EL')) elInMonth += h;
+                                        if (type.includes('PH')) phInMonth += h;
+                                    }
+                                });
+                            }
                         }
-                    }
+                    });
                 });
-            });
 
-            // 3. Shortfall Check
-            const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
-            
-            if (actualShortfallHours > 0 && !forceProceed) {
-                // Halt and show warning
-                document.getElementById('warningText').innerHTML = `Employee has only logged <span class="font-bold text-gray-900">${loggedInMonth.toFixed(1)} hrs</span> out of the required <span class="font-bold text-gray-900">${monthGoalHours} hrs</span> for this month.`;
-                document.getElementById('warningShortfall').textContent = `${actualShortfallHours.toFixed(1)} hrs`;
-                document.getElementById('warningModal').classList.remove('hidden');
-                return;
-            }
+                // 3. Shortfall Check
+                const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
+                
+                if (actualShortfallHours > 0 && !forceProceed) {
+                    // Halt and show warning
+                    document.getElementById('warningText').innerHTML = `Employee has only logged <span class="font-bold text-gray-900">${loggedInMonth.toFixed(1)} hrs</span> out of the required <span class="font-bold text-gray-900">${monthGoalHours} hrs</span> for this month.`;
+                    document.getElementById('warningShortfall').textContent = `${actualShortfallHours.toFixed(1)} hrs`;
+                    document.getElementById('warningModal').classList.remove('hidden');
+                    return;
+                }
 
-            const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
+                const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
 
-            // 4. Calculate Excess Leaves LWP
-            const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8;
-            const elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8;
-            const phLimitHrs = (emp.phLimit !== undefined ? emp.phLimit : 12) * 8;
+                // 4. Calculate Excess Leaves LWP
+                const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8;
+                const elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8;
+                const phLimitHrs = (emp.phLimit !== undefined ? emp.phLimit : 12) * 8;
 
-            const excessSLTotal = Math.max(0, ytdSL - slLimitHrs);
-            const excessELTotal = Math.max(0, ytdEL - elLimitHrs);
+                const excessSLTotal = Math.max(0, ytdSL - slLimitHrs);
+                const excessELTotal = Math.max(0, ytdEL - elLimitHrs);
 
-            // We only deduct excess leaves that were physically taken *during this specific month*
-            const chargeableSL = Math.min(excessSLTotal, slInMonth);
-            const chargeableEL = Math.min(excessELTotal, elInMonth);
-            const totalExcessLeaveHrs = chargeableSL + chargeableEL;
+                // We only deduct excess leaves that were physically taken *during this specific month*
+                const chargeableSL = Math.min(excessSLTotal, slInMonth);
+                const chargeableEL = Math.min(excessELTotal, elInMonth);
+                const totalExcessLeaveHrs = chargeableSL + chargeableEL;
 
-            // 5. Final Pay Math
-            const hourlyRate = basePay / monthGoalHours;
-            const totalLWPHours = chargeableShortfall + totalExcessLeaveHrs;
-            const deductionAmount = totalLWPHours * hourlyRate;
-            const finalPay = Math.max(0, (basePay + bonusAmount) - deductionAmount);
+                // 5. Final Pay Math
+                const hourlyRate = basePay / monthGoalHours;
+                const totalLWPHours = chargeableShortfall + totalExcessLeaveHrs;
+                const deductionAmount = totalLWPHours * hourlyRate;
+                const finalPay = Math.max(0, (basePay + bonusAmount) - deductionAmount);
 
-            // 6. UI Update: Top Header
-            document.getElementById('resultsEmpty').classList.add('hidden');
-            document.getElementById('resultsPanel').classList.remove('hidden');
+                // 6. UI Update: Top Header
+                document.getElementById('resultsEmpty').classList.add('hidden');
+                document.getElementById('resultsPanel').classList.remove('hidden');
 
-            const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-            document.getElementById('resEmpName').textContent = emp.name;
-            document.getElementById('resMonthLabel').textContent = `PAYSLIP FOR ${monthNames[selMonth-1]} ${selYear}`;
-            
-            const startD = actualMonthStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const endD = actualMonthEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            document.getElementById('resPeriodLabel').textContent = `Period: ${startD} to ${endD}`;
-            
-            // UI Update: Monthly Stats
-            const d = (hrs) => (hrs/8).toFixed(1);
-            document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${monthGoalDays} days)`;
-            document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
-            document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
-            
-            document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs`;
-            document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs`;
-            document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs`;
+                const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                document.getElementById('resEmpName').textContent = emp.name;
+                document.getElementById('resMonthLabel').textContent = `PAYSLIP FOR ${monthNames[selMonth-1]} ${selYear}`;
+                
+                const startD = actualMonthStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                const endD = actualMonthEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                document.getElementById('resPeriodLabel').textContent = `Period: ${startD} to ${endD}`;
+                
+                // UI Update: Monthly Stats
+                const d = (hrs) => (hrs/8).toFixed(1);
+                document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${monthGoalDays} days)`;
+                document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
+                document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
+                
+                document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs`;
+                document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs`;
+                document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs`;
 
-            // UI Update: YTD Leave Stats
-            document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`;
-            document.getElementById('resYtdSlDays').textContent = `(${d(ytdSL)} / ${d(slLimitHrs)} days)`;
-            document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`;
-            document.getElementById('resYtdElDays').textContent = `(${d(ytdEL)} / ${d(elLimitHrs)} days)`;
-            document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
-            document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
+                // UI Update: YTD Leave Stats
+                document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`;
+                document.getElementById('resYtdSlDays').textContent = `(${d(ytdSL)} / ${d(slLimitHrs)} days)`;
+                document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`;
+                document.getElementById('resYtdElDays').textContent = `(${d(ytdEL)} / ${d(elLimitHrs)} days)`;
+                document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
+                document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
 
-            // UI Update: Earnings
-            const earnList = document.getElementById('earningsList');
-            earnList.innerHTML = `
-                <div class="flex justify-between items-center py-1">
-                    <span class="font-medium">Basic Pay</span>
-                    <span class="font-semibold">₹${basePay.toLocaleString('en-IN')}</span>
-                </div>
-            `;
-            if (bonusAmount > 0) {
-                earnList.innerHTML += `
-                <div class="flex justify-between items-center py-1 text-brand-blue">
-                    <span class="font-medium">Bonus Component</span>
-                    <span class="font-semibold">+ ₹${bonusAmount.toLocaleString('en-IN')}</span>
-                </div>`;
-            }
-
-            // UI Update: Deductions Breakdown
-            const dedList = document.getElementById('deductionList');
-            dedList.innerHTML = '';
-            
-            if (actualShortfallHours > 0 && bypassShortfall) {
-                dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but explicitly Bypassed.</span><span>₹0</span></div>`;
-            }
-
-            if (totalLWPHours === 0) {
-                dedList.innerHTML += '<div class="text-gray-400 italic text-xs p-2">No active deductions applied for this period.</div>';
-            } else {
-                const addRow = (label, hrs, rate) => {
-                    const amt = hrs * rate;
-                    return `<div class="flex justify-between items-center py-1">
-                        <div>
-                            <span class="block font-medium">${label}</span>
-                            <span class="text-xs text-red-400">(${hrs.toFixed(1)} hrs × ₹${rate.toFixed(2)}/hr)</span>
-                        </div>
-                        <span class="font-semibold">- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
+                // UI Update: Earnings
+                const earnList = document.getElementById('earningsList');
+                earnList.innerHTML = `
+                    <div class="flex justify-between items-center py-1">
+                        <span class="font-medium">Basic Pay</span>
+                        <span class="font-semibold">₹${basePay.toLocaleString('en-IN')}</span>
+                    </div>
+                `;
+                if (bonusAmount > 0) {
+                    earnList.innerHTML += `
+                    <div class="flex justify-between items-center py-1 text-brand-blue">
+                        <span class="font-medium">Bonus Component</span>
+                        <span class="font-semibold">+ ₹${bonusAmount.toLocaleString('en-IN')}</span>
                     </div>`;
+                }
+
+                // UI Update: Deductions Breakdown
+                const dedList = document.getElementById('deductionList');
+                dedList.innerHTML = '';
+                
+                if (actualShortfallHours > 0 && bypassShortfall) {
+                    dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but explicitly Bypassed.</span><span>₹0</span></div>`;
+                }
+
+                if (totalLWPHours === 0) {
+                    dedList.innerHTML += '<div class="text-gray-400 italic text-xs p-2">No active deductions applied for this period.</div>';
+                } else {
+                    const addRow = (label, hrs, rate) => {
+                        const amt = hrs * rate;
+                        return `<div class="flex justify-between items-center py-1">
+                            <div>
+                                <span class="block font-medium">${label}</span>
+                                <span class="text-xs text-red-400">(${hrs.toFixed(1)} hrs × ₹${rate.toFixed(2)}/hr)</span>
+                            </div>
+                            <span class="font-semibold">- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
+                        </div>`;
+                    };
+
+                    if (chargeableShortfall > 0) dedList.innerHTML += addRow("Shortfall LWP", chargeableShortfall, hourlyRate);
+                    if (chargeableSL > 0) dedList.innerHTML += addRow("Excess Sick Leave", chargeableSL, hourlyRate);
+                    if (chargeableEL > 0) dedList.innerHTML += addRow("Excess Earned Leave", chargeableEL, hourlyRate);
+                }
+                document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+                document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
+                document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
+
+                // Save payload state explicitly to window for memory safety across events
+                window.pendingPayloadData = {
+                    empId, empName: emp.name, monthVal, basePay, bonusAmount, finalPay, 
+                    shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
+                    bypassedShortfall: bypassShortfall, updatedAt: Date.now()
                 };
 
-                if (chargeableShortfall > 0) dedList.innerHTML += addRow("Shortfall LWP", chargeableShortfall, hourlyRate);
-                if (chargeableSL > 0) dedList.innerHTML += addRow("Excess Sick Leave", chargeableSL, hourlyRate);
-                if (chargeableEL > 0) dedList.innerHTML += addRow("Excess Earned Leave", chargeableEL, hourlyRate);
-            }
-            document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
-            document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
-            document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
+                window.currentPayslipData = {
+                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, bonusAmount, finalPay, 
+                    deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
+                    actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
+                    workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
+                };
 
-            // Save payload state securely to module variables for confirmation
-            pendingPayloadData = {
-                empId, empName: emp.name, monthVal, basePay, bonusAmount, finalPay, 
-                shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
-                bypassedShortfall: bypassShortfall, updatedAt: Date.now()
-            };
-
-            currentPayslipData = {
-                emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, bonusAmount, finalPay, 
-                deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
-                actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
-                workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
-            };
-
-            // Set Button State
-            if (isViewingPast) {
-                document.getElementById('confirmBtn').classList.add('hidden');
-                document.getElementById('pdfBtn').classList.remove('hidden');
-                document.getElementById('confirmedBadge').classList.remove('hidden');
-            } else {
-                document.getElementById('confirmBtn').classList.remove('hidden');
-                document.getElementById('pdfBtn').classList.add('hidden');
-                document.getElementById('confirmedBadge').classList.add('hidden');
-                
-                // Reset button in case of a previous confirm click
-                const confirmBtn = document.getElementById('confirmBtn');
-                confirmBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Confirm Calculations & Save`;
-                confirmBtn.disabled = false;
+                // Set Button State
+                if (isViewingPast) {
+                    document.getElementById('confirmBtn').classList.add('hidden');
+                    document.getElementById('pdfBtn').classList.remove('hidden');
+                    document.getElementById('confirmedBadge').classList.remove('hidden');
+                } else {
+                    document.getElementById('confirmBtn').classList.remove('hidden');
+                    document.getElementById('pdfBtn').classList.add('hidden');
+                    document.getElementById('confirmedBadge').classList.add('hidden');
+                    
+                    // Reset button in case of a previous confirm click
+                    const confirmBtn = document.getElementById('confirmBtn');
+                    confirmBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Confirm Calculations & Save`;
+                    confirmBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error("Preview Calculation Error:", err);
+                showToast("Error processing calculation.", "error");
             }
         };
 
@@ -839,7 +844,7 @@
         };
 
         window.confirmAndSavePay = async () => {
-            if (!pendingPayloadData || !currentPayslipData) {
+            if (!window.pendingPayloadData || !window.currentPayslipData) {
                 showToast("Missing calculation data. Please preview again.", "error");
                 return;
             }
@@ -849,12 +854,12 @@
             btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
             btn.disabled = true;
 
-            const p = pendingPayloadData;
+            const p = window.pendingPayloadData;
             const recordId = `${p.empId}_${p.monthVal}`;
 
             try {
                 // Generate Base64 PDF to store in DB
-                const pdfDoc = createPDFDocument(currentPayslipData);
+                const pdfDoc = createPDFDocument(window.currentPayslipData);
                 p.pdfDataUri = pdfDoc.output('datauristring');
                 
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), p);
@@ -865,7 +870,7 @@
                 document.getElementById('confirmedBadge').classList.remove('hidden');
                 
                 // Automatically trigger download
-                pdfDoc.save(`Payslip_${currentPayslipData.emp.name}_${currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
+                pdfDoc.save(`Payslip_${window.currentPayslipData.emp.name}_${window.currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
                 
                 showToast("Pay record confirmed and saved successfully!", "success");
             } catch (err) {
@@ -877,9 +882,9 @@
         };
 
         window.downloadPDF = () => {
-            if(!currentPayslipData) return;
-            const doc = createPDFDocument(currentPayslipData);
-            doc.save(`Payslip_${currentPayslipData.emp.name}_${currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
+            if(!window.currentPayslipData) return;
+            const doc = createPDFDocument(window.currentPayslipData);
+            doc.save(`Payslip_${window.currentPayslipData.emp.name}_${window.currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
         };
     </script>
 </body>
