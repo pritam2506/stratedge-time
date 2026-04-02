@@ -93,7 +93,7 @@
                         <div>
                             <label class="flex items-center gap-2 text-sm font-bold text-gray-700 cursor-pointer">
                                 <input type="checkbox" id="hasBonus" class="w-4 h-4 text-brand-blue rounded border-gray-300 focus:ring-brand-blue" onchange="toggleBonusInput()">
-                                Include Bonus Component?
+                                Include Bonus Component? (Optional)
                             </label>
                         </div>
                         <div id="bonusInputContainer" class="hidden">
@@ -305,6 +305,10 @@
         let allEmployees = [];
         let allTimesheets = [];
         let allPayRecords = [];
+        
+        // Memory-safe variables to hold current calculation state
+        let pendingPayloadData = null;
+        let currentPayslipData = null;
 
         window.logout = () => {
             sessionStorage.removeItem('stratedge_active_user');
@@ -465,7 +469,7 @@
             runCalculation(false, false, false);
         });
 
-        const runCalculation = async (forceProceed, bypassShortfall, isViewingPast) => {
+        const runCalculation = (forceProceed, bypassShortfall, isViewingPast) => {
             const empId = document.getElementById('empSelect').value;
             const monthVal = document.getElementById('payMonth').value; // YYYY-MM
             const basePayStr = document.getElementById('basePay').value;
@@ -556,9 +560,9 @@
             const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
 
             // 4. Calculate Excess Leaves LWP
-            const slLimitHrs = (emp.slLimit || 5) * 8;
-            const elLimitHrs = (emp.elLimit || 12) * 8;
-            const phLimitHrs = (emp.phLimit || 12) * 8;
+            const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8;
+            const elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8;
+            const phLimitHrs = (emp.phLimit !== undefined ? emp.phLimit : 12) * 8;
 
             const excessSLTotal = Math.max(0, ytdSL - slLimitHrs);
             const excessELTotal = Math.max(0, ytdEL - elLimitHrs);
@@ -650,15 +654,14 @@
             document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
             document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
 
-            // Save payload state for confirmation
-            window.pendingPayload = {
+            // Save payload state securely to module variables for confirmation
+            pendingPayloadData = {
                 empId, empName: emp.name, monthVal, basePay, bonusAmount, finalPay, 
                 shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
                 bypassedShortfall: bypassShortfall, updatedAt: Date.now()
             };
 
-            // Save state for PDF Generation
-            window.currentPayslip = {
+            currentPayslipData = {
                 emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, bonusAmount, finalPay, 
                 deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
                 actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
@@ -674,6 +677,11 @@
                 document.getElementById('confirmBtn').classList.remove('hidden');
                 document.getElementById('pdfBtn').classList.add('hidden');
                 document.getElementById('confirmedBadge').classList.add('hidden');
+                
+                // Reset button in case of a previous confirm click
+                const confirmBtn = document.getElementById('confirmBtn');
+                confirmBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Confirm Calculations & Save`;
+                confirmBtn.disabled = false;
             }
         };
 
@@ -831,7 +839,7 @@
         };
 
         window.confirmAndSavePay = async () => {
-            if (!window.pendingPayload || !window.currentPayslip) {
+            if (!pendingPayloadData || !currentPayslipData) {
                 showToast("Missing calculation data. Please preview again.", "error");
                 return;
             }
@@ -841,12 +849,12 @@
             btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
             btn.disabled = true;
 
-            const p = window.pendingPayload;
+            const p = pendingPayloadData;
             const recordId = `${p.empId}_${p.monthVal}`;
 
             try {
                 // Generate Base64 PDF to store in DB
-                const pdfDoc = createPDFDocument(window.currentPayslip);
+                const pdfDoc = createPDFDocument(currentPayslipData);
                 p.pdfDataUri = pdfDoc.output('datauristring');
                 
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), p);
@@ -857,7 +865,7 @@
                 document.getElementById('confirmedBadge').classList.remove('hidden');
                 
                 // Automatically trigger download
-                pdfDoc.save(`Payslip_${window.currentPayslip.emp.name}_${window.currentPayslip.monthStr.replace(' ', '_')}.pdf`);
+                pdfDoc.save(`Payslip_${currentPayslipData.emp.name}_${currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
                 
                 showToast("Pay record confirmed and saved successfully!", "success");
             } catch (err) {
@@ -869,9 +877,9 @@
         };
 
         window.downloadPDF = () => {
-            if(!window.currentPayslip) return;
-            const doc = createPDFDocument(window.currentPayslip);
-            doc.save(`Payslip_${window.currentPayslip.emp.name}_${window.currentPayslip.monthStr.replace(' ', '_')}.pdf`);
+            if(!currentPayslipData) return;
+            const doc = createPDFDocument(currentPayslipData);
+            doc.save(`Payslip_${currentPayslipData.emp.name}_${currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
         };
     </script>
 </body>
