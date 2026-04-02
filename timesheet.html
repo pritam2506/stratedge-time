@@ -539,9 +539,9 @@
                     
                     const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
                     
-                    // Round to the next highest integer value always
-                    slLimit = Math.ceil(5 * ratio);
-                    elLimit = Math.ceil(12 * ratio);
+                    // Round to the nearest integer value always
+                    slLimit = Math.round(5 * ratio);
+                    elLimit = Math.round(12 * ratio);
                 } else if (dojDate.getFullYear() > currentYearNum) {
                     // Edge case: DOJ is in the future
                     slLimit = 0;
