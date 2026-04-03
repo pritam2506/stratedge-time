@@ -762,14 +762,54 @@
             const doc = new jsPDF();
             const m = 20; const rightAlignX = 190; let y = 20;
 
-            // Brand Header
-            doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(65, 105, 225).text("STRATEDGE", m, y);
-            doc.setFontSize(10).setTextColor(150).text("COMMUNICATIONS PVT LTD", m, y + 6);
+            // --- Brand Logo & Header ---
+            // Native vector recreation of the Stratedge logo for perfect resolution
+            const iconX = m;
+            const iconY = y - 14;
+            
+            // Grey Brackets
+            doc.setDrawColor(105, 105, 105);
+            doc.setLineWidth(1.5);
+            doc.line(iconX, iconY, iconX + 10, iconY); // Top horizontal
+            doc.line(iconX, iconY, iconX, iconY + 8);  // Left vertical
+            doc.line(iconX + 4, iconY + 14, iconX + 14, iconY + 14); // Bottom horizontal
+            doc.line(iconX + 14, iconY + 14, iconX + 14, iconY + 6); // Right vertical
+            
+            // Orange Diagonal
+            doc.setDrawColor(225, 90, 30);
+            doc.line(iconX - 1, iconY + 12, iconX + 15, iconY + 2); 
+
+            // Color-Banded Text Setup
+            const headerX = m + 22;
+            doc.setFont("helvetica", "normal").setFontSize(22);
+            
+            // "S" (Orange)
+            doc.setTextColor(225, 90, 30); 
+            doc.text("S", headerX, y);
+            let curX = headerX + doc.getTextWidth("S") + 0.5;
+            
+            // "TRAT" (Grey)
+            doc.setTextColor(105, 105, 105); 
+            doc.text("TRAT", curX, y);
+            curX += doc.getTextWidth("TRAT") + 0.5;
+            
+            // "E" (Orange)
+            doc.setTextColor(225, 90, 30); 
+            doc.text("E", curX, y);
+            curX += doc.getTextWidth("E") + 0.5;
+            
+            // "DGÉ" (Grey)
+            doc.setTextColor(105, 105, 105); 
+            doc.text("DGÉ", curX, y);
+            
+            // Sub-text & Identifiers
+            doc.setFontSize(9).setTextColor(150).text("Communications Pvt. Ltd.", headerX, y + 6);
             
             doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
-            doc.text(`CIN: U70200WB2025PTC277733`, m, y + 12);
-            doc.text(`PAN: ABPCS6820D`, m, y + 16);
+            doc.text(`CIN: U70200WB2025PTC277733`, headerX, y + 12);
+            doc.text(`PAN: ABPCS6820D`, headerX, y + 16);
 
+            // Right-aligned Address
             doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
             doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
             doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
