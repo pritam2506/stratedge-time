@@ -793,9 +793,9 @@
             doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
             doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation || 'N/A', m + 35, y + 12);
             
-            doc.setFont("helvetica", "bold").text(`Department:`, m + 90, y); doc.setFont("helvetica", "normal").text(ps.emp.department || 'N/A', m + 115, y);
-            doc.setFont("helvetica", "bold").text(`Date of Joining:`, m + 90, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 115, y + 6);
-            doc.setFont("helvetica", "bold").text(`Email ID:`, m + 90, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 115, y + 12);
+            doc.setFont("helvetica", "bold").text(`Department:`, m + 90, y); doc.setFont("helvetica", "normal").text(ps.emp.department || 'N/A', m + 122, y);
+            doc.setFont("helvetica", "bold").text(`Date of Joining:`, m + 90, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 122, y + 6);
+            doc.setFont("helvetica", "bold").text(`Email ID:`, m + 90, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 122, y + 12);
 
             y += 22; doc.setDrawColor(230).line(m, y, 190, y); y += 10;
 
@@ -839,10 +839,12 @@
 
             if (ps.bonusAmount > 0) {
                 const bonusText = ps.bonusJustification ? `Bonus: ${ps.bonusJustification}` : "Bonus";
-                const safeBonusText = bonusText.length > 55 ? bonusText.substring(0, 52) + "..." : bonusText;
-                doc.text(safeBonusText, m + 2, y); 
+                // Wrap text gracefully instead of truncating
+                const splitBonusText = doc.splitTextToSize(bonusText, 140);
+                doc.text(splitBonusText, m + 2, y); 
                 doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
-                y += 8;
+                // Shift 'y' downwards dynamically based on the number of wrapped lines
+                y += 8 + ((splitBonusText.length - 1) * 5);
             }
 
             y += 6;
