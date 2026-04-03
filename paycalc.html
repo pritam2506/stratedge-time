@@ -136,7 +136,6 @@
                             <p class="text-xs text-gray-400 mt-1" id="resPeriodLabel">Period: -- to --</p>
                         </div>
                         
-                        <!-- Restored the missing Net Payable block -->
                         <div class="text-right">
                             <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Net Payable</p>
                             <p class="text-3xl font-black text-brand-blue" id="resNetPay">₹0</p>
@@ -566,7 +565,13 @@
 
                 const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
 
-                // 4. Calculate Excess Leaves LWP
+                // 4. Calculate Pro-Rated Basic Pay and Deductions
+                // Standardizing on exactly 30 days = 240 hours as base rate divider
+                const hourlyRate = basePay / 240; 
+                
+                // Maximum possible Basic Pay for this specific period
+                const proRatedBasePay = monthGoalHours * hourlyRate;
+
                 const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8;
                 const elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8;
                 const phLimitHrs = (emp.phLimit !== undefined ? emp.phLimit : 12) * 8;
@@ -580,10 +585,9 @@
                 const totalExcessLeaveHrs = chargeableSL + chargeableEL;
 
                 // 5. Final Pay Math
-                const hourlyRate = basePay / monthGoalHours;
                 const totalLWPHours = chargeableShortfall + totalExcessLeaveHrs;
                 const deductionAmount = totalLWPHours * hourlyRate;
-                const finalPay = Math.max(0, (basePay + bonusAmount) - deductionAmount);
+                const finalPay = Math.max(0, (proRatedBasePay + bonusAmount) - deductionAmount);
 
                 // 6. UI Update: Top Header
                 document.getElementById('resultsEmpty').classList.add('hidden');
@@ -603,9 +607,9 @@
                 document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
                 document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
                 
-                document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs`;
-                document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs`;
-                document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs`;
+                document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs (${d(slInMonth)} days)`;
+                document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs (${d(elInMonth)} days)`;
+                document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs (${d(phInMonth)} days)`;
 
                 // UI Update: YTD Leave Stats
                 document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`;
@@ -619,8 +623,11 @@
                 const earnList = document.getElementById('earningsList');
                 earnList.innerHTML = `
                     <div class="flex justify-between items-center py-1">
-                        <span class="font-medium">Basic Pay</span>
-                        <span class="font-semibold">₹${basePay.toLocaleString('en-IN')}</span>
+                        <div>
+                            <span class="block font-medium">Pro-rated Basic Pay</span>
+                            <span class="text-[10px] text-gray-500">(Target: ${monthGoalDays} working days out of 30)</span>
+                        </div>
+                        <span class="font-semibold">₹${proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
                     </div>
                 `;
                 if (bonusAmount > 0) {
@@ -663,13 +670,13 @@
 
                 // Save payload state explicitly to window for memory safety across events
                 window.pendingPayloadData = {
-                    empId, empName: emp.name, monthVal, basePay, bonusAmount, finalPay, 
+                    empId, empName: emp.name, monthVal, basePay, proRatedBasePay, bonusAmount, finalPay, 
                     shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
                     bypassedShortfall: bypassShortfall, updatedAt: Date.now()
                 };
 
                 window.currentPayslipData = {
-                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, bonusAmount, finalPay, 
+                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, monthGoalDays, bonusAmount, finalPay, 
                     deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
                     actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
                     workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
@@ -788,8 +795,12 @@
             
             y += 8;
             doc.setFont("helvetica", "normal").setTextColor(60);
-            doc.text("Basic Pay", m + 2, y); doc.text(`Rs. ${ps.basePay.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
-            y += 6;
+            doc.text("Pro-rated Basic Pay", m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            doc.setFontSize(7).setTextColor(100);
+            doc.text(`(Target: ${ps.monthGoalDays} working days out of 30)`, m + 2, y + 4);
+            doc.setFontSize(9).setTextColor(60);
+            y += 8;
+
             if (ps.bonusAmount > 0) {
                 doc.text("Bonus", m + 2, y); doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
                 y += 6;
@@ -833,8 +844,8 @@
             
             // TOTALS
             doc.setFont("helvetica", "bold");
-            const totalEarnings = ps.basePay + ps.bonusAmount;
-            doc.text("Total Earnings:", m + 2, y); doc.text(`Rs. ${totalEarnings.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
+            const totalEarnings = ps.proRatedBasePay + ps.bonusAmount;
+            doc.text("Total Earnings:", m + 2, y); doc.text(`Rs. ${totalEarnings.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
             y += 6;
             doc.text("Total Deductions:", m + 2, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
             
@@ -872,7 +883,7 @@
                 
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), p);
                 
-                // Swap Buttons
+                // Swap Buttons to allow PDF Download
                 document.getElementById('confirmBtn').classList.add('hidden');
                 document.getElementById('pdfBtn').classList.remove('hidden');
                 document.getElementById('confirmedBadge').classList.remove('hidden');
