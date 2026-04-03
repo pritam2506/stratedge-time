@@ -116,12 +116,18 @@
                 </div>
 
                 <!-- History sub-panel -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow">
-                    <h3 class="text-sm font-bold text-gray-900 mb-4 border-b pb-2 flex justify-between">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow flex flex-col">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3 border-b pb-2 flex justify-between items-center">
                         Past Records 
                         <span id="recordCount" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">0 Total</span>
                     </h3>
-                    <div id="payRecordList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scroll">
+                    <div class="flex gap-2 mb-4">
+                        <select id="filterEmp" onchange="renderPayRecords()" class="w-1/2 px-2 py-1.5 border border-gray-300 rounded outline-none focus:ring-1 focus:ring-brand-blue bg-gray-50 text-xs text-gray-700">
+                            <option value="">All Employees</option>
+                        </select>
+                        <input type="month" id="filterMonth" onchange="renderPayRecords()" class="w-1/2 px-2 py-1.5 border border-gray-300 rounded outline-none focus:ring-1 focus:ring-brand-blue bg-gray-50 text-xs text-gray-700">
+                    </div>
+                    <div id="payRecordList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scroll flex-grow">
                         <!-- JS injected -->
                     </div>
                 </div>
@@ -374,12 +380,21 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
                     allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
                     const sel = document.getElementById('empSelect');
+                    const filterSel = document.getElementById('filterEmp');
                     const currentSelection = sel.value;
+                    const currentFilter = filterSel ? filterSel.value : '';
+                    
                     sel.innerHTML = '<option value="" disabled selected>-- Select Employee --</option>';
+                    if (filterSel) filterSel.innerHTML = '<option value="">All Employees</option>';
+                    
                     allEmployees.sort((a,b)=>a.name.localeCompare(b.name)).forEach(emp => {
                         sel.innerHTML += `<option value="${emp.empId}">${emp.name} (${emp.empId})</option>`;
+                        if (filterSel) filterSel.innerHTML += `<option value="${emp.empId}">${emp.name}</option>`;
                     });
+                    
                     if(currentSelection) sel.value = currentSelection;
+                    if(filterSel && currentFilter) filterSel.value = currentFilter;
+                    if(window.renderPayRecords) window.renderPayRecords();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
                     allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
@@ -412,12 +427,23 @@
 
         window.renderPayRecords = () => {
             const list = document.getElementById('payRecordList');
-            document.getElementById('recordCount').textContent = `${allPayRecords.length} Total`;
+            const filterEmp = document.getElementById('filterEmp') ? document.getElementById('filterEmp').value : '';
+            const filterMonth = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : '';
+
+            let filteredRecords = allPayRecords;
+            if (filterEmp) {
+                filteredRecords = filteredRecords.filter(r => r.empId === filterEmp);
+            }
+            if (filterMonth) {
+                filteredRecords = filteredRecords.filter(r => r.monthVal === filterMonth);
+            }
+
+            document.getElementById('recordCount').textContent = `${filteredRecords.length} Total`;
             list.innerHTML = '';
-            if (allPayRecords.length === 0) {
+            if (filteredRecords.length === 0) {
                 list.innerHTML = '<div class="text-center py-4 text-gray-400 text-sm italic">No records found.</div>';
             } else {
-                allPayRecords.forEach(rec => {
+                filteredRecords.forEach(rec => {
                     const div = document.createElement('div');
                     div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30";
                     
@@ -901,6 +927,10 @@
                 document.getElementById('pdfBtn').classList.remove('hidden');
                 document.getElementById('confirmedBadge').classList.remove('hidden');
                 
+                // Automatically trigger download with formatted name
+                const safeMonthStr = window.currentPayslipData.monthStr.replace(' ', '');
+                pdfDoc.save(`Payslip_${window.currentPayslipData.emp.name}_${safeMonthStr}.pdf`);
+                
                 showToast("Pay record confirmed and saved successfully!", "success");
             } catch (err) {
                 console.error("Failed to save pay record", err);
@@ -913,7 +943,8 @@
         window.downloadPDF = () => {
             if(!window.currentPayslipData) return;
             const doc = createPDFDocument(window.currentPayslipData);
-            doc.save(`Payslip_${window.currentPayslipData.emp.name}_${window.currentPayslipData.monthStr.replace(' ', '_')}.pdf`);
+            const safeMonthStr = window.currentPayslipData.monthStr.replace(' ', '');
+            doc.save(`Payslip_${window.currentPayslipData.emp.name}_${safeMonthStr}.pdf`);
         };
     </script>
 </body>
