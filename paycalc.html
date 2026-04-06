@@ -109,6 +109,12 @@
                                 <input type="text" id="bonusJustification" placeholder="e.g. Diwali Bonus, Performance" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
                             </div>
                         </div>
+                        <div id="fullPayOverrideContainer" class="hidden mt-2">
+                            <label class="flex items-center gap-2 text-sm font-bold text-green-700 cursor-pointer bg-green-50 p-2.5 rounded-lg border border-green-200 shadow-sm transition-all hover:bg-green-100">
+                                <input type="checkbox" id="overrideFullPay" class="w-4 h-4 text-green-600 rounded border-green-300 focus:ring-green-500" onchange="document.getElementById('calcBtn').click()">
+                                100% Goal Met: Grant Full 30-Day Pay
+                            </label>
+                        </div>
                         <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4 flex justify-center items-center gap-2">
                             Preview Calculation
                         </button>
@@ -483,6 +489,7 @@
             window.toggleBonusInput();
             document.getElementById('bonusAmount').value = rec.bonusAmount || 0;
             document.getElementById('bonusJustification').value = rec.bonusJustification || '';
+            document.getElementById('overrideFullPay').checked = !!rec.useFullPay;
 
             // Run calculation to populate view state
             runCalculation(true, rec.bypassedShortfall, true); 
@@ -528,12 +535,6 @@
 
                 const [selYear, selMonth] = monthVal.split('-').map(Number);
                 
-                // Calculate total working days in the month to establish the base hourly rate
-                const fullMonthStart = new Date(selYear, selMonth - 1, 1);
-                const fullMonthEnd = new Date(selYear, selMonth, 0);
-                const totalMonthWorkingDays = getMonSatDays(fullMonthStart, fullMonthEnd);
-                const totalMonthWorkingHours = totalMonthWorkingDays * 8;
-
                 // 1. Calculate Target Hours for the Month and Identify Broken Months
                 const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
                 let actualMonthStart = new Date(selYear, selMonth - 1, 1);
@@ -597,6 +598,19 @@
                 // 3. Shortfall Check
                 const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
                 
+                const is100Percent = loggedInMonth >= monthGoalHours && monthGoalHours > 0;
+                const overrideContainer = document.getElementById('fullPayOverrideContainer');
+                const overrideCheckbox = document.getElementById('overrideFullPay');
+
+                if (is100Percent) {
+                    overrideContainer.classList.remove('hidden');
+                } else {
+                    overrideContainer.classList.add('hidden');
+                    overrideCheckbox.checked = false;
+                }
+
+                const useFullPay = is100Percent && overrideCheckbox.checked;
+                
                 if (actualShortfallHours > 0 && !forceProceed) {
                     // Halt and show warning
                     document.getElementById('warningText').innerHTML = `Employee has only logged <span class="font-bold text-gray-900">${loggedInMonth.toFixed(1)} hrs</span> out of the required <span class="font-bold text-gray-900">${monthGoalHours} hrs</span> for this month.`;
@@ -608,11 +622,14 @@
                 const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
 
                 // 4. Calculate Pro-Rated Basic Pay and Deductions
-                // Dynamically establish hourly rate based on actual Mon-Sat working days in the month
-                const hourlyRate = basePay / totalMonthWorkingHours; 
+                // Standardizing on exactly 30 days = 240 hours as base rate divider
+                const hourlyRate = basePay / 240; 
                 
                 // Maximum possible Basic Pay for this specific period
-                const proRatedBasePay = monthGoalHours * hourlyRate;
+                let proRatedBasePay = monthGoalHours * hourlyRate;
+                if (useFullPay) {
+                    proRatedBasePay = basePay;
+                }
 
                 const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8;
                 const elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8;
@@ -662,12 +679,15 @@
                 document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
 
                 // UI Update: Earnings
+                let basicPayLabel = useFullPay ? "Full Basic Pay (100% Goal Met)" : "Pro-rated Basic Pay";
+                let basicPaySub = useFullPay ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : `(Target: ${monthGoalDays} working days out of 30)`;
+
                 const earnList = document.getElementById('earningsList');
                 earnList.innerHTML = `
                     <div class="flex justify-between items-center py-1">
                         <div>
-                            <span class="block font-medium">Pro-rated Basic Pay</span>
-                            <span class="text-[10px] text-gray-500">(Target: ${monthGoalDays} working days out of ${totalMonthWorkingDays})</span>
+                            <span class="block font-medium">${basicPayLabel}</span>
+                            <span class="text-[10px] text-gray-500">${basicPaySub}</span>
                         </div>
                         <span class="font-semibold">₹${proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
                     </div>
@@ -712,13 +732,13 @@
 
                 // Save payload state explicitly to window for memory safety across events
                 window.pendingPayloadData = {
-                    empId, empName: emp.name, monthVal, basePay, proRatedBasePay, bonusAmount, bonusJustification, finalPay, 
+                    empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, bonusAmount, bonusJustification, finalPay, 
                     shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
                     bypassedShortfall: bypassShortfall, updatedAt: Date.now()
                 };
 
                 window.currentPayslipData = {
-                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, monthGoalDays, totalMonthWorkingDays, bonusAmount, bonusJustification, finalPay, 
+                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, useFullPay, monthGoalDays, bonusAmount, bonusJustification, finalPay, 
                     deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
                     actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
                     workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
@@ -876,10 +896,14 @@
             doc.text("EARNINGS", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
             
             y += 8;
+            
+            let basicPayLabel = ps.useFullPay ? "Full Basic Pay (100% Goal Met)" : "Pro-rated Basic Pay";
+            let basicPaySub = ps.useFullPay ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : `(Target: ${ps.monthGoalDays} working days out of 30)`;
+
             doc.setFont("helvetica", "normal").setTextColor(60);
-            doc.text("Pro-rated Basic Pay", m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            doc.text(basicPayLabel, m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
             doc.setFontSize(7).setTextColor(100);
-            doc.text(`(Target: ${ps.monthGoalDays} working days out of ${ps.totalMonthWorkingDays})`, m + 2, y + 4);
+            doc.text(basicPaySub, m + 2, y + 4);
             doc.setFontSize(9).setTextColor(60);
             y += 8;
 
