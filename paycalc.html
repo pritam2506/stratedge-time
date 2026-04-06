@@ -528,6 +528,12 @@
 
                 const [selYear, selMonth] = monthVal.split('-').map(Number);
                 
+                // Calculate total working days in the month to establish the base hourly rate
+                const fullMonthStart = new Date(selYear, selMonth - 1, 1);
+                const fullMonthEnd = new Date(selYear, selMonth, 0);
+                const totalMonthWorkingDays = getMonSatDays(fullMonthStart, fullMonthEnd);
+                const totalMonthWorkingHours = totalMonthWorkingDays * 8;
+
                 // 1. Calculate Target Hours for the Month and Identify Broken Months
                 const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
                 let actualMonthStart = new Date(selYear, selMonth - 1, 1);
@@ -602,8 +608,8 @@
                 const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
 
                 // 4. Calculate Pro-Rated Basic Pay and Deductions
-                // Standardizing on exactly 30 days = 240 hours as base rate divider
-                const hourlyRate = basePay / 240; 
+                // Dynamically establish hourly rate based on actual Mon-Sat working days in the month
+                const hourlyRate = basePay / totalMonthWorkingHours; 
                 
                 // Maximum possible Basic Pay for this specific period
                 const proRatedBasePay = monthGoalHours * hourlyRate;
@@ -661,7 +667,7 @@
                     <div class="flex justify-between items-center py-1">
                         <div>
                             <span class="block font-medium">Pro-rated Basic Pay</span>
-                            <span class="text-[10px] text-gray-500">(Target: ${monthGoalDays} working days out of 30)</span>
+                            <span class="text-[10px] text-gray-500">(Target: ${monthGoalDays} working days out of ${totalMonthWorkingDays})</span>
                         </div>
                         <span class="font-semibold">₹${proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
                     </div>
@@ -712,7 +718,7 @@
                 };
 
                 window.currentPayslipData = {
-                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, monthGoalDays, bonusAmount, bonusJustification, finalPay, 
+                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, monthGoalDays, totalMonthWorkingDays, bonusAmount, bonusJustification, finalPay, 
                     deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
                     actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
                     workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
@@ -873,7 +879,7 @@
             doc.setFont("helvetica", "normal").setTextColor(60);
             doc.text("Pro-rated Basic Pay", m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
             doc.setFontSize(7).setTextColor(100);
-            doc.text(`(Target: ${ps.monthGoalDays} working days out of 30)`, m + 2, y + 4);
+            doc.text(`(Target: ${ps.monthGoalDays} working days out of ${ps.totalMonthWorkingDays})`, m + 2, y + 4);
             doc.setFontSize(9).setTextColor(60);
             y += 8;
 
