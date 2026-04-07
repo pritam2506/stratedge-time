@@ -297,7 +297,6 @@
         </button>
     </div>
 
-    <!-- Script Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -471,6 +470,14 @@
             updateNotifications();
             window.selectWeek(weekStr);
             document.getElementById('notifDropdown').classList.add('hidden');
+        };
+
+        window.markReadAndOpenPayslips = (notifId) => {
+            readNotifIds.add(notifId);
+            saveReadNotifs(); 
+            updateNotifications();
+            document.getElementById('notifDropdown').classList.add('hidden');
+            window.openPayslipModal();
         };
 
         // --- Date Utils ---
@@ -717,6 +724,26 @@
             const currentWeekStr = getWeekString(now);
             const dayOfWeek = now.getDay();
 
+            // 1. Payslip Notifications
+            myPayRecords.forEach(rec => {
+                const notifId = `payslip_${rec.monthVal}`;
+                if (!readNotifIds.has(notifId)) {
+                    currentActiveNotifIds.push(notifId);
+                    notifCount++;
+                    const [y, m] = rec.monthVal.split('-');
+                    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    const monthLabel = `${monthNames[parseInt(m)-1]} ${y}`;
+
+                    notifList.innerHTML += `
+                        <div class="px-4 py-3 bg-blue-50 border-l-4 border-brand-blue cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndOpenPayslips('${notifId}')">
+                            <p class="text-sm font-bold text-brand-blue">Payslip Generated</p>
+                            <p class="text-xs text-gray-700 mt-1">Your payslip for ${monthLabel} has been generated and is ready for download.</p>
+                        </div>
+                    `;
+                }
+            });
+
+            // 2. Alert on Explicit Admin Actions
             myTimesheets.forEach(ts => {
                 const needsResubmit = ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned';
                 if (ts.status === 'Approved' || needsResubmit) {
@@ -973,7 +1000,7 @@
                     banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-green-800">Timesheet Approved & Locked</h3><p class="text-sm text-green-600 mt-1">Your hours for this week have been processed. Contact Admin to request changes.</p>`;
                 } else {
                     banner.className = "bg-orange-50 border border-orange-200 p-4 mb-6 rounded-lg text-center shadow-sm";
-                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending Approval</h3><p class="text-sm text-orange-600 mt-1">Your hours are locked while awaiting Admin review.</p>`;
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending Approval</h3><p class="text-sm text-green-600 mt-1">Your hours are locked while awaiting Admin review.</p>`;
                 }
                 submitBtn.classList.add('hidden');
                 saveBtn.classList.add('hidden');
@@ -1185,6 +1212,7 @@
                     unsubscribePayslips = onSnapshot(payslipsQuery, (snapshot) => {
                         myPayRecords = snapshot.docs.map(docSnap => docSnap.data());
                         myPayRecords.sort((a, b) => b.monthVal.localeCompare(a.monthVal));
+                        updateNotifications(); 
                     });
                 } else {
                     if (unsubscribeTimesheets) unsubscribeTimesheets();
