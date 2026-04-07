@@ -28,6 +28,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
+    <!-- Header -->
     <header class="bg-brand-blue text-white shadow-md z-20 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -40,17 +41,20 @@
             </div>
             <div class="flex items-center gap-4">
                 
+                <!-- Notifications -->
                 <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()">
                     <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     <span id="empNotifBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
                     
+                    <!-- Dropdown Panel -->
                     <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
                         <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                             <span class="font-bold text-gray-800 text-sm">Notifications</span>
                             <button onclick="markAllRead()" class="text-xs text-brand-blue hover:text-blue-700 font-semibold transition-colors">Mark all as read</button>
                         </div>
                         <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
-                            </div>
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                 </div>
 
@@ -58,6 +62,7 @@
                     Employee Portal
                 </div>
 
+                <!-- Payslips Button -->
                 <button onclick="openPayslipModal()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded-lg ml-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     My Payslips
@@ -71,9 +76,11 @@
         </div>
     </header>
 
+    <!-- Main Content -->
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             
+            <!-- Left Side: User Profile -->
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-8">
                     <div class="flex flex-col items-center text-center">
@@ -112,6 +119,7 @@
                         <p class="text-xs text-gray-500 mt-2 text-right">Target: 48.0 hrs</p>
                     </div>
 
+                    <!-- YTD Leave Summary Block -->
                     <div class="mt-8 border-t border-gray-100 pt-6">
                         <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">YTD Leave Summary</h3>
                         <div class="space-y-3">
@@ -136,6 +144,7 @@
                         </div>
                         <p class="text-xs text-gray-400 mt-3 text-right">* 1 day = 8 hours</p>
                         
+                        <!-- Callout -->
                         <div class="mt-3 bg-blue-50 border border-blue-100 p-2.5 rounded-lg flex items-start gap-1.5 shadow-sm">
                             <svg class="w-4 h-4 text-brand-blue shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <p class="text-[11px] text-brand-blue font-semibold leading-snug">Note: Earned and Sick leaves are allocated on a pro-rated basis relative to your joining date.</p>
@@ -144,18 +153,22 @@
                 </div>
             </div>
 
+            <!-- Right Side: Timesheet Entry -->
             <div class="lg:col-span-3">
                 
+                <!-- Calendar Header -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                     <div class="flex-1">
                         <h2 class="text-xl font-bold text-gray-900 mb-1">Weekly Timesheet</h2>
                         <div class="flex items-center gap-3 text-xs font-semibold text-gray-500 bg-gray-50 py-1.5 px-3 rounded-lg w-fit mt-2">
                             <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-green-500"></div> Approved</span>
                             <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-brand-orange"></div> Pending</span>
+                            <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div> Saved</span>
                             <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-red-500"></div> Open</span>
                         </div>
                     </div>
                     
+                    <!-- Custom Calendar Week Selector Dropdown -->
                     <div class="w-full sm:w-72 relative">
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Calendar Week Filter</label>
                         <button id="weekSelectorBtn" type="button" onclick="toggleWeekDropdown()" class="w-full px-4 py-3 bg-white border-2 border-brand-blue/30 rounded-xl flex justify-between items-center hover:bg-blue-50 focus:ring-4 focus:ring-blue-100 outline-none transition-all shadow-sm">
@@ -165,12 +178,15 @@
                             <svg class="w-5 h-5 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         
+                        <!-- Calendar Popover List -->
                         <div id="weekDropdown" class="hidden absolute z-50 mt-2 w-full sm:w-80 max-h-[400px] calendar-scroll overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-2xl right-0 sm:left-auto sm:right-0 p-3">
-                            </div>
+                            <!-- Injected dynamically via JS -->
+                        </div>
                         <input type="hidden" id="weekSelector" value="">
                     </div>
                 </div>
 
+                <!-- Pre-fill Warning -->
                 <div id="prefillWarning" class="hidden bg-orange-50 border-l-4 border-brand-orange p-4 mb-6 rounded-r-lg">
                     <div class="flex">
                         <div class="flex-shrink-0">
@@ -183,12 +199,21 @@
                     </div>
                 </div>
 
+                <!-- Submission Status Banner -->
                 <div id="submittedBanner" class="hidden bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center">
                     <svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <h3 class="text-lg font-bold text-green-800">Timesheet Submitted</h3>
                     <p class="text-sm text-green-600 mt-1">Your hours for this week have been successfully logged and locked.</p>
                 </div>
 
+                <!-- Progress Saved Banner -->
+                <div id="savedBanner" class="hidden bg-blue-50 border border-blue-200 p-4 mb-6 rounded-lg text-center">
+                    <svg class="mx-auto h-8 w-8 text-brand-blue mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <h3 class="text-lg font-bold text-blue-800">Progress Saved</h3>
+                    <p class="text-sm text-blue-600 mt-1">You have saved your progress for this week. Remember to click "Submit" when finished.</p>
+                </div>
+
+                <!-- Main Form Grid -->
                 <form id="timesheetForm" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-opacity">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200" id="timesheetTable">
@@ -201,7 +226,8 @@
                                     <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16"></th>
                                 </tr>
                             </thead>
-                            </table>
+                            <!-- Table Bodys will be generated by JS -->
+                        </table>
                     </div>
 
                     <div class="bg-gray-50 px-6 py-5 border-t border-gray-200">
@@ -217,7 +243,10 @@
                             </label>
                         </div>
 
-                        <div class="flex justify-end">
+                        <div class="flex justify-end gap-3" id="formButtons">
+                            <button type="button" id="saveBtn" onclick="saveTimesheetProgress()" class="border-2 border-brand-orange text-brand-orange hover:bg-orange-50 font-bold py-3 px-8 rounded-lg transition-all focus:ring-4 focus:ring-orange-100 flex items-center justify-center min-w-[200px]">
+                                <span>Save Progress</span>
+                            </button>
                             <button type="submit" id="submitBtn" class="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all focus:ring-4 focus:ring-orange-300 flex items-center justify-center min-w-[250px]">
                                 <span>Submit Weekly Timesheet</span>
                             </button>
@@ -228,6 +257,7 @@
         </div>
     </main>
 
+    <!-- Payslip Download Modal -->
     <div id="payslipModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col transform transition-all">
             <div class="p-6">
@@ -257,6 +287,7 @@
         </div>
     </div>
 
+    <!-- Toast Notification System -->
     <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-50 flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-xl border border-gray-200" role="alert">
         <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
         <div id="toastMessage" class="ml-3 text-sm font-medium">Message here.</div>
@@ -266,6 +297,7 @@
         </button>
     </div>
 
+    <!-- Script Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -283,10 +315,10 @@
         // Core App Variables
         let fbUser = null;
         let myTimesheets = [];
-        let myPayRecords = []; // NEW: Variable to hold payslips
+        let myPayRecords = []; 
         let unsubscribeTimesheets = null;
         let unsubscribePrefs = null;
-        let unsubscribePayslips = null; // NEW: Unsubscribe for payslips listener
+        let unsubscribePayslips = null; 
         let readNotifIds = new Set();
         let currentActiveNotifIds = [];
 
@@ -345,7 +377,7 @@
             }
         });
 
-        // NEW: Payslip Modal Functions
+        // Payslip Modal Functions
         window.openPayslipModal = () => {
             const sel = document.getElementById('payslipMonthSelect');
             const noMsg = document.getElementById('noPayslipsMsg');
@@ -427,7 +459,7 @@
 
         window.markAllRead = () => {
             currentActiveNotifIds.forEach(id => readNotifIds.add(id));
-            saveReadNotifs(); // Save to database
+            saveReadNotifs(); 
             updateNotifications();
             document.getElementById('notifDropdown').classList.add('hidden');
             showToast("All notifications marked as read.", "success");
@@ -435,7 +467,7 @@
 
         window.markReadAndGo = (notifId, weekStr) => {
             readNotifIds.add(notifId);
-            saveReadNotifs(); // Save to database
+            saveReadNotifs(); 
             updateNotifications();
             window.selectWeek(weekStr);
             document.getElementById('notifDropdown').classList.add('hidden');
@@ -493,9 +525,10 @@
             if (ts) {
                 if (ts.status === 'Approved') icon = '🟢';
                 else if (ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned') icon = '🔴';
+                else if (ts.status === 'Saved') icon = '🔵';
                 else icon = '🟠';
             }
-            if (weekStr > getWeekString(new Date())) icon = '⏳'; // Future
+            if (weekStr > getWeekString(new Date())) icon = '⏳'; 
 
             document.getElementById('weekSelectorDisplay').innerHTML = `
                 <span class="text-lg">${icon}</span>
@@ -515,11 +548,9 @@
 
             const currentWeekStr = getWeekString(new Date());
             
-            // Strict limitation: Start loop from DOJ only
             let startDoj = activeUser.doj ? new Date(activeUser.doj) : new Date(Date.now() - 4 * 604800000);
             let dojWeekStr = getWeekString(startDoj);
 
-            // Generate up to 4 upcoming future weeks to show (but disabled)
             let futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + 28);
             let futureWeekStr = getWeekString(futureDate);
@@ -528,7 +559,7 @@
             const weeksArr = [];
             
             if (iterWeekStr > futureWeekStr) {
-                weeksArr.push(iterWeekStr); // Edge case safeguard
+                weeksArr.push(iterWeekStr); 
             } else {
                 while(iterWeekStr <= futureWeekStr) {
                     weeksArr.push(iterWeekStr);
@@ -537,7 +568,7 @@
                     iterWeekStr = getWeekString(d);
                 }
             }
-            weeksArr.reverse(); // Newest top
+            weeksArr.reverse(); 
 
             weeksArr.forEach(w => {
                 const ts = myTimesheets.find(t => t.week === w);
@@ -547,11 +578,10 @@
                 
                 let bgColor, borderColor, textColor, statusBadge, clickAction;
                 
-                // Color Logic mapped exactly to keys
                 if (isFuture) {
                     bgColor = 'bg-gray-100'; borderColor = 'border-gray-200'; textColor = 'text-gray-400';
                     statusBadge = '⏳ Upcoming';
-                    clickAction = ''; // No click event = Selection not allowed
+                    clickAction = ''; 
                 } else {
                     clickAction = `onclick="selectWeek('${w}')"`;
                     if (ts) {
@@ -561,6 +591,9 @@
                         } else if (ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned') {
                             bgColor = 'bg-red-50'; borderColor = 'border-red-500'; textColor = 'text-red-800';
                             statusBadge = '🔴 ' + ts.status;
+                        } else if (ts.status === 'Saved') {
+                            bgColor = 'bg-blue-50'; borderColor = 'border-blue-500'; textColor = 'text-blue-800';
+                            statusBadge = '🔵 Saved';
                         } else {
                             bgColor = 'bg-orange-50'; borderColor = 'border-orange-500'; textColor = 'text-orange-800';
                             statusBadge = '🟠 Pending';
@@ -585,11 +618,9 @@
                 `;
             });
 
-            // Auto-select behavior
             if (currentVal && weeksArr.includes(currentVal)) {
                 window.selectWeek(currentVal);
             } else {
-                // Default to current week. If DOJ is in future, select DOJ week.
                 const defaultSelection = currentWeekStr >= dojWeekStr ? currentWeekStr : dojWeekStr;
                 window.selectWeek(defaultSelection);
             }
@@ -602,7 +633,6 @@
             const currentYear = currentYearNum.toString();
 
             myTimesheets.forEach(ts => {
-                // Calculate only from approved timesheets in the current year
                 if (ts.status === 'Approved' && ts.week.startsWith(currentYear)) {
                     Object.values(ts.entries).forEach(dayArr => {
                         const entries = Array.isArray(dayArr) ? dayArr : [dayArr];
@@ -616,10 +646,9 @@
                 }
             });
 
-            // Calculate Pro-rated Limits for EL and SL based on DOJ
             let slLimit = 5;
             let elLimit = 12;
-            let phLimit = 12; // Default limit
+            let phLimit = 12; 
 
             if (activeUser.doj) {
                 const dojDate = new Date(activeUser.doj);
@@ -627,32 +656,20 @@
                 if (dojDate.getFullYear() === currentYearNum) {
                     const endOfYear = new Date(currentYearNum, 11, 31);
                     const startOfYear = new Date(currentYearNum, 0, 1);
-                    
                     const daysWorked = Math.floor((endOfYear - dojDate) / (1000 * 60 * 60 * 24)) + 1;
                     const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
-                    
                     const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
-                    
-                    // Round to the nearest integer value always
                     slLimit = Math.round(5 * ratio);
                     elLimit = Math.round(12 * ratio);
-
-                    // Public Holidays Remaining in joining year
                     const dojJustDate = getISODate(dojDate);
                     phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYear) && h.date >= dojJustDate).length;
-
                 } else if (dojDate.getFullYear() > currentYearNum) {
-                    // Edge case: DOJ is in the future
-                    slLimit = 0;
-                    elLimit = 0;
-                    phLimit = 0;
+                    slLimit = 0; elLimit = 0; phLimit = 0;
                 } else {
-                    // Past year joiners get all holidays in the current year
                     phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYear)).length;
                 }
             }
 
-            // Sync calculated limits to backend if they have changed or are not yet set
             if (activeUser.slLimit !== slLimit || activeUser.elLimit !== elLimit || activeUser.phLimit !== phLimit) {
                 activeUser.slLimit = slLimit;
                 activeUser.elLimit = elLimit;
@@ -670,14 +687,11 @@
                 }
             }
 
-            // Convert hours to days, display max limits, and warn if exceeded
             const formatLeave = (elId, hrs, limit) => {
                 const days = hrs / 8;
                 const el = document.getElementById(elId);
                 const isExceeded = days > limit;
-                
                 el.innerHTML = `${days.toFixed(1)} <span class="text-xs ${isExceeded ? 'text-red-400' : 'text-gray-500'} font-medium">/ ${limit} days</span>`;
-                
                 if (isExceeded) {
                     el.className = "font-bold text-red-600 flex flex-col items-end leading-tight";
                     el.innerHTML += `<span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded mt-1 border border-red-200 shadow-sm">Limit Exceeded</span>`;
@@ -703,14 +717,11 @@
             const currentWeekStr = getWeekString(now);
             const dayOfWeek = now.getDay();
 
-            // 1. Alert on Explicit Admin Actions (Approved / Rejected / Resubmit / Returned)
             myTimesheets.forEach(ts => {
                 const needsResubmit = ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned';
-                
                 if (ts.status === 'Approved' || needsResubmit) {
-                    const statusStr = ts.status; // Get explicit status word
+                    const statusStr = ts.status; 
                     const notifId = `${ts.id}_${statusStr}`;
-                    
                     if (!readNotifIds.has(notifId)) {
                         currentActiveNotifIds.push(notifId);
                         notifCount++;
@@ -718,11 +729,9 @@
                         const color = isAppr ? 'text-green-600' : 'text-red-600';
                         const bg = isAppr ? 'bg-green-50' : 'bg-red-50';
                         const border = isAppr ? 'border-green-500' : 'border-red-500';
-                        
                         const msg = needsResubmit 
                             ? `Admin has requested changes to your timesheet for ${ts.week}. Status is marked as ${statusStr}.`
                             : `Your timesheet for ${ts.week} was approved by Admin.`;
-
                         notifList.innerHTML += `
                             <div class="px-4 py-3 ${bg} border-l-4 ${border} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${notifId}', '${ts.week}')">
                                 <p class="text-sm font-bold ${color}">Timesheet ${statusStr}</p>
@@ -733,7 +742,6 @@
                 }
             });
 
-            // 2. Scan past valid weeks (From DOJ to Current) to find missing or re-opened timesheets
             let dojWeekStr = activeUser.doj ? getWeekString(new Date(activeUser.doj)) : getWeekString(new Date(Date.now() - 4 * 604800000));
             if (dojWeekStr > currentWeekStr) dojWeekStr = currentWeekStr; 
 
@@ -748,9 +756,7 @@
 
             validPastWeeks.forEach(w => {
                 const ts = myTimesheets.find(t => t.week === w);
-                
                 if (!ts && w !== currentWeekStr) {
-                    // It's a past week, but no timesheet exists.
                     const notifId = `missing_${w}`;
                     if (!readNotifIds.has(notifId)) {
                         currentActiveNotifIds.push(notifId);
@@ -763,7 +769,6 @@
                         `;
                     }
                 } else if (!ts && w === currentWeekStr && (dayOfWeek === 5 || dayOfWeek === 6)) {
-                    // Friday or Saturday of the Current Week reminder
                     const notifId = `reminder_${w}`;
                     if (!readNotifIds.has(notifId)) {
                         currentActiveNotifIds.push(notifId);
@@ -814,8 +819,7 @@
                 document.getElementById('timesheetTable').appendChild(tbody);
             }
 
-            // Force Public Holiday details & Lock if it matches
-            if (holidayInfo && !isSubmitted) {
+            if (holidayInfo && !isSubmitted && !data) {
                 data = { hours: 8, project: holidayInfo.name, type: 'Public Holiday (PH)' };
                 isSubmitted = true;
             }
@@ -830,7 +834,6 @@
             const hrsValue = data ? data.hours : '8';
             const projValue = data && data.project ? data.project : '';
 
-            // Note: Secure Lock via 'readonly' and 'disabled' dynamically applied
             tr.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap align-top"></td>
                 <td class="px-6 py-3 align-top">
@@ -850,7 +853,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium align-top">
                     ${!isSubmitted ? `
                         <button type="button" class="text-brand-blue hover:text-blue-700 mr-2 font-bold text-xl px-2 py-1 rounded hover:bg-blue-50 transition-colors" onclick="addEntryRow(${dayIndex}, '${dayName}', '${dateStr}')" title="Add Row">+</button>
-                        <button type="button" class="text-red-500 hover:text-red-700 font-bold text-xl px-2 py-1 rounded hover:bg-red-50 transition-colors" onclick="removeEntryRow(this, ${dayIndex})" title="Remove Row">-</button>
+                        <button type="button" class="text-red-500 hover:text-red-700 font-bold text-xl px-2 py-1 rounded hover:bg-red-100 transition-colors" onclick="removeEntryRow(this, ${dayIndex})" title="Remove Row">-</button>
                     ` : ''}
                 </td>
             `;
@@ -865,7 +868,7 @@
             
             const applyLeaveLogic = () => {
                 if (typeSelect.value !== 'Regular Work') {
-                    if(!holidayInfo) projInput.value = 'On Leave';
+                    if(!holidayInfo && (projInput.value === '' || projInput.value === 'On Leave')) projInput.value = 'On Leave';
                     projInput.readOnly = true;
                     projInput.classList.add('bg-gray-100', 'text-gray-500');
                 } else {
@@ -895,26 +898,20 @@
         // --- Grid Rendering Logic ---
         const isBeforeDoj = (rowDate) => {
             if (!activeUser.doj) return false;
-            const rDate = new Date(rowDate);
-            rDate.setHours(0,0,0,0);
-            const dDate = new Date(activeUser.doj);
-            dDate.setHours(0,0,0,0);
+            const rDate = new Date(rowDate); rDate.setHours(0,0,0,0);
+            const dDate = new Date(activeUser.doj); dDate.setHours(0,0,0,0);
             return rDate < dDate;
         };
 
         window.renderTimesheetGrid = async (weekStr) => {
             if (!weekStr) return;
-            
             const timesheetForm = document.getElementById('timesheetForm');
             timesheetForm.classList.remove('hidden');
-
             const dates = getDatesFromWeek(weekStr);
             const table = document.getElementById('timesheetTable');
-            
             const tbodys = table.querySelectorAll('tbody');
             tbodys.forEach(t => t.remove());
 
-            // Prefill Logic
             const currentData = myTimesheets.find(ts => ts.week === weekStr);
             
             if (!currentData) {
@@ -922,20 +919,16 @@
                 if (approvedSheets.length > 0) {
                     const lastApproved = approvedSheets[0];
                     document.getElementById('prefillWarning').classList.remove('hidden');
-                    
                     daysOfWeek.forEach((day, index) => {
                         const rowDate = dates[index];
                         const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
                         const beforeDoj = isBeforeDoj(rowDate);
-
                         if (beforeDoj) {
                             window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
                         } else if (holidayInfo) {
                             window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
                         } else if (lastApproved.entries && lastApproved.entries[day] && Array.isArray(lastApproved.entries[day])) {
-                            lastApproved.entries[day].forEach(entry => {
-                                window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo);
-                            });
+                            lastApproved.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo));
                         } else {
                             window.addEntryRow(index, day, formatDate(rowDate), {hours: 8, project: '', type: 'Regular Work'}, false, holidayInfo);
                         }
@@ -946,7 +939,6 @@
                         const rowDate = dates[index];
                         const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
                         const beforeDoj = isBeforeDoj(rowDate);
-                        
                         if (beforeDoj) {
                             window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
                         } else {
@@ -954,44 +946,54 @@
                         }
                     });
                 }
-            } else {
-                document.getElementById('prefillWarning').classList.add('hidden');
-                // The rows will be rendered by checkSubmissionStatus based on the existing currentData
-            }
-
+            } 
             checkSubmissionStatus(weekStr);
             calculateTotals();
         };
 
-        // --- Status Lock Enforcement ---
         const checkSubmissionStatus = (weekStr) => {
             const submitBtn = document.getElementById('submitBtn');
+            const saveBtn = document.getElementById('saveBtn');
             const banner = document.getElementById('submittedBanner');
+            const savedBanner = document.getElementById('savedBanner');
             const dates = getDatesFromWeek(weekStr);
             const data = myTimesheets.find(ts => ts.week === weekStr);
             
-            // Check if it's explicitly rejected, resubmit, or returned
-            const isReopened = data && (data.status === 'Rejected' || data.status === 'Resubmit' || data.status === 'Returned');
-            
-            if (data && !isReopened) {
-                // If Timesheet exists and isn't actively rejected/reopened, Lock Everything
+            const isLocked = data && ['Submitted', 'Approved'].includes(data.status);
+            const isSaved = data && data.status === 'Saved';
+            const isReopened = data && ['Rejected', 'Resubmit', 'Returned'].includes(data.status);
+
+            banner.classList.add('hidden');
+            savedBanner.classList.add('hidden');
+
+            if (isLocked) {
                 banner.classList.remove('hidden');
                 if (data.status === 'Approved') {
                     banner.className = "bg-green-50 border border-green-200 p-4 mb-6 rounded-lg text-center shadow-sm";
                     banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-green-800">Timesheet Approved & Locked</h3><p class="text-sm text-green-600 mt-1">Your hours for this week have been processed. Contact Admin to request changes.</p>`;
                 } else {
                     banner.className = "bg-orange-50 border border-orange-200 p-4 mb-6 rounded-lg text-center shadow-sm";
-                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending Approval</h3><p class="text-sm text-orange-600 mt-1">Your hours are locked while awaiting Admin review.</p>`;
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending Approval</h3><p class="text-sm text-orange-600 mt-1">Your hours are locked while awaiting Admin review.</p>`;
                 }
-
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = "Timesheet Locked";
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400', 'hover:bg-gray-400');
-                submitBtn.classList.remove('bg-brand-orange', 'hover:bg-brand-orange-hover');
-                
+                submitBtn.classList.add('hidden');
+                saveBtn.classList.add('hidden');
                 document.getElementById('declaration').disabled = true;
                 document.getElementById('declaration').checked = true;
+            } else {
+                submitBtn.classList.remove('hidden');
+                saveBtn.classList.remove('hidden');
+                document.getElementById('declaration').disabled = false;
+                document.getElementById('declaration').checked = false;
+                
+                if (isSaved) savedBanner.classList.remove('hidden');
+                if (isReopened) {
+                    banner.classList.remove('hidden');
+                    banner.className = "bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center shadow-sm";
+                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Requires Updates</h3><p class="text-sm text-red-600 mt-1">Status: <strong>${data.status}</strong>. Please correct your hours below and submit again.</p>`;
+                }
+            }
 
+            if (data) {
                 daysOfWeek.forEach((day, index) => {
                     const rowDate = dates[index];
                     const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
@@ -999,16 +1001,15 @@
                     let tbody = document.getElementById(`day-tbody-${index}`);
                     if (tbody) tbody.innerHTML = ''; 
                     
+                    const isRowLocked = isLocked || (holidayInfo && !isReopened && !isSaved) || beforeDoj;
+
                     if (beforeDoj) {
                         window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
-                    } else if (holidayInfo) {
-                        window.addEntryRow(index, day, formatDate(rowDate), null, true, holidayInfo);
-                    } else if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                        data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, true, holidayInfo));
                     } else if (data.entries && data.entries[day]) {
-                        window.addEntryRow(index, day, formatDate(rowDate), data.entries[day], true, holidayInfo);
+                        const entries = Array.isArray(data.entries[day]) ? data.entries[day] : [data.entries[day]];
+                        entries.forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, isLocked, holidayInfo));
                     } else {
-                        window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: '', type: 'Regular Work'}, true, holidayInfo);
+                        window.addEntryRow(index, day, formatDate(rowDate), null, isLocked, holidayInfo);
                     }
                 });
 
@@ -1021,57 +1022,7 @@
                     justBlock.classList.add('hidden');
                     justBox.value = '';
                 }
-                justBox.disabled = true;
-                justBox.classList.add('bg-gray-50');
-
-            } else {
-                // Not submitted OR Rejected/Resubmit -> Form is Open and Editable
-                banner.classList.add('hidden');
-                
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = "<span>Submit Weekly Timesheet</span>";
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400', 'hover:bg-gray-400');
-                submitBtn.classList.add('bg-brand-orange', 'hover:bg-brand-orange-hover');
-                
-                document.getElementById('declaration').disabled = false;
-                document.getElementById('declaration').checked = false;
-                
-                const justBlock = document.getElementById('justificationBlock');
-                const justBox = document.getElementById('justification');
-                justBox.disabled = false;
-                justBox.classList.remove('bg-gray-50');
-                justBox.value = '';
-                justBlock.classList.add('hidden');
-                
-                if (isReopened) {
-                    banner.classList.remove('hidden');
-                    banner.className = "bg-red-50 border border-red-200 p-4 mb-6 rounded-lg text-center shadow-sm";
-                    banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><h3 class="text-lg font-bold text-red-800">Timesheet Requires Updates</h3><p class="text-sm text-red-600 mt-1">Status: <strong>${data.status}</strong>. Please correct your hours below and submit again.</p>`;
-                    
-                    daysOfWeek.forEach((day, index) => {
-                        const rowDate = dates[index];
-                        const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                        const beforeDoj = isBeforeDoj(rowDate);
-                        let tbody = document.getElementById(`day-tbody-${index}`);
-                        if (tbody) tbody.innerHTML = ''; 
-                        
-                        if (beforeDoj) {
-                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
-                        } else if (holidayInfo) {
-                            window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
-                        } else if (data.entries && data.entries[day] && Array.isArray(data.entries[day])) {
-                            data.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo));
-                        } else if (data.entries && data.entries[day]) {
-                            window.addEntryRow(index, day, formatDate(rowDate), data.entries[day], false, holidayInfo);
-                        } else {
-                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: '', type: 'Regular Work'}, false, holidayInfo);
-                        }
-                    });
-                    if (data.justification) {
-                        justBlock.classList.remove('hidden');
-                        justBox.value = data.justification;
-                    }
-                }
+                justBox.disabled = isLocked;
             }
         };
 
@@ -1096,7 +1047,6 @@
             }
         };
 
-        // --- Toast Utility ---
         window.hideToast = () => document.getElementById('toast').classList.add('translate-y-full', 'opacity-0');
         const showToast = (message, type = 'success') => {
             const toast = document.getElementById('toast');
@@ -1110,27 +1060,16 @@
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-blue-500 bg-blue-100 rounded-lg';
             } else {
-                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
             }
             toast.classList.remove('translate-y-full', 'opacity-0');
             setTimeout(window.hideToast, 4000);
         };
 
-        // --- Submit Event ---
-        document.getElementById('timesheetForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!fbUser) { showToast("Not connected to database. Please wait or check config.", "error"); return; }
-
-            const btn = document.getElementById('submitBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `Submitting...`;
-            btn.disabled = true;
-
-            const weekStr = document.getElementById('weekSelector').value;
+        const collectFormData = () => {
             const entriesData = {};
             let totalHours = 0;
-
             daysOfWeek.forEach((day, index) => {
                 const tbody = document.getElementById(`day-tbody-${index}`);
                 const rows = tbody.querySelectorAll('tr');
@@ -1142,39 +1081,59 @@
                 });
                 entriesData[day] = dayEntries;
             });
+            return { entries: entriesData, totalHours: totalHours };
+        };
 
-            // Dynamic Justification Validation
+        window.saveTimesheetProgress = async () => {
+            if (!fbUser) return;
+            const weekStr = document.getElementById('weekSelector').value;
+            const data = collectFormData();
+            const payload = {
+                empId: activeUser.empId, name: activeUser.name, week: weekStr, entries: data.entries,
+                totalHours: data.totalHours, status: 'Saved', updatedAt: Date.now()
+            };
+            try {
+                const docId = `${activeUser.empId}_${weekStr}`;
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId), payload, { merge: true });
+                showToast("Progress saved as draft.", "success");
+            } catch (error) {
+                console.error("Save Error", error);
+                showToast("Failed to save progress.", "error");
+            }
+        };
+
+        document.getElementById('timesheetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!fbUser) return;
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `Submitting...`; btn.disabled = true;
+            const weekStr = document.getElementById('weekSelector').value;
+            const data = collectFormData();
             const justBlock = document.getElementById('justificationBlock');
             const justBox = document.getElementById('justification');
             const justificationText = justBox.value.trim();
 
-            if (totalHours !== 48 && justificationText === '') {
+            if (data.totalHours !== 48 && justificationText === '') {
                 justBlock.classList.remove('hidden');
                 justBox.classList.add('border-red-500', 'ring-2', 'ring-red-200');
                 justBox.focus();
-                showToast(`You logged ${totalHours.toFixed(1)} hrs. Justification required for not logging exactly 48 hrs.`, "error");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                return;
-            } else {
-                justBox.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                showToast(`Justification required for logging ${data.totalHours.toFixed(1)} hrs.`, "error");
+                btn.innerHTML = originalText; btn.disabled = false; return;
             }
 
             const payload = {
-                empId: activeUser.empId, name: activeUser.name, week: weekStr, entries: entriesData,
-                totalHours: totalHours, justification: justificationText, status: 'Submitted', submittedAt: Date.now()
+                empId: activeUser.empId, name: activeUser.name, week: weekStr, entries: data.entries,
+                totalHours: data.totalHours, justification: justificationText, status: 'Submitted', submittedAt: Date.now()
             };
-
             try {
                 const docId = `${activeUser.empId}_${weekStr}`;
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId);
-                await setDoc(docRef, payload);
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId), payload);
                 showToast("Timesheet submitted successfully!", "success");
             } catch (error) {
                 console.error("Submission Error", error);
                 showToast("Failed to submit timesheet.", "error");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                btn.innerHTML = originalText; btn.disabled = false;
             }
         });
 
@@ -1200,26 +1159,20 @@
             onAuthStateChanged(auth, (user) => {
                 fbUser = user;
                 if (user) {
-                    
-                    // 1. Hook up the Notification State Sync
                     const prefsRef = doc(db, 'artifacts', appId, 'public', 'data', 'employee_prefs', activeUser.empId);
                     unsubscribePrefs = onSnapshot(prefsRef, (docSnap) => {
                         if (docSnap.exists() && docSnap.data().readNotifs) {
                             readNotifIds = new Set(docSnap.data().readNotifs);
-                            updateNotifications(); // Re-render logic with new memory state
+                            updateNotifications(); 
                         }
                     });
 
-                    // 2. Hook up the Timesheets Sync
                     const timesheetsRef = collection(db, 'artifacts', appId, 'public', 'data', 'timesheets');
                     unsubscribeTimesheets = onSnapshot(timesheetsRef, (snapshot) => {
                         myTimesheets = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })).filter(ts => ts.empId === activeUser.empId);
-                        
                         generateCalendarList();
                         updateLeaveSummary();
                         updateNotifications();
-                        
-                        // Fallback render if something goes wrong
                         if(!document.getElementById('weekSelector').value) {
                             const dSel = getWeekString(new Date()) >= (activeUser.doj ? getWeekString(new Date(activeUser.doj)) : '0000') ? getWeekString(new Date()) : getWeekString(new Date(activeUser.doj));
                             window.selectWeek(dSel);
@@ -1228,21 +1181,17 @@
                         }
                     }, (error) => console.error("Database sync error: ", error));
 
-                    // 3. NEW: Hook up Payslips Sync
                     const payslipsQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'pay_records'), where('empId', '==', activeUser.empId));
                     unsubscribePayslips = onSnapshot(payslipsQuery, (snapshot) => {
                         myPayRecords = snapshot.docs.map(docSnap => docSnap.data());
-                        // Sort descending by month
                         myPayRecords.sort((a, b) => b.monthVal.localeCompare(a.monthVal));
                     });
-
                 } else {
                     if (unsubscribeTimesheets) unsubscribeTimesheets();
                     if (unsubscribePrefs) unsubscribePrefs();
                     if (unsubscribePayslips) unsubscribePayslips();
                 }
             });
-
             signInAnonymously(auth).catch(e => console.error("Auth error", e));
         } catch (e) {
             console.error("Firebase Configuration Error", e);
