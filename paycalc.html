@@ -112,7 +112,7 @@
                         <div id="fullPayOverrideContainer" class="hidden mt-2">
                             <label class="flex items-center gap-2 text-sm font-bold text-green-700 cursor-pointer bg-green-50 p-2.5 rounded-lg border border-green-200 shadow-sm transition-all hover:bg-green-100">
                                 <input type="checkbox" id="overrideFullPay" class="w-4 h-4 text-green-600 rounded border-green-300 focus:ring-green-500" onchange="document.getElementById('calcBtn').click()">
-                                100% Goal Met: Grant Full 30-Day Pay
+                                Grant Full 30-Day Pay (Override)
                             </label>
                         </div>
                         <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4 flex justify-center items-center gap-2">
@@ -597,20 +597,21 @@
 
                 // 3. Shortfall Check
                 const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
-                
                 const is100Percent = loggedInMonth >= monthGoalHours && monthGoalHours > 0;
+                
                 const overrideContainer = document.getElementById('fullPayOverrideContainer');
                 const overrideCheckbox = document.getElementById('overrideFullPay');
 
-                if (is100Percent) {
-                    overrideContainer.classList.remove('hidden');
-                } else {
-                    overrideContainer.classList.add('hidden');
-                    overrideCheckbox.checked = false;
+                // Always show the override option as requested
+                overrideContainer.classList.remove('hidden');
+
+                const useFullPay = overrideCheckbox.checked;
+                
+                // Warning logic for Admin if using override while below 100% goal
+                if (useFullPay && !is100Percent) {
+                    showToast("Warning: Full Pay Override active while Employee is below 100% Goal.", "info");
                 }
 
-                const useFullPay = is100Percent && overrideCheckbox.checked;
-                
                 if (actualShortfallHours > 0 && !forceProceed) {
                     // Halt and show warning
                     document.getElementById('warningText').innerHTML = `Employee has only logged <span class="font-bold text-gray-900">${loggedInMonth.toFixed(1)} hrs</span> out of the required <span class="font-bold text-gray-900">${monthGoalHours} hrs</span> for this month.`;
@@ -619,7 +620,8 @@
                     return;
                 }
 
-                const chargeableShortfall = bypassShortfall ? 0 : actualShortfallHours;
+                // If full pay override is checked, we bypass shortfall deductions
+                const chargeableShortfall = (bypassShortfall || useFullPay) ? 0 : actualShortfallHours;
 
                 // 4. Calculate Pro-Rated Basic Pay and Deductions
                 // Standardizing on exactly 30 days = 240 hours as base rate divider
@@ -679,8 +681,8 @@
                 document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
 
                 // UI Update: Earnings
-                let basicPayLabel = useFullPay ? "Full Basic Pay (100% Goal Met)" : "Pro-rated Basic Pay";
-                let basicPaySub = useFullPay ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : `(Target: ${monthGoalDays} working days out of 30)`;
+                let basicPayLabel = useFullPay ? (is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
+                let basicPaySub = useFullPay ? (is100Percent ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : "(Target: Admin Override - Full 30-Day Pay Applied)") : `(Target: ${monthGoalDays} working days out of 30)`;
 
                 const earnList = document.getElementById('earningsList');
                 earnList.innerHTML = `
@@ -704,8 +706,9 @@
                 const dedList = document.getElementById('deductionList');
                 dedList.innerHTML = '';
                 
-                if (actualShortfallHours > 0 && bypassShortfall) {
-                    dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but explicitly Bypassed.</span><span>₹0</span></div>`;
+                if (actualShortfallHours > 0 && (bypassShortfall || useFullPay)) {
+                    const reason = useFullPay ? "Full Pay Override" : "Bypassed";
+                    dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but suppressed via ${reason}.</span><span>₹0</span></div>`;
                 }
 
                 if (totalLWPHours === 0) {
@@ -732,13 +735,13 @@
 
                 // Save payload state explicitly to window for memory safety across events
                 window.pendingPayloadData = {
-                    empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, bonusAmount, bonusJustification, finalPay, 
+                    empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, is100Percent, bonusAmount, bonusJustification, finalPay, 
                     shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
                     bypassedShortfall: bypassShortfall, updatedAt: Date.now()
                 };
 
                 window.currentPayslipData = {
-                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, useFullPay, monthGoalDays, bonusAmount, bonusJustification, finalPay, 
+                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, useFullPay, is100Percent, monthGoalDays, bonusAmount, bonusJustification, finalPay, 
                     deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
                     actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
                     workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
@@ -897,8 +900,8 @@
             
             y += 8;
             
-            let basicPayLabel = ps.useFullPay ? "Full Basic Pay (100% Goal Met)" : "Pro-rated Basic Pay";
-            let basicPaySub = ps.useFullPay ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : `(Target: ${ps.monthGoalDays} working days out of 30)`;
+            let basicPayLabel = ps.useFullPay ? (ps.is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
+            let basicPaySub = ps.useFullPay ? (ps.is100Percent ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : "(Target: Admin Override - Full 30-Day Pay Applied)") : `(Target: ${ps.monthGoalDays} working days out of 30)`;
 
             doc.setFont("helvetica", "normal").setTextColor(60);
             doc.text(basicPayLabel, m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
@@ -909,11 +912,9 @@
 
             if (ps.bonusAmount > 0) {
                 const bonusText = ps.bonusJustification ? `Bonus: ${ps.bonusJustification}` : "Bonus";
-                // Wrap text gracefully instead of truncating
                 const splitBonusText = doc.splitTextToSize(bonusText, 140);
                 doc.text(splitBonusText, m + 2, y); 
                 doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
-                // Shift 'y' downwards dynamically based on the number of wrapped lines
                 y += 8 + ((splitBonusText.length - 1) * 5);
             }
 
