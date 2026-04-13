@@ -61,13 +61,26 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-        <div class="mb-8 border-b pb-4">
-            <h2 class="text-3xl font-bold text-gray-900">Monthly Pay Calculation</h2>
-            <p class="text-gray-600 mt-1">Review timesheets, confirm automated LWP, and generate validated payslips.</p>
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <div class="mb-8 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Payroll Center</h2>
+                <p class="text-gray-600 mt-1">Review timesheets, confirm automated LWP, and generate validated payslips.</p>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex bg-gray-200 p-1 rounded-lg shadow-inner">
+                <button id="tab-btn-calc" class="px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm" onclick="switchTab('calc')">
+                    Calculator
+                </button>
+                <button id="tab-btn-summary" class="px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900" onclick="switchTab('summary')">
+                    Payout Summary
+                </button>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+        <!-- TAB 1: CALCULATOR VIEW -->
+        <div id="tab-calc" class="grid grid-cols-1 md:grid-cols-12 gap-8">
             <!-- Left: Input Form & History -->
             <div class="md:col-span-4 flex flex-col gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -118,7 +131,7 @@
                 <!-- History sub-panel -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow flex flex-col">
                     <h3 class="text-sm font-bold text-gray-900 mb-3 border-b pb-2 flex justify-between items-center">
-                        Past Records 
+                        Quick History 
                         <span id="recordCount" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">0 Total</span>
                     </h3>
                     <div class="flex gap-2 mb-4">
@@ -262,6 +275,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- TAB 2: PAYOUT SUMMARY VIEW -->
+        <div id="tab-summary" class="hidden flex flex-col gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex flex-col md:flex-row justify-between items-end gap-4 mb-6">
+                    <div class="w-full md:w-auto flex flex-col md:flex-row gap-4 flex-grow">
+                        <div class="flex-grow">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter Employee</label>
+                            <select id="summaryFilterEmp" onchange="renderPayoutSummary()" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm font-medium">
+                                <option value="">All Employees</option>
+                            </select>
+                        </div>
+                        <div class="w-full md:w-64">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter Month</label>
+                            <input type="month" id="summaryFilterMonth" onchange="renderPayoutSummary()" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm font-medium">
+                        </div>
+                    </div>
+                    <button onclick="clearSummaryFilters()" class="text-xs font-bold text-brand-blue hover:underline pb-2">Clear Filters</button>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-gray-100">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left font-bold text-gray-500 uppercase tracking-wider">Employee</th>
+                                <th class="px-6 py-4 text-left font-bold text-gray-500 uppercase tracking-wider text-center">Month</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Base Pay</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Bonus</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Deductions</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Net Payable</th>
+                                <th class="px-6 py-4 text-center font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="bg-white divide-y divide-gray-100">
+                            <!-- JS injected -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="summaryEmptyState" class="hidden py-20 text-center flex flex-col items-center">
+                    <div class="p-4 bg-gray-50 rounded-full mb-4">
+                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"></path></svg>
+                    </div>
+                    <p class="text-gray-400 font-medium">No payout records found for the selected criteria.</p>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Calculation Review Modal (Centralized Override & Warnings) -->
@@ -344,10 +403,7 @@
         let allTimesheets = [];
         let allPayRecords = [];
         
-        // Modal State Storage
         let currentModalStats = null;
-
-        // Memory-safe global variables to hold current calculation state robustly
         window.pendingPayloadData = null;
         window.currentPayslipData = null;
 
@@ -364,6 +420,26 @@
             setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
         };
 
+        window.switchTab = (tabName) => {
+            const btnCalc = document.getElementById('tab-btn-calc');
+            const btnSummary = document.getElementById('tab-btn-summary');
+            const tabCalc = document.getElementById('tab-calc');
+            const tabSummary = document.getElementById('tab-summary');
+            
+            if (tabName === 'calc') {
+                btnCalc.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm";
+                btnSummary.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
+                tabCalc.classList.remove('hidden');
+                tabSummary.classList.add('hidden');
+            } else {
+                btnSummary.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm";
+                btnCalc.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
+                tabSummary.classList.remove('hidden');
+                tabCalc.classList.add('hidden');
+                renderPayoutSummary();
+            }
+        };
+
         window.toggleBonusInput = () => {
             const container = document.getElementById('bonusInputContainer');
             if (document.getElementById('hasBonus').checked) {
@@ -375,7 +451,6 @@
             }
         };
 
-        // --- Date Helpers ---
         const getDatesFromWeek = (w) => {
             const [yStr, wkStr] = w.split('-W');
             const d = new Date(parseInt(yStr), 0, 1 + (parseInt(wkStr) - 1) * 7);
@@ -396,41 +471,45 @@
             return count;
         };
 
-        // ==========================================
-        // 2. UI & LOGIC
-        // ==========================================
         onAuthStateChanged(auth, u => {
             if (u) {
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
                     allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
                     const sel = document.getElementById('empSelect');
                     const filterSel = document.getElementById('filterEmp');
-                    const currentSelection = sel.value;
-                    const currentFilter = filterSel ? filterSel.value : '';
+                    const summaryFilterSel = document.getElementById('summaryFilterEmp');
                     
-                    sel.innerHTML = '<option value="" disabled selected>-- Select Employee --</option>';
-                    if (filterSel) filterSel.innerHTML = '<option value="">All Employees</option>';
+                    const curSel = sel.value;
+                    const curFil = filterSel.value;
+                    const curSumFil = summaryFilterSel.value;
+                    
+                    const options = '<option value="" disabled selected>-- Select Employee --</option>';
+                    const filterOptions = '<option value="">All Employees</option>';
+                    
+                    sel.innerHTML = options;
+                    filterSel.innerHTML = filterOptions;
+                    summaryFilterSel.innerHTML = filterOptions;
                     
                     allEmployees.sort((a,b)=>a.name.localeCompare(b.name)).forEach(emp => {
-                        sel.innerHTML += `<option value="${emp.empId}">${emp.name} (${emp.empId})</option>`;
-                        if (filterSel) filterSel.innerHTML += `<option value="${emp.empId}">${emp.name}</option>`;
+                        const opt = `<option value="${emp.empId}">${emp.name} (${emp.empId})</option>`;
+                        const filterOpt = `<option value="${emp.empId}">${emp.name}</option>`;
+                        sel.innerHTML += opt;
+                        filterSel.innerHTML += filterOpt;
+                        summaryFilterSel.innerHTML += filterOpt;
                     });
                     
-                    if(currentSelection) sel.value = currentSelection;
-                    if(filterSel && currentFilter) filterSel.value = currentFilter;
-                    if(window.renderPayRecords) window.renderPayRecords();
+                    if(curSel) sel.value = curSel;
+                    if(curFil) filterSel.value = curFil;
+                    if(curSumFil) summaryFilterSel.value = curSumFil;
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
                     allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
                 });
-                
-                // Fetch Past Pay Records
                 onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'pay_records'), orderBy('updatedAt', 'desc')), s => {
                     allPayRecords = s.docs.map(d => ({ id: d.id, ...d.data() }));
                     renderPayRecords();
+                    renderPayoutSummary();
                 });
-                
-                // Set default month to current
                 if (!document.getElementById('payMonth').value) {
                     const now = new Date();
                     document.getElementById('payMonth').value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
@@ -442,312 +521,216 @@
         window.handleEmpSelection = () => {
             const empId = document.getElementById('empSelect').value;
             const emp = allEmployees.find(e => e.empId === empId);
-            if (emp && emp.pay) {
-                document.getElementById('basePay').value = emp.pay;
-            } else {
-                document.getElementById('basePay').value = '';
-            }
+            if (emp && emp.pay) document.getElementById('basePay').value = emp.pay;
+            else document.getElementById('basePay').value = '';
         };
 
         window.renderPayRecords = () => {
             const list = document.getElementById('payRecordList');
-            const filterEmp = document.getElementById('filterEmp') ? document.getElementById('filterEmp').value : '';
-            const filterMonth = document.getElementById('filterMonth') ? document.getElementById('filterMonth').value : '';
+            const filterEmp = document.getElementById('filterEmp').value;
+            const filterMonth = document.getElementById('filterMonth').value;
 
-            let filteredRecords = allPayRecords;
-            if (filterEmp) {
-                filteredRecords = filteredRecords.filter(r => r.empId === filterEmp);
-            }
-            if (filterMonth) {
-                filteredRecords = filteredRecords.filter(r => r.monthVal === filterMonth);
-            }
+            let filtered = allPayRecords;
+            if (filterEmp) filtered = filtered.filter(r => r.empId === filterEmp);
+            if (filterMonth) filtered = filtered.filter(r => r.monthVal === filterMonth);
 
-            document.getElementById('recordCount').textContent = `${filteredRecords.length} Total`;
+            document.getElementById('recordCount').textContent = `${filtered.length} Total`;
             list.innerHTML = '';
-            if (filteredRecords.length === 0) {
-                list.innerHTML = '<div class="text-center py-4 text-gray-400 text-sm italic">No records found.</div>';
-            } else {
-                filteredRecords.forEach(rec => {
+            if (filtered.length === 0) list.innerHTML = '<div class="text-center py-4 text-gray-400 text-sm italic">No records found.</div>';
+            else {
+                filtered.forEach(rec => {
                     const div = document.createElement('div');
                     div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30";
-                    
-                    let statusBadge = '';
-                    if (rec.useFullPay) {
-                        statusBadge = `<span class="bg-green-100 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Override</span>`;
-                    } else if (rec.bypassedShortfall) {
-                        statusBadge = `<span class="bg-yellow-100 text-yellow-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Bypassed</span>`;
-                    }
-                    
+                    let badge = rec.useFullPay ? `<span class="bg-green-100 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Override</span>` : (rec.bypassedShortfall ? `<span class="bg-yellow-100 text-yellow-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Bypassed</span>` : '');
                     div.innerHTML = `
                         <div class="overflow-hidden">
-                            <div class="text-[10px] font-bold text-brand-blue uppercase flex items-center">${rec.monthVal} ${statusBadge}</div>
+                            <div class="text-[10px] font-bold text-brand-blue uppercase flex items-center">${rec.monthVal} ${badge}</div>
                             <div class="font-bold text-sm truncate text-gray-800">${rec.empName}</div>
                             <div class="text-[10px] text-gray-500 font-medium mt-0.5">Net Pay: ₹${rec.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
                         </div>
                         <div class="flex gap-1.5 ml-2">
-                            <button onclick="event.stopPropagation(); loadPayRecord('${rec.id}')" class="px-2 py-1 bg-white border border-gray-300 shadow-sm hover:bg-blue-50 hover:text-blue-600 rounded text-gray-600 text-xs font-bold transition-colors" title="View & Edit">
-                                VIEW
-                            </button>
-                            <button onclick="event.stopPropagation(); deletePayRecord('${rec.id}')" class="p-1 hover:bg-red-100 rounded text-red-600 transition-colors" title="Delete record">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                    `;
+                            <button onclick="event.stopPropagation(); loadPayRecord('${rec.id}')" class="px-2 py-1 bg-white border border-gray-300 shadow-sm hover:bg-blue-50 hover:text-blue-600 rounded text-gray-600 text-xs font-bold transition-colors">VIEW</button>
+                            <button onclick="event.stopPropagation(); deletePayRecord('${rec.id}')" class="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>`;
                     list.appendChild(div);
                 });
             }
         };
 
+        window.renderPayoutSummary = () => {
+            const tbody = document.getElementById('summaryTableBody');
+            const filterEmp = document.getElementById('summaryFilterEmp').value;
+            const filterMonth = document.getElementById('summaryFilterMonth').value;
+
+            let filtered = allPayRecords;
+            if (filterEmp) filtered = filtered.filter(r => r.empId === filterEmp);
+            if (filterMonth) filtered = filtered.filter(r => r.monthVal === filterMonth);
+
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                document.getElementById('summaryEmptyState').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('summaryEmptyState').classList.add('hidden');
+            filtered.forEach(rec => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-gray-900">${rec.empName}</div>
+                        <div class="text-xs text-gray-400 font-mono">${rec.empId}</div>
+                    </td>
+                    <td class="px-6 py-4 text-center font-semibold text-gray-600">${rec.monthVal}</td>
+                    <td class="px-6 py-4 text-right text-gray-900">₹${(rec.proRatedBasePay || rec.basePay).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-right text-brand-blue font-medium">₹${(rec.bonusAmount || 0).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-right text-red-500 font-medium">- ₹${(rec.deductionAmount || 0).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-right font-black text-brand-blue text-lg">₹${rec.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="downloadHistoryPdf('${rec.id}')" class="bg-gray-100 hover:bg-brand-blue hover:text-white text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            PDF
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.clearSummaryFilters = () => {
+            document.getElementById('summaryFilterEmp').value = '';
+            document.getElementById('summaryFilterMonth').value = '';
+            renderPayoutSummary();
+        };
+
+        window.downloadHistoryPdf = (id) => {
+            const rec = allPayRecords.find(r => r.id === id);
+            if (!rec || !rec.pdfDataUri) {
+                showToast("PDF data not available for this record.", "error");
+                return;
+            }
+            const link = document.createElement('a');
+            link.href = rec.pdfDataUri;
+            link.download = `Payslip_${rec.empName.replace(' ', '')}_${rec.monthVal.replace('-', '')}.pdf`;
+            link.click();
+        };
+
         window.loadPayRecord = (id) => {
             const rec = allPayRecords.find(r => r.id === id);
             if (!rec) return;
+            switchTab('calc');
             document.getElementById('empSelect').value = rec.empId;
             document.getElementById('payMonth').value = rec.monthVal;
             document.getElementById('basePay').value = rec.basePay;
-            
             document.getElementById('hasBonus').checked = (rec.bonusAmount > 0);
             window.toggleBonusInput();
             document.getElementById('bonusAmount').value = rec.bonusAmount || 0;
             document.getElementById('bonusJustification').value = rec.bonusJustification || '';
-
-            // Run calculation bypassing the modal setup since it's a past record view
             runCalculation(true, !!rec.bypassedShortfall, true, !!rec.useFullPay); 
         };
 
         window.deletePayRecord = async (id) => {
-            if(confirm('Delete this pay record?')) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', id));
-                showToast("Record deleted.");
-                
-                // Clear UI if the deleted record is currently shown
-                const activeId = `${document.getElementById('empSelect').value}_${document.getElementById('payMonth').value}`;
-                if (id === activeId) {
-                    document.getElementById('resultsEmpty').classList.remove('hidden');
-                    document.getElementById('resultsPanel').classList.add('hidden');
-                }
-            }
+            if(confirm('Delete this pay record?')) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', id));
         };
 
-        // Modal Interaction Functions
-        window.cancelReview = () => {
-            document.getElementById('calcReviewModal').classList.add('hidden');
-            currentModalStats = null;
-        };
-
+        window.cancelReview = () => { document.getElementById('calcReviewModal').classList.add('hidden'); currentModalStats = null; };
         window.updateModalWarnings = () => {
             const override = document.getElementById('modalOverrideToggle').checked;
             const warningEl = document.getElementById('modalOverrideWarning');
-            if (override && currentModalStats && !currentModalStats.is100Percent) {
-                warningEl.classList.remove('hidden');
-            } else {
-                warningEl.classList.add('hidden');
-            }
+            if (override && currentModalStats && !currentModalStats.is100Percent) warningEl.classList.remove('hidden');
+            else warningEl.classList.add('hidden');
         };
-
         window.applyReviewAndPreview = () => {
             const useFullPay = document.getElementById('modalOverrideToggle').checked;
             document.getElementById('calcReviewModal').classList.add('hidden');
-            // Execute calculation with the selected modal parameters
             runCalculation(true, false, false, useFullPay);
         };
 
-        // --- CORE CALCULATION ENGINE ---
-        document.getElementById('calcForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            runCalculation(false, false, false, false);
-        });
+        document.getElementById('calcForm').addEventListener('submit', (e) => { e.preventDefault(); runCalculation(false, false, false, false); });
 
         const runCalculation = async (forceProceed, bypassShortfall, isViewingPast, useFullPay) => {
             try {
                 const empId = document.getElementById('empSelect').value;
                 const monthVal = document.getElementById('payMonth').value; 
                 const basePayStr = document.getElementById('basePay').value;
-                
                 if(!empId || !monthVal || !basePayStr) return;
                 const basePay = parseFloat(basePayStr);
                 const emp = allEmployees.find(e => e.empId === empId);
                 if(!emp) return;
-
-                let bonusAmount = 0;
-                let bonusJustification = "";
+                let bonusAmount = 0, bonusJustification = "";
                 if (document.getElementById('hasBonus').checked) {
                     bonusAmount = parseFloat(document.getElementById('bonusAmount').value) || 0;
                     bonusJustification = document.getElementById('bonusJustification').value.trim() || "Bonus";
                 }
-
                 const [selYear, selMonth] = monthVal.split('-').map(Number);
-                
-                // 1. Calculate Target Hours for the Month
                 const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
                 let actualMonthStart = new Date(selYear, selMonth - 1, 1);
-                
-                if (dojDate > actualMonthStart) {
-                    actualMonthStart = dojDate; 
-                }
+                if (dojDate > actualMonthStart) actualMonthStart = dojDate; 
                 const actualMonthEnd = new Date(selYear, selMonth, 0); 
-                
                 const monthGoalDays = actualMonthStart > actualMonthEnd ? 0 : getMonSatDays(actualMonthStart, actualMonthEnd);
                 const monthGoalHours = monthGoalDays * 8;
-
-                if (monthGoalHours === 0) {
-                    showToast("Employee joined after this month. No pay applicable.", "error");
-                    return;
-                }
-
-                // 2. Fetch Timesheets and Accumulate Stats
+                if (monthGoalHours === 0) { showToast("Employee joined after this month.", "error"); return; }
                 const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
-                let loggedInMonth = 0;
-                let workInMonth = 0; let slInMonth = 0; let elInMonth = 0; let phInMonth = 0;
-                let ytdSL = 0; let ytdEL = 0; let ytdPH = 0;
-
+                let loggedInMonth = 0, workInMonth = 0, slInMonth = 0, elInMonth = 0, phInMonth = 0, ytdSL = 0, ytdEL = 0, ytdPH = 0;
                 userTS.forEach(ts => {
                     if (!ts.week) return;
                     const dates = getDatesFromWeek(ts.week);
                     ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
                         if(ts.entries && ts.entries[day]) {
                             const entryDate = dates[idx];
-                            const isCurrentYear = entryDate.getFullYear() === selYear;
-                            const isUpToSelectedMonth = entryDate.getMonth() + 1 <= selMonth;
-                            const isExactlySelectedMonth = entryDate.getMonth() + 1 === selMonth;
-
-                            if (isCurrentYear && isUpToSelectedMonth) {
+                            if (entryDate.getFullYear() === selYear && entryDate.getMonth() + 1 <= selMonth) {
                                 const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
                                 entries.forEach(e => {
                                     if(!e) return;
-                                    const h = parseFloat(e.hours) || 0;
-                                    const type = e.type || '';
-                                    if (type.includes('SL')) ytdSL += h;
-                                    if (type.includes('EL')) ytdEL += h;
-                                    if (type.includes('PH')) ytdPH += h;
-                                    if (isExactlySelectedMonth) {
-                                        loggedInMonth += h;
-                                        if (type.includes('Work')) workInMonth += h;
-                                        if (type.includes('SL')) slInMonth += h;
-                                        if (type.includes('EL')) elInMonth += h;
-                                        if (type.includes('PH')) phInMonth += h;
+                                    const h = parseFloat(e.hours) || 0, type = e.type || '';
+                                    if (type.includes('SL')) ytdSL += h; if (type.includes('EL')) ytdEL += h; if (type.includes('PH')) ytdPH += h;
+                                    if (entryDate.getMonth() + 1 === selMonth) {
+                                        loggedInMonth += h; if (type.includes('Work')) workInMonth += h;
+                                        if (type.includes('SL')) slInMonth += h; if (type.includes('EL')) elInMonth += h; if (type.includes('PH')) phInMonth += h;
                                     }
                                 });
                             }
                         }
                     });
                 });
-
-                // 3. Review Modal Setup & Validation
                 const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
                 const is100Percent = loggedInMonth >= monthGoalHours && monthGoalHours > 0;
-                const progressPct = Math.round((loggedInMonth / monthGoalHours) * 100);
-
                 if (!forceProceed) {
                     currentModalStats = { loggedInMonth, monthGoalHours, is100Percent, actualShortfallHours };
-                    
-                    document.getElementById('modalProgressText').textContent = `Logged ${loggedInMonth.toFixed(1)} hrs of ${monthGoalHours.toFixed(1)} hrs target (${progressPct}%).`;
-                    
-                    const shortfallAlert = document.getElementById('modalShortfallAlert');
-                    if (actualShortfallHours > 0) {
-                        shortfallAlert.classList.remove('hidden');
-                        document.getElementById('modalShortfallHrs').textContent = `${actualShortfallHours.toFixed(1)} hrs`;
-                    } else {
-                        shortfallAlert.classList.add('hidden');
-                    }
-
+                    document.getElementById('modalProgressText').textContent = `Logged ${loggedInMonth.toFixed(1)} hrs of ${monthGoalHours.toFixed(1)} hrs target (${Math.round((loggedInMonth / monthGoalHours) * 100)}%).`;
+                    const alert = document.getElementById('modalShortfallAlert');
+                    if (actualShortfallHours > 0) { alert.classList.remove('hidden'); document.getElementById('modalShortfallHrs').textContent = `${actualShortfallHours.toFixed(1)} hrs`; }
+                    else alert.classList.add('hidden');
                     document.getElementById('modalOverrideToggle').checked = false;
                     document.getElementById('modalOverrideWarning').classList.add('hidden');
-                    document.getElementById('calcReviewModal').classList.remove('hidden');
-                    return;
+                    document.getElementById('calcReviewModal').classList.remove('hidden'); return;
                 }
-
-                // 4. Calculate Final Pay Logic
                 const chargeableShortfall = (bypassShortfall || useFullPay) ? 0 : actualShortfallHours;
                 const hourlyRate = basePay / 240; 
-                
-                let proRatedBasePay = monthGoalHours * hourlyRate;
-                if (useFullPay) {
-                    proRatedBasePay = basePay;
-                }
-
-                const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8;
-                const elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8;
-                const phLimitHrs = (emp.phLimit !== undefined ? emp.phLimit : 12) * 8;
-
-                const excessSLTotal = Math.max(0, ytdSL - slLimitHrs);
-                const excessELTotal = Math.max(0, ytdEL - elLimitHrs);
-
-                const chargeableSL = Math.min(excessSLTotal, slInMonth);
-                const chargeableEL = Math.min(excessELTotal, elInMonth);
-                const totalExcessLeaveHrs = chargeableSL + chargeableEL;
-
-                const totalLWPHours = chargeableShortfall + totalExcessLeaveHrs;
-                const deductionAmount = totalLWPHours * hourlyRate;
+                let proRatedBasePay = useFullPay ? basePay : monthGoalHours * hourlyRate;
+                const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8, elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8, phLimitHrs = (emp.phLimit !== undefined ? emp.phLimit : 12) * 8;
+                const chargeableSL = Math.min(Math.max(0, ytdSL - slLimitHrs), slInMonth), chargeableEL = Math.min(Math.max(0, ytdEL - elLimitHrs), elInMonth);
+                const totalLWPHours = chargeableShortfall + chargeableSL + chargeableEL, deductionAmount = totalLWPHours * hourlyRate;
                 const finalPay = Math.max(0, (proRatedBasePay + bonusAmount) - deductionAmount);
-
-                // 5. UI Updates
-                document.getElementById('resultsEmpty').classList.add('hidden');
-                document.getElementById('resultsPanel').classList.remove('hidden');
-
+                document.getElementById('resultsEmpty').classList.add('hidden'); document.getElementById('resultsPanel').classList.remove('hidden');
                 const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-                document.getElementById('resEmpName').textContent = emp.name;
-                document.getElementById('resMonthLabel').textContent = `PAYSLIP FOR ${monthNames[selMonth-1]} ${selYear}`;
-                
-                const startD = actualMonthStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                const endD = actualMonthEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                document.getElementById('resPeriodLabel').textContent = `Period: ${startD} to ${endD}`;
-                
+                document.getElementById('resEmpName').textContent = emp.name; document.getElementById('resMonthLabel').textContent = `PAYSLIP FOR ${monthNames[selMonth-1]} ${selYear}`;
+                document.getElementById('resPeriodLabel').textContent = `Period: ${actualMonthStart.toLocaleDateString('en-GB')} to ${actualMonthEnd.toLocaleDateString('en-GB')}`;
                 const d = (hrs) => (hrs/8).toFixed(1);
                 document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${monthGoalDays} days)`;
                 document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
                 document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
-                document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs (${d(slInMonth)} days)`;
-                document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs (${d(elInMonth)} days)`;
-                document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs (${d(phInMonth)} days)`;
-
-                document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`;
-                document.getElementById('resYtdSlDays').textContent = `(${d(ytdSL)} / ${d(slLimitHrs)} days)`;
-                document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`;
-                document.getElementById('resYtdElDays').textContent = `(${d(ytdEL)} / ${d(elLimitHrs)} days)`;
-                document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
-                document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
-
+                document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs`; document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs`; document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs`;
+                document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`; document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`; document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
                 let basicPayLabel = useFullPay ? (is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
-                let basicPaySub = useFullPay ? (is100Percent ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : "(Target: Admin Override - Full 30-Day Pay Applied)") : `(Target: ${monthGoalDays} working days out of 30)`;
-
                 const earnList = document.getElementById('earningsList');
-                earnList.innerHTML = `
-                    <div class="flex justify-between items-center py-1">
-                        <div>
-                            <span class="block font-medium">${basicPayLabel}</span>
-                            <span class="text-[10px] text-gray-500">${basicPaySub}</span>
-                        </div>
-                        <span class="font-semibold">₹${proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
-                    </div>
-                `;
-                if (bonusAmount > 0) {
-                    earnList.innerHTML += `
-                    <div class="flex justify-between items-center py-1 text-brand-blue">
-                        <span class="font-medium">${bonusJustification}</span>
-                        <span class="font-semibold">+ ₹${bonusAmount.toLocaleString('en-IN')}</span>
-                    </div>`;
-                }
-
-                const dedList = document.getElementById('deductionList');
-                dedList.innerHTML = '';
-                if (actualShortfallHours > 0 && (bypassShortfall || useFullPay)) {
-                    const reason = useFullPay ? "Full Pay Override" : "Bypassed";
-                    dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but suppressed via ${reason}.</span><span>₹0</span></div>`;
-                }
-
-                if (totalLWPHours === 0) {
-                    dedList.innerHTML += '<div class="text-gray-400 italic text-xs p-2">No active deductions applied for this period.</div>';
-                } else {
-                    const addRow = (label, hrs, rate) => {
-                        const amt = hrs * rate;
-                        return `<div class="flex justify-between items-center py-1">
-                            <div>
-                                <span class="block font-medium">${label}</span>
-                                <span class="text-xs text-red-400">(${hrs.toFixed(1)} hrs × ₹${rate.toFixed(2)}/hr)</span>
-                            </div>
-                            <span class="font-semibold">- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
-                        </div>`;
-                    };
+                earnList.innerHTML = `<div class="flex justify-between items-center py-1"><div><span class="block font-medium">${basicPayLabel}</span><span class="text-[10px] text-gray-500">${useFullPay ? "(Full 30-Day Pay Applied)" : `(${monthGoalDays} working days out of 30)`}</span></div><span class="font-semibold">₹${proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
+                if (bonusAmount > 0) earnList.innerHTML += `<div class="flex justify-between items-center py-1 text-brand-blue"><span class="font-medium">${bonusJustification}</span><span class="font-semibold">+ ₹${bonusAmount.toLocaleString('en-IN')}</span></div>`;
+                const dedList = document.getElementById('deductionList'); dedList.innerHTML = '';
+                if (actualShortfallHours > 0 && (bypassShortfall || useFullPay)) dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall suppressed.</span><span>₹0</span></div>`;
+                if (totalLWPHours === 0) dedList.innerHTML += '<div class="text-gray-400 italic text-xs p-2">No active deductions.</div>';
+                else {
+                    const addRow = (label, hrs, rate) => `<div class="flex justify-between items-center py-1"><div><span class="block font-medium">${label}</span><span class="text-xs text-red-400">(${hrs.toFixed(1)} hrs × ₹${rate.toFixed(2)}/hr)</span></div><span class="font-semibold">- ₹${(hrs*rate).toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
                     if (chargeableShortfall > 0) dedList.innerHTML += addRow("Shortfall LWP", chargeableShortfall, hourlyRate);
                     if (chargeableSL > 0) dedList.innerHTML += addRow("Excess Sick Leave", chargeableSL, hourlyRate);
                     if (chargeableEL > 0) dedList.innerHTML += addRow("Excess Earned Leave", chargeableEL, hourlyRate);
@@ -755,71 +738,33 @@
                 document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
                 document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
                 document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
-
-                window.pendingPayloadData = {
-                    empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, is100Percent, bonusAmount, bonusJustification, finalPay, 
-                    shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
-                    bypassedShortfall: bypassShortfall, updatedAt: Date.now()
-                };
-
-                window.currentPayslipData = {
-                    emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, useFullPay, is100Percent, monthGoalDays, bonusAmount, bonusJustification, finalPay, 
-                    deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL,
-                    actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth,
-                    workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
-                };
-
-                if (isViewingPast) {
-                    document.getElementById('confirmBtn').classList.add('hidden');
-                    document.getElementById('pdfBtn').classList.remove('hidden');
-                    document.getElementById('confirmedBadge').classList.remove('hidden');
-                } else {
-                    document.getElementById('confirmBtn').classList.remove('hidden');
-                    document.getElementById('pdfBtn').classList.add('hidden');
-                    document.getElementById('confirmedBadge').classList.add('hidden');
-                    const confirmBtn = document.getElementById('confirmBtn');
-                    confirmBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Confirm Calculations & Save`;
-                    confirmBtn.disabled = false;
-                }
-            } catch (err) {
-                console.error("Preview Calculation Error:", err);
-                showToast(`Calculation Error: ${err.message || err}`, "error");
-            }
+                window.pendingPayloadData = { empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, is100Percent, bonusAmount, bonusJustification, finalPay, shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount, bypassedShortfall: bypassShortfall, updatedAt: Date.now() };
+                window.currentPayslipData = { emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, useFullPay, is100Percent, monthGoalDays, bonusAmount, bonusJustification, finalPay, deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL, actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth, workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs };
+                if (isViewingPast) { document.getElementById('confirmBtn').classList.add('hidden'); document.getElementById('pdfBtn').classList.remove('hidden'); document.getElementById('confirmedBadge').classList.remove('hidden'); }
+                else { document.getElementById('confirmBtn').classList.remove('hidden'); document.getElementById('pdfBtn').classList.add('hidden'); document.getElementById('confirmedBadge').classList.add('hidden'); document.getElementById('confirmBtn').disabled = false; }
+            } catch (err) { console.error(err); showToast(`Calculation Error: ${err.message}`, "error"); }
         };
 
         const createPDFDocument = (ps) => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const m = 20; const rightAlignX = 190; let y = 20;
-            const iconX = m; const iconY = y - 14;
-            doc.setDrawColor(105, 105, 105); doc.setLineWidth(1.5);
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); const m = 20; const rightAlignX = 190; let y = 20;
+            const iconX = m; const iconY = y - 14; doc.setDrawColor(105, 105, 105); doc.setLineWidth(1.5);
             doc.line(iconX, iconY, iconX + 10, iconY); doc.line(iconX, iconY, iconX, iconY + 8); 
             doc.line(iconX + 4, iconY + 14, iconX + 14, iconY + 14); doc.line(iconX + 14, iconY + 14, iconX + 14, iconY + 6);
             doc.setDrawColor(225, 90, 30); doc.line(iconX - 1, iconY + 12, iconX + 15, iconY + 2); 
             const headerX = m + 22; doc.setFont("helvetica", "normal").setFontSize(22);
-            doc.setTextColor(225, 90, 30); doc.text("S", headerX, y);
-            let curX = headerX + doc.getTextWidth("S") + 0.5;
-            doc.setTextColor(105, 105, 105); doc.text("TRAT", curX, y);
-            curX += doc.getTextWidth("TRAT") + 0.5;
-            doc.setTextColor(225, 90, 30); doc.text("E", curX, y);
-            curX += doc.getTextWidth("E") + 0.5;
+            doc.setTextColor(225, 90, 30); doc.text("S", headerX, y); let curX = headerX + doc.getTextWidth("S") + 0.5;
+            doc.setTextColor(105, 105, 105); doc.text("TRAT", curX, y); curX += doc.getTextWidth("TRAT") + 0.5;
+            doc.setTextColor(225, 90, 30); doc.text("E", curX, y); curX += doc.getTextWidth("E") + 0.5;
             doc.setTextColor(105, 105, 105); doc.text("DGÉ", curX, y);
             doc.setFontSize(9).setTextColor(150).text("Communications Pvt. Ltd.", headerX, y + 6);
-            doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
-            doc.text(`CIN: U70200WB2025PTC277733`, headerX, y + 12);
-            doc.text(`PAN: ABPCS6820D`, headerX, y + 16);
-            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
-            doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
-            doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
+            doc.setFontSize(7).setTextColor(100).text(`CIN: U70200WB2025PTC277733 | PAN: ABPCS6820D`, headerX, y + 12);
+            doc.setFontSize(9).setTextColor(80).text("42/22 New Ballygunge Road, Kolkata - 700039", rightAlignX, y, { align: 'right' });
             y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
-            const startDateStr = new Date(ps.actualStart).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const endDateStr = new Date(ps.actualEnd).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const generatedDateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const periodStr = `${new Date(ps.actualStart).toLocaleDateString('en-GB')} to ${new Date(ps.actualEnd).toLocaleDateString('en-GB')}`;
             doc.setFontSize(14).setFont("helvetica", "bold").setTextColor(40).text("PAYSLIP", m, y);
-            doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text(`For the period: ${startDateStr} to ${endDateStr}`, m, y + 6);
-            doc.setFontSize(8).setTextColor(120).text(`Generated On: ${generatedDateStr}`, rightAlignX, y, {align: 'right'});
-            y += 18;
-            doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
+            doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text(`For the period: ${periodStr}`, m, y + 6);
+            doc.setFontSize(8).setTextColor(120).text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, rightAlignX, y, {align: 'right'});
+            y += 18; doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
             doc.text(`Employee Name:`, m, y); doc.setFont("helvetica", "normal").text(ps.emp.name, m + 35, y);
             doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
             doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation || 'N/A', m + 35, y + 12);
@@ -827,72 +772,35 @@
             doc.setFont("helvetica", "bold").text(`Date of Joining:`, m + 90, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 122, y + 6);
             doc.setFont("helvetica", "bold").text(`Email ID:`, m + 90, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 122, y + 12);
             y += 22; doc.setDrawColor(230).line(m, y, 190, y); y += 10;
-            doc.setFontSize(10).setFont("helvetica", "bold").setTextColor(40);
-            doc.text("MONTHLY TIME SUMMARY", m, y); doc.text("YTD LEAVE SUMMARY", m + 90, y);
-            y += 6; doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60);
-            const d = (hrs) => (hrs/8).toFixed(1);
-            doc.text(`Target Total: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y);
-            doc.text(`Logged Total: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
-            doc.text(`Regular Work: ${ps.workInMonth.toFixed(1)} hrs (${d(ps.workInMonth)} days)`, m, y + 10);
-            doc.text(`Sick Leave: ${ps.slInMonth.toFixed(1)} hrs (${d(ps.slInMonth)} days)`, m, y + 15);
-            doc.text(`Earned Leave: ${ps.elInMonth.toFixed(1)} hrs (${d(ps.elInMonth)} days)`, m, y + 20);
-            doc.text(`Public Holiday: ${ps.phInMonth.toFixed(1)} hrs (${d(ps.phInMonth)} days)`, m, y + 25);
-            doc.text(`Sick Leave: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs (${d(ps.ytdSL)} / ${d(ps.slLimitHrs)} days)`, m + 90, y);
-            doc.text(`Earned Leave: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs (${d(ps.ytdEL)} / ${d(ps.elLimitHrs)} days)`, m + 90, y + 5);
-            doc.text(`Public Holiday: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs (${d(ps.ytdPH)} / ${d(ps.phLimitHrs)} days)`, m + 90, y + 10);
-            y += 35; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
-            doc.setFillColor(245).rect(m, y-5, 170, 8, 'F');
-            doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
+            doc.setFontSize(10).setFont("helvetica", "bold").setTextColor(40); doc.text("MONTHLY TIME SUMMARY", m, y); doc.text("YTD LEAVE SUMMARY", m + 90, y);
+            y += 6; doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60); const d = (hrs) => (hrs/8).toFixed(1);
+            doc.text(`Target: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y); doc.text(`Logged: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
+            doc.text(`Work: ${ps.workInMonth.toFixed(1)} hrs | SL: ${ps.slInMonth.toFixed(1)} | EL: ${ps.elInMonth.toFixed(1)} | PH: ${ps.phInMonth.toFixed(1)}`, m, y + 10);
+            doc.text(`SL: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs`, m + 90, y); doc.text(`EL: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs`, m + 90, y + 5); doc.text(`PH: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs`, m + 90, y + 10);
+            y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
+            doc.setFillColor(245).rect(m, y-5, 170, 8, 'F'); doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
             doc.text("EARNINGS", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
-            y += 8;
-            let basicPayLabel = ps.useFullPay ? (ps.is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
-            let basicPaySub = ps.useFullPay ? (ps.is100Percent ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : "(Target: Admin Override - Full 30-Day Pay Applied)") : `(Target: ${ps.monthGoalDays} working days out of 30)`;
-            doc.setFont("helvetica", "normal").setTextColor(60);
-            doc.text(basicPayLabel, m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-            doc.setFontSize(7).setTextColor(100); doc.text(basicPaySub, m + 2, y + 4);
-            doc.setFontSize(9).setTextColor(60); y += 8;
-            if (ps.bonusAmount > 0) {
-                const bonusText = ps.bonusJustification ? `Bonus: ${ps.bonusJustification}` : "Bonus";
-                const splitBonusText = doc.splitTextToSize(bonusText, 140);
-                doc.text(splitBonusText, m + 2, y); 
-                doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
-                y += 8 + ((splitBonusText.length - 1) * 5);
-            }
-            y += 6; doc.setFillColor(253, 242, 242).rect(m, y-5, 170, 8, 'F');
-            doc.setFont("helvetica", "bold").setTextColor(220, 38, 38);
+            y += 8; doc.setFont("helvetica", "normal").setTextColor(60);
+            let bpl = ps.useFullPay ? (ps.is100Percent ? "Full Basic Pay (Goal Met)" : "Full Basic Pay (Override)") : "Pro-rated Basic Pay";
+            doc.text(bpl, m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            y += 8; if (ps.bonusAmount > 0) { const bt = ps.bonusJustification ? `Bonus: ${ps.bonusJustification}` : "Bonus"; const sbt = doc.splitTextToSize(bt, 140); doc.text(sbt, m + 2, y); doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'}); y += 8 + ((sbt.length - 1) * 5); }
+            y += 6; doc.setFillColor(253, 242, 242).rect(m, y-5, 170, 8, 'F'); doc.setFont("helvetica", "bold").setTextColor(220, 38, 38);
             doc.text("DEDUCTIONS (Leave Without Pay)", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
             y += 8; doc.setFont("helvetica", "normal").setTextColor(60);
-            if (ps.deductions === 0) {
-                doc.text("None", m + 2, y); doc.text("-", rightAlignX - 2, y, {align: 'right'});
-                y += 8;
-            } else {
-                const amt = (h, r) => (h * r).toLocaleString('en-IN', {maximumFractionDigits:0});
-                if (ps.shortfallHours > 0) { doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.shortfallHours, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; }
-                if (ps.chargeableSL > 0) { doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableSL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; }
-                if (ps.chargeableEL > 0) { doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableEL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; }
-            }
+            if (ps.deductions === 0) { doc.text("None", m + 2, y); doc.text("-", rightAlignX - 2, y, {align: 'right'}); y += 8; }
+            else { const amt = (h, r) => (h * r).toLocaleString('en-IN', {maximumFractionDigits:0}); if (ps.shortfallHours > 0) { doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.shortfallHours, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; } if (ps.chargeableSL > 0) { doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableSL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; } if (ps.chargeableEL > 0) { doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableEL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; } }
             y += 2; doc.setDrawColor(230).line(m, y, 190, y); y += 8;
-            doc.setFont("helvetica", "bold").setTextColor(40);
-            const totalEarnings = ps.proRatedBasePay + ps.bonusAmount;
-            doc.text("Total Earnings:", m + 2, y); doc.text(`Rs. ${totalEarnings.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            doc.setFont("helvetica", "bold").setTextColor(40); doc.text("Total Earnings:", m + 2, y); doc.text(`Rs. ${(ps.proRatedBasePay + ps.bonusAmount).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
             y += 8; doc.text("Total Deductions:", m + 2, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-            y += 10; doc.setFillColor(235).rect(m, y, 170, 12, 'F'); doc.setFontSize(12);
-            doc.text("NET PAYABLE:", m + 5, y + 8); doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
-            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic"); doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" });
-            return doc;
+            y += 10; doc.setFillColor(235).rect(m, y, 170, 12, 'F'); doc.setFontSize(12); doc.text("NET PAYABLE:", m + 5, y + 8);
+            doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
+            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic"); doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" }); return doc;
         };
 
         window.confirmAndSavePay = async () => {
-            if (!window.pendingPayloadData || !window.currentPayslipData) {
-                showToast("Missing calculation data. Please preview again.", "error");
-                return;
-            }
-            const btn = document.getElementById('confirmBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
-            btn.disabled = true;
-            const p = window.pendingPayloadData;
-            const recordId = `${p.empId}_${p.monthVal}`;
+            if (!window.pendingPayloadData || !window.currentPayslipData) { showToast("Missing data. Preview again.", "error"); return; }
+            const btn = document.getElementById('confirmBtn'); btn.innerHTML = "Saving..."; btn.disabled = true;
+            const p = window.pendingPayloadData, recordId = `${p.empId}_${p.monthVal}`;
             try {
                 const pdfDoc = createPDFDocument(window.currentPayslipData);
                 p.pdfDataUri = pdfDoc.output('datauristring');
@@ -900,20 +808,14 @@
                 document.getElementById('confirmBtn').classList.add('hidden');
                 document.getElementById('pdfBtn').classList.remove('hidden');
                 document.getElementById('confirmedBadge').classList.remove('hidden');
-                showToast("Pay record confirmed and saved successfully!", "success");
-            } catch (err) {
-                console.error("Failed to save pay record", err);
-                showToast("Failed to save record.", "error");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+                showToast("Pay record confirmed!", "success");
+            } catch (err) { console.error(err); showToast("Failed to save.", "error"); btn.innerHTML = "Confirm & Save"; btn.disabled = false; }
         };
 
         window.downloadPDF = () => {
             if(!window.currentPayslipData) return;
             const doc = createPDFDocument(window.currentPayslipData);
-            const safeMonthStr = window.currentPayslipData.monthStr.replace(' ', '');
-            doc.save(`Payslip_${window.currentPayslipData.emp.name}_${safeMonthStr}.pdf`);
+            doc.save(`Payslip_${window.currentPayslipData.emp.name}_${window.currentPayslipData.monthStr.replace(' ', '')}.pdf`);
         };
     </script>
 </body>
