@@ -109,12 +109,6 @@
                                 <input type="text" id="bonusJustification" placeholder="e.g. Diwali Bonus, Performance" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
                             </div>
                         </div>
-                        <div id="fullPayOverrideContainer" class="hidden mt-2">
-                            <label class="flex items-center gap-2 text-sm font-bold text-green-700 cursor-pointer bg-green-50 p-2.5 rounded-lg border border-green-200 shadow-sm transition-all hover:bg-green-100">
-                                <input type="checkbox" id="overrideFullPay" class="w-4 h-4 text-green-600 rounded border-green-300 focus:ring-green-500" onchange="document.getElementById('calcBtn').click()">
-                                Grant Full 30-Day Pay (Override)
-                            </label>
-                        </div>
                         <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4 flex justify-center items-center gap-2">
                             Preview Calculation
                         </button>
@@ -270,23 +264,44 @@
         </div>
     </main>
 
-    <!-- Warning Modal for Shortfall -->
-    <div id="warningModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <!-- Calculation Review Modal (Centralized Override & Warnings) -->
+    <div id="calcReviewModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all">
             <div class="p-6 text-center">
-                <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Incomplete Timesheet</h3>
-                <p class="text-sm text-gray-600 mb-4" id="warningText">Employee has only logged <span class="font-bold text-gray-900">X hrs</span> out of the required <span class="font-bold text-gray-900">Y hrs</span> for this month.</p>
-                <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-700 text-left mb-6">
-                    <strong>Standard Process:</strong> If you proceed with LWP, the <span id="warningShortfall" class="font-bold">Z hrs</span> deficit will be automatically calculated as Leave Without Pay and deducted proportionally from the salary.<br><br>
-                    <strong>Bypass Option:</strong> You may choose to bypass this shortfall if the missing hours are approved. No shortfall deduction will occur.
+                <h3 class="text-xl font-bold text-gray-900 mb-1">Calculation Review</h3>
+                <p id="modalProgressText" class="text-sm text-gray-500 mb-4">Logged 0.0 hrs of 0.0 hrs target (0%).</p>
+
+                <!-- Conditional Shortfall Warning -->
+                <div id="modalShortfallAlert" class="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-700 text-left mb-6 hidden">
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <strong class="font-bold">Incomplete Timesheet detected!</strong>
+                    </div>
+                    Standard process will deduct <span id="modalShortfallHrs" class="font-bold">0.0 hrs</span> as Leave Without Pay.
                 </div>
+
+                <!-- Override Input -->
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 text-left">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" id="modalOverrideToggle" class="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer" onchange="updateModalWarnings()">
+                        </div>
+                        <div>
+                            <span class="block text-sm font-bold text-gray-800">Grant Full 30-Day Pay</span>
+                            <span class="block text-[10px] text-gray-500">Override pro-rated calculation and shortfall logic.</span>
+                        </div>
+                    </label>
+                    <div id="modalOverrideWarning" class="mt-3 text-[10px] font-bold text-orange-600 bg-orange-50 p-2 rounded border border-orange-200 hidden animate-pulse">
+                        ⚠️ WARNING: You are granting full pay despite the employee being below 100% target.
+                    </div>
+                </div>
+
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button type="button" onclick="cancelCalculation()" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
-                    <button type="button" onclick="bypassCalculation()" class="flex-1 px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Bypass Shortfall</button>
-                    <button type="button" onclick="proceedCalculation()" class="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Proceed with LWP</button>
+                    <button type="button" onclick="cancelReview()" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+                    <button type="button" onclick="applyReviewAndPreview()" class="flex-1 px-3 py-2 bg-brand-blue hover:bg-blue-700 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Generate Preview</button>
                 </div>
             </div>
         </div>
@@ -329,6 +344,9 @@
         let allTimesheets = [];
         let allPayRecords = [];
         
+        // Modal State Storage
+        let currentModalStats = null;
+
         // Memory-safe global variables to hold current calculation state robustly
         window.pendingPayloadData = null;
         window.currentPayslipData = null;
@@ -454,7 +472,9 @@
                     div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30";
                     
                     let statusBadge = '';
-                    if (rec.bypassedShortfall) {
+                    if (rec.useFullPay) {
+                        statusBadge = `<span class="bg-green-100 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Override</span>`;
+                    } else if (rec.bypassedShortfall) {
                         statusBadge = `<span class="bg-yellow-100 text-yellow-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Bypassed</span>`;
                     }
                     
@@ -489,10 +509,9 @@
             window.toggleBonusInput();
             document.getElementById('bonusAmount').value = rec.bonusAmount || 0;
             document.getElementById('bonusJustification').value = rec.bonusJustification || '';
-            document.getElementById('overrideFullPay').checked = !!rec.useFullPay;
 
-            // Run calculation to populate view state
-            runCalculation(true, rec.bypassedShortfall, true); 
+            // Run calculation bypassing the modal setup since it's a past record view
+            runCalculation(true, !!rec.bypassedShortfall, true, !!rec.useFullPay); 
         };
 
         window.deletePayRecord = async (id) => {
@@ -509,16 +528,39 @@
             }
         };
 
+        // Modal Interaction Functions
+        window.cancelReview = () => {
+            document.getElementById('calcReviewModal').classList.add('hidden');
+            currentModalStats = null;
+        };
+
+        window.updateModalWarnings = () => {
+            const override = document.getElementById('modalOverrideToggle').checked;
+            const warningEl = document.getElementById('modalOverrideWarning');
+            if (override && currentModalStats && !currentModalStats.is100Percent) {
+                warningEl.classList.remove('hidden');
+            } else {
+                warningEl.classList.add('hidden');
+            }
+        };
+
+        window.applyReviewAndPreview = () => {
+            const useFullPay = document.getElementById('modalOverrideToggle').checked;
+            document.getElementById('calcReviewModal').classList.add('hidden');
+            // Execute calculation with the selected modal parameters
+            runCalculation(true, false, false, useFullPay);
+        };
+
         // --- CORE CALCULATION ENGINE ---
         document.getElementById('calcForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            runCalculation(false, false, false);
+            runCalculation(false, false, false, false);
         });
 
-        const runCalculation = async (forceProceed, bypassShortfall, isViewingPast) => {
+        const runCalculation = async (forceProceed, bypassShortfall, isViewingPast, useFullPay) => {
             try {
                 const empId = document.getElementById('empSelect').value;
-                const monthVal = document.getElementById('payMonth').value; // YYYY-MM
+                const monthVal = document.getElementById('payMonth').value; 
                 const basePayStr = document.getElementById('basePay').value;
                 
                 if(!empId || !monthVal || !basePayStr) return;
@@ -535,12 +577,12 @@
 
                 const [selYear, selMonth] = monthVal.split('-').map(Number);
                 
-                // 1. Calculate Target Hours for the Month and Identify Broken Months
+                // 1. Calculate Target Hours for the Month
                 const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
                 let actualMonthStart = new Date(selYear, selMonth - 1, 1);
                 
                 if (dojDate > actualMonthStart) {
-                    actualMonthStart = dojDate; // Joined midway this month
+                    actualMonthStart = dojDate; 
                 }
                 const actualMonthEnd = new Date(selYear, selMonth, 0); 
                 
@@ -554,7 +596,6 @@
 
                 // 2. Fetch Timesheets and Accumulate Stats
                 const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
-                
                 let loggedInMonth = 0;
                 let workInMonth = 0; let slInMonth = 0; let elInMonth = 0; let phInMonth = 0;
                 let ytdSL = 0; let ytdEL = 0; let ytdPH = 0;
@@ -575,13 +616,9 @@
                                     if(!e) return;
                                     const h = parseFloat(e.hours) || 0;
                                     const type = e.type || '';
-                                    
-                                    // Accumulate YTD Leaves (Up to this month)
                                     if (type.includes('SL')) ytdSL += h;
                                     if (type.includes('EL')) ytdEL += h;
                                     if (type.includes('PH')) ytdPH += h;
-
-                                    // Accumulate Specific Month Data
                                     if (isExactlySelectedMonth) {
                                         loggedInMonth += h;
                                         if (type.includes('Work')) workInMonth += h;
@@ -595,39 +632,34 @@
                     });
                 });
 
-                // 3. Shortfall Check
+                // 3. Review Modal Setup & Validation
                 const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
                 const is100Percent = loggedInMonth >= monthGoalHours && monthGoalHours > 0;
-                
-                const overrideContainer = document.getElementById('fullPayOverrideContainer');
-                const overrideCheckbox = document.getElementById('overrideFullPay');
+                const progressPct = Math.round((loggedInMonth / monthGoalHours) * 100);
 
-                // Always show the override option as requested
-                overrideContainer.classList.remove('hidden');
+                if (!forceProceed) {
+                    currentModalStats = { loggedInMonth, monthGoalHours, is100Percent, actualShortfallHours };
+                    
+                    document.getElementById('modalProgressText').textContent = `Logged ${loggedInMonth.toFixed(1)} hrs of ${monthGoalHours.toFixed(1)} hrs target (${progressPct}%).`;
+                    
+                    const shortfallAlert = document.getElementById('modalShortfallAlert');
+                    if (actualShortfallHours > 0) {
+                        shortfallAlert.classList.remove('hidden');
+                        document.getElementById('modalShortfallHrs').textContent = `${actualShortfallHours.toFixed(1)} hrs`;
+                    } else {
+                        shortfallAlert.classList.add('hidden');
+                    }
 
-                const useFullPay = overrideCheckbox.checked;
-                
-                // Warning logic for Admin if using override while below 100% goal
-                if (useFullPay && !is100Percent) {
-                    showToast("Warning: Full Pay Override active while Employee is below 100% Goal.", "info");
-                }
-
-                if (actualShortfallHours > 0 && !forceProceed) {
-                    // Halt and show warning
-                    document.getElementById('warningText').innerHTML = `Employee has only logged <span class="font-bold text-gray-900">${loggedInMonth.toFixed(1)} hrs</span> out of the required <span class="font-bold text-gray-900">${monthGoalHours} hrs</span> for this month.`;
-                    document.getElementById('warningShortfall').textContent = `${actualShortfallHours.toFixed(1)} hrs`;
-                    document.getElementById('warningModal').classList.remove('hidden');
+                    document.getElementById('modalOverrideToggle').checked = false;
+                    document.getElementById('modalOverrideWarning').classList.add('hidden');
+                    document.getElementById('calcReviewModal').classList.remove('hidden');
                     return;
                 }
 
-                // If full pay override is checked, we bypass shortfall deductions
+                // 4. Calculate Final Pay Logic
                 const chargeableShortfall = (bypassShortfall || useFullPay) ? 0 : actualShortfallHours;
-
-                // 4. Calculate Pro-Rated Basic Pay and Deductions
-                // Standardizing on exactly 30 days = 240 hours as base rate divider
                 const hourlyRate = basePay / 240; 
                 
-                // Maximum possible Basic Pay for this specific period
                 let proRatedBasePay = monthGoalHours * hourlyRate;
                 if (useFullPay) {
                     proRatedBasePay = basePay;
@@ -640,17 +672,15 @@
                 const excessSLTotal = Math.max(0, ytdSL - slLimitHrs);
                 const excessELTotal = Math.max(0, ytdEL - elLimitHrs);
 
-                // We only deduct excess leaves that were physically taken *during this specific month*
                 const chargeableSL = Math.min(excessSLTotal, slInMonth);
                 const chargeableEL = Math.min(excessELTotal, elInMonth);
                 const totalExcessLeaveHrs = chargeableSL + chargeableEL;
 
-                // 5. Final Pay Math
                 const totalLWPHours = chargeableShortfall + totalExcessLeaveHrs;
                 const deductionAmount = totalLWPHours * hourlyRate;
                 const finalPay = Math.max(0, (proRatedBasePay + bonusAmount) - deductionAmount);
 
-                // 6. UI Update: Top Header
+                // 5. UI Updates
                 document.getElementById('resultsEmpty').classList.add('hidden');
                 document.getElementById('resultsPanel').classList.remove('hidden');
 
@@ -662,17 +692,14 @@
                 const endD = actualMonthEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                 document.getElementById('resPeriodLabel').textContent = `Period: ${startD} to ${endD}`;
                 
-                // UI Update: Monthly Stats
                 const d = (hrs) => (hrs/8).toFixed(1);
                 document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${monthGoalDays} days)`;
                 document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
                 document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
-                
                 document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs (${d(slInMonth)} days)`;
                 document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs (${d(elInMonth)} days)`;
                 document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs (${d(phInMonth)} days)`;
 
-                // UI Update: YTD Leave Stats
                 document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`;
                 document.getElementById('resYtdSlDays').textContent = `(${d(ytdSL)} / ${d(slLimitHrs)} days)`;
                 document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`;
@@ -680,7 +707,6 @@
                 document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
                 document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
 
-                // UI Update: Earnings
                 let basicPayLabel = useFullPay ? (is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
                 let basicPaySub = useFullPay ? (is100Percent ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : "(Target: Admin Override - Full 30-Day Pay Applied)") : `(Target: ${monthGoalDays} working days out of 30)`;
 
@@ -702,10 +728,8 @@
                     </div>`;
                 }
 
-                // UI Update: Deductions Breakdown
                 const dedList = document.getElementById('deductionList');
                 dedList.innerHTML = '';
-                
                 if (actualShortfallHours > 0 && (bypassShortfall || useFullPay)) {
                     const reason = useFullPay ? "Full Pay Override" : "Bypassed";
                     dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall of ${actualShortfallHours.toFixed(1)} hrs detected but suppressed via ${reason}.</span><span>₹0</span></div>`;
@@ -724,7 +748,6 @@
                             <span class="font-semibold">- ₹${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
                         </div>`;
                     };
-
                     if (chargeableShortfall > 0) dedList.innerHTML += addRow("Shortfall LWP", chargeableShortfall, hourlyRate);
                     if (chargeableSL > 0) dedList.innerHTML += addRow("Excess Sick Leave", chargeableSL, hourlyRate);
                     if (chargeableEL > 0) dedList.innerHTML += addRow("Excess Earned Leave", chargeableEL, hourlyRate);
@@ -733,7 +756,6 @@
                 document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
                 document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
 
-                // Save payload state explicitly to window for memory safety across events
                 window.pendingPayloadData = {
                     empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, is100Percent, bonusAmount, bonusJustification, finalPay, 
                     shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount,
@@ -747,7 +769,6 @@
                     workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs
                 };
 
-                // Set Button State
                 if (isViewingPast) {
                     document.getElementById('confirmBtn').classList.add('hidden');
                     document.getElementById('pdfBtn').classList.remove('hidden');
@@ -756,8 +777,6 @@
                     document.getElementById('confirmBtn').classList.remove('hidden');
                     document.getElementById('pdfBtn').classList.add('hidden');
                     document.getElementById('confirmedBadge').classList.add('hidden');
-                    
-                    // Reset button in case of a previous confirm click
                     const confirmBtn = document.getElementById('confirmBtn');
                     confirmBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Confirm Calculations & Save`;
                     confirmBtn.disabled = false;
@@ -768,148 +787,70 @@
             }
         };
 
-        window.cancelCalculation = () => {
-            document.getElementById('warningModal').classList.add('hidden');
-        };
-
-        window.proceedCalculation = () => {
-            document.getElementById('warningModal').classList.add('hidden');
-            runCalculation(true, false, false);
-        };
-
-        window.bypassCalculation = () => {
-            document.getElementById('warningModal').classList.add('hidden');
-            runCalculation(true, true, false);
-        };
-
-        window.editParameters = () => {
-            document.getElementById('empSelect').focus();
-        };
-
         const createPDFDocument = (ps) => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const m = 20; const rightAlignX = 190; let y = 20;
-
-            // --- Brand Logo & Header ---
-            // Native vector recreation of the Stratedge logo for perfect resolution
-            const iconX = m;
-            const iconY = y - 14;
-            
-            // Grey Brackets
-            doc.setDrawColor(105, 105, 105);
-            doc.setLineWidth(1.5);
-            doc.line(iconX, iconY, iconX + 10, iconY); // Top horizontal
-            doc.line(iconX, iconY, iconX, iconY + 8);  // Left vertical
-            doc.line(iconX + 4, iconY + 14, iconX + 14, iconY + 14); // Bottom horizontal
-            doc.line(iconX + 14, iconY + 14, iconX + 14, iconY + 6); // Right vertical
-            
-            // Orange Diagonal
-            doc.setDrawColor(225, 90, 30);
-            doc.line(iconX - 1, iconY + 12, iconX + 15, iconY + 2); 
-
-            // Color-Banded Text Setup
-            const headerX = m + 22;
-            doc.setFont("helvetica", "normal").setFontSize(22);
-            
-            // "S" (Orange)
-            doc.setTextColor(225, 90, 30); 
-            doc.text("S", headerX, y);
+            const iconX = m; const iconY = y - 14;
+            doc.setDrawColor(105, 105, 105); doc.setLineWidth(1.5);
+            doc.line(iconX, iconY, iconX + 10, iconY); doc.line(iconX, iconY, iconX, iconY + 8); 
+            doc.line(iconX + 4, iconY + 14, iconX + 14, iconY + 14); doc.line(iconX + 14, iconY + 14, iconX + 14, iconY + 6);
+            doc.setDrawColor(225, 90, 30); doc.line(iconX - 1, iconY + 12, iconX + 15, iconY + 2); 
+            const headerX = m + 22; doc.setFont("helvetica", "normal").setFontSize(22);
+            doc.setTextColor(225, 90, 30); doc.text("S", headerX, y);
             let curX = headerX + doc.getTextWidth("S") + 0.5;
-            
-            // "TRAT" (Grey)
-            doc.setTextColor(105, 105, 105); 
-            doc.text("TRAT", curX, y);
+            doc.setTextColor(105, 105, 105); doc.text("TRAT", curX, y);
             curX += doc.getTextWidth("TRAT") + 0.5;
-            
-            // "E" (Orange)
-            doc.setTextColor(225, 90, 30); 
-            doc.text("E", curX, y);
+            doc.setTextColor(225, 90, 30); doc.text("E", curX, y);
             curX += doc.getTextWidth("E") + 0.5;
-            
-            // "DGÉ" (Grey)
-            doc.setTextColor(105, 105, 105); 
-            doc.text("DGÉ", curX, y);
-            
-            // Sub-text & Identifiers
+            doc.setTextColor(105, 105, 105); doc.text("DGÉ", curX, y);
             doc.setFontSize(9).setTextColor(150).text("Communications Pvt. Ltd.", headerX, y + 6);
-            
             doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
             doc.text(`CIN: U70200WB2025PTC277733`, headerX, y + 12);
             doc.text(`PAN: ABPCS6820D`, headerX, y + 16);
-
-            // Right-aligned Address
             doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(80);
             doc.text("42/22 New Ballygunge Road,", rightAlignX, y, { align: 'right' });
             doc.text("Kolkata - 700039", rightAlignX, y + 5, { align: 'right' });
-            
             y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
-
             const startDateStr = new Date(ps.actualStart).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             const endDateStr = new Date(ps.actualEnd).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             const generatedDateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-            // Title & Dates
             doc.setFontSize(14).setFont("helvetica", "bold").setTextColor(40).text("PAYSLIP", m, y);
             doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text(`For the period: ${startDateStr} to ${endDateStr}`, m, y + 6);
             doc.setFontSize(8).setTextColor(120).text(`Generated On: ${generatedDateStr}`, rightAlignX, y, {align: 'right'});
-            
             y += 18;
-            
-            // Detailed Employee Information Block
             doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
             doc.text(`Employee Name:`, m, y); doc.setFont("helvetica", "normal").text(ps.emp.name, m + 35, y);
             doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
             doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation || 'N/A', m + 35, y + 12);
-            
             doc.setFont("helvetica", "bold").text(`Department:`, m + 90, y); doc.setFont("helvetica", "normal").text(ps.emp.department || 'N/A', m + 122, y);
             doc.setFont("helvetica", "bold").text(`Date of Joining:`, m + 90, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 122, y + 6);
             doc.setFont("helvetica", "bold").text(`Email ID:`, m + 90, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 122, y + 12);
-
             y += 22; doc.setDrawColor(230).line(m, y, 190, y); y += 10;
-
-            // Summaries Side by Side
             doc.setFontSize(10).setFont("helvetica", "bold").setTextColor(40);
-            doc.text("MONTHLY TIME SUMMARY", m, y);
-            doc.text("YTD LEAVE SUMMARY", m + 90, y);
-
-            y += 6;
-            doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60);
-            
+            doc.text("MONTHLY TIME SUMMARY", m, y); doc.text("YTD LEAVE SUMMARY", m + 90, y);
+            y += 6; doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60);
             const d = (hrs) => (hrs/8).toFixed(1);
-            
-            // Left Col (Time)
             doc.text(`Target Total: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y);
             doc.text(`Logged Total: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
             doc.text(`Regular Work: ${ps.workInMonth.toFixed(1)} hrs (${d(ps.workInMonth)} days)`, m, y + 10);
             doc.text(`Sick Leave: ${ps.slInMonth.toFixed(1)} hrs (${d(ps.slInMonth)} days)`, m, y + 15);
             doc.text(`Earned Leave: ${ps.elInMonth.toFixed(1)} hrs (${d(ps.elInMonth)} days)`, m, y + 20);
             doc.text(`Public Holiday: ${ps.phInMonth.toFixed(1)} hrs (${d(ps.phInMonth)} days)`, m, y + 25);
-
-            // Right Col (YTD)
             doc.text(`Sick Leave: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs (${d(ps.ytdSL)} / ${d(ps.slLimitHrs)} days)`, m + 90, y);
             doc.text(`Earned Leave: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs (${d(ps.ytdEL)} / ${d(ps.elLimitHrs)} days)`, m + 90, y + 5);
             doc.text(`Public Holiday: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs (${d(ps.ytdPH)} / ${d(ps.phLimitHrs)} days)`, m + 90, y + 10);
-
             y += 35; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
-            
-            // EARNINGS
             doc.setFillColor(245).rect(m, y-5, 170, 8, 'F');
             doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
             doc.text("EARNINGS", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
-            
             y += 8;
-            
             let basicPayLabel = ps.useFullPay ? (ps.is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
             let basicPaySub = ps.useFullPay ? (ps.is100Percent ? "(Target: 100% Goal Met - Full 30-Day Pay Applied)" : "(Target: Admin Override - Full 30-Day Pay Applied)") : `(Target: ${ps.monthGoalDays} working days out of 30)`;
-
             doc.setFont("helvetica", "normal").setTextColor(60);
             doc.text(basicPayLabel, m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-            doc.setFontSize(7).setTextColor(100);
-            doc.text(basicPaySub, m + 2, y + 4);
-            doc.setFontSize(9).setTextColor(60);
-            y += 8;
-
+            doc.setFontSize(7).setTextColor(100); doc.text(basicPaySub, m + 2, y + 4);
+            doc.setFontSize(9).setTextColor(60); y += 8;
             if (ps.bonusAmount > 0) {
                 const bonusText = ps.bonusJustification ? `Bonus: ${ps.bonusJustification}` : "Bonus";
                 const splitBonusText = doc.splitTextToSize(bonusText, 140);
@@ -917,60 +858,27 @@
                 doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'});
                 y += 8 + ((splitBonusText.length - 1) * 5);
             }
-
-            y += 6;
-
-            // DEDUCTIONS
-            doc.setFillColor(253, 242, 242).rect(m, y-5, 170, 8, 'F');
+            y += 6; doc.setFillColor(253, 242, 242).rect(m, y-5, 170, 8, 'F');
             doc.setFont("helvetica", "bold").setTextColor(220, 38, 38);
             doc.text("DEDUCTIONS (Leave Without Pay)", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
-            
-            y += 8;
-            doc.setFont("helvetica", "normal").setTextColor(60);
-            
+            y += 8; doc.setFont("helvetica", "normal").setTextColor(60);
             if (ps.deductions === 0) {
                 doc.text("None", m + 2, y); doc.text("-", rightAlignX - 2, y, {align: 'right'});
                 y += 8;
             } else {
-                if (ps.shortfallHours > 0) {
-                    const amt = ps.shortfallHours * ps.hourlyRate;
-                    doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, m + 2, y);
-                    doc.text(`Rs. ${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-                    y += 8;
-                }
-                if (ps.chargeableSL > 0) {
-                    const amt = ps.chargeableSL * ps.hourlyRate;
-                    doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, m + 2, y);
-                    doc.text(`Rs. ${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-                    y += 8;
-                }
-                if (ps.chargeableEL > 0) {
-                    const amt = ps.chargeableEL * ps.hourlyRate;
-                    doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, m + 2, y);
-                    doc.text(`Rs. ${amt.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-                    y += 8;
-                }
+                const amt = (h, r) => (h * r).toLocaleString('en-IN', {maximumFractionDigits:0});
+                if (ps.shortfallHours > 0) { doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.shortfallHours, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; }
+                if (ps.chargeableSL > 0) { doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableSL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; }
+                if (ps.chargeableEL > 0) { doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableEL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; }
             }
-
             y += 2; doc.setDrawColor(230).line(m, y, 190, y); y += 8;
-            
-            // TOTALS
             doc.setFont("helvetica", "bold").setTextColor(40);
             const totalEarnings = ps.proRatedBasePay + ps.bonusAmount;
             doc.text("Total Earnings:", m + 2, y); doc.text(`Rs. ${totalEarnings.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-            y += 8;
-            doc.text("Total Deductions:", m + 2, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
-            
-            y += 10;
-            doc.setFillColor(235).rect(m, y, 170, 12, 'F');
-            doc.setFontSize(12);
-            doc.text("NET PAYABLE:", m + 5, y + 8); 
-            doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
-
-            // Footer
-            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic");
-            doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" });
-
+            y += 8; doc.text("Total Deductions:", m + 2, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            y += 10; doc.setFillColor(235).rect(m, y, 170, 12, 'F'); doc.setFontSize(12);
+            doc.text("NET PAYABLE:", m + 5, y + 8); doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
+            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic"); doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" });
             return doc;
         };
 
@@ -979,27 +887,19 @@
                 showToast("Missing calculation data. Please preview again.", "error");
                 return;
             }
-            
             const btn = document.getElementById('confirmBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
             btn.disabled = true;
-
             const p = window.pendingPayloadData;
             const recordId = `${p.empId}_${p.monthVal}`;
-
             try {
-                // Generate Base64 PDF to store in DB
                 const pdfDoc = createPDFDocument(window.currentPayslipData);
                 p.pdfDataUri = pdfDoc.output('datauristring');
-                
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), p);
-                
-                // Swap Buttons to allow PDF Download
                 document.getElementById('confirmBtn').classList.add('hidden');
                 document.getElementById('pdfBtn').classList.remove('hidden');
                 document.getElementById('confirmedBadge').classList.remove('hidden');
-                
                 showToast("Pay record confirmed and saved successfully!", "success");
             } catch (err) {
                 console.error("Failed to save pay record", err);
