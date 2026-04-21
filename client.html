@@ -765,6 +765,7 @@
 
             // Invoice Meta
             doc.setFontSize(18).setFont("helvetica", "bold").setTextColor(40).text("TAX INVOICE", m, y);
+            doc.setFontSize(10).setFont("helvetica", "italic").setTextColor(100).text("Original for Recipient", m, y + 6);
             doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(80);
             
             const invDate = new Date();
