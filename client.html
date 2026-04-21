@@ -19,6 +19,12 @@
             }
         }
     </script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
@@ -161,97 +167,137 @@
         </div>
 
         <!-- TAB 2: INVOICE GENERATOR -->
-        <div id="tab-invoices" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 transition-all h-[calc(100vh-250px)]">
-            <!-- Form & History Panel -->
-            <div class="lg:col-span-4 flex flex-col gap-6 overflow-y-auto pr-2 custom-scroll h-full">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 id="invFormTitle" class="text-lg font-bold text-brand-blue mb-6 flex items-center gap-2 border-b pb-4">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Invoice Details
-                    </h3>
-                    <form id="invoiceForm" class="space-y-4">
-                        <input type="hidden" id="editingInvId">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Client Selection</label>
-                            <select id="invClientSelect" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
-                                <option value="" disabled selected>-- Choose Client --</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
+        <div id="tab-invoices" class="hidden flex-col gap-6 transition-all h-[calc(100vh-220px)]">
+            
+            <!-- Invoice Sub-Tabs -->
+            <div class="flex gap-6 border-b border-gray-200">
+                <button id="subtab-btn-create" onclick="switchInvTab('create')" class="pb-2 font-bold text-sm text-brand-blue border-b-2 border-brand-blue transition-all">Create Invoice</button>
+                <button id="subtab-btn-history" onclick="switchInvTab('history')" class="pb-2 font-bold text-sm text-gray-500 hover:text-gray-800 border-b-2 border-transparent transition-all">Generated Invoices</button>
+            </div>
+
+            <!-- CREATE INVOICE VIEW -->
+            <div id="inv-create-view" class="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full overflow-hidden">
+                <!-- Form & Small History Panel -->
+                <div class="lg:col-span-4 flex flex-col gap-6 overflow-y-auto pr-2 custom-scroll h-full">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 id="invFormTitle" class="text-lg font-bold text-brand-blue mb-6 flex items-center gap-2 border-b pb-4">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Invoice Details
+                        </h3>
+                        <form id="invoiceForm" class="space-y-4">
+                            <input type="hidden" id="editingInvId">
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Billing From</label>
-                                <input type="date" id="invFromDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-xs">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Client Selection</label>
+                                <select id="invClientSelect" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
+                                    <option value="" disabled selected>-- Choose Client --</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Billing From</label>
+                                    <input type="date" id="invFromDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Billing To</label>
+                                    <input type="date" id="invToDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-xs">
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Billing To</label>
-                                <input type="date" id="invToDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-xs">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Service Category</label>
+                                <select id="invServiceType" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
+                                    <option value="Social Media">Social Media</option>
+                                    <option value="Brand Strategy">Brand Strategy</option>
+                                    <option value="Others">Others</option>
+                                </select>
                             </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Service Category</label>
-                            <select id="invServiceType" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
-                                <option value="Social Media">Social Media</option>
-                                <option value="Brand Strategy">Brand Strategy</option>
-                                <option value="Others">Others</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Comments <span class="text-[10px] font-normal text-gray-400">(Max 30)</span></label>
-                            <input type="text" id="invComments" maxlength="30" placeholder="Brief description..." required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">HSN Code</label>
-                            <input type="text" id="invHsn" required placeholder="e.g. 998311" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Net Amount without GST (INR)</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-2 text-gray-400 text-sm font-bold">₹</span>
-                                <input type="number" id="invAmount" step="0.01" required placeholder="0.00" class="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none font-bold text-brand-blue">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Comments <span class="text-[10px] font-normal text-gray-400">(Max 30)</span></label>
+                                <input type="text" id="invComments" maxlength="30" placeholder="Brief description..." required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
                             </div>
-                        </div>
-                        <div class="flex items-center gap-2 py-1">
-                            <input type="checkbox" id="invApplyGst" class="w-4 h-4 text-brand-blue rounded border-gray-300 focus:ring-brand-blue">
-                            <label for="invApplyGst" class="text-xs font-bold text-gray-700">Apply GST (18%)</label>
-                        </div>
-                        <div class="flex flex-col gap-2 pt-2">
-                            <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                GENERATE INVOICE
-                            </button>
-                            <button type="button" id="cancelInvBtn" onclick="resetInvoiceForm()" class="hidden w-full py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 text-sm">Discard Changes</button>
-                        </div>
-                    </form>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">HSN Code</label>
+                                <input type="text" id="invHsn" required placeholder="e.g. 998311" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Net Amount without GST (INR)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-400 text-sm font-bold">₹</span>
+                                    <input type="number" id="invAmount" step="0.01" required placeholder="0.00" class="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none font-bold text-brand-blue">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 py-1">
+                                <input type="checkbox" id="invApplyGst" class="w-4 h-4 text-brand-blue rounded border-gray-300 focus:ring-brand-blue">
+                                <label for="invApplyGst" class="text-xs font-bold text-gray-700">Apply GST (18%)</label>
+                            </div>
+                            <div class="flex flex-col gap-2 pt-2">
+                                <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    GENERATE INVOICE
+                                </button>
+                                <button type="button" id="cancelInvBtn" onclick="resetInvoiceForm()" class="hidden w-full py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 text-sm">Discard Changes</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Quick History sub-panel -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow">
+                        <h3 class="text-sm font-bold text-gray-900 mb-4 border-b pb-2 flex justify-between">
+                            Quick History 
+                            <span id="invCount" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">0 Total</span>
+                        </h3>
+                        <div id="invoiceHistoryList" class="space-y-3"></div>
+                    </div>
                 </div>
 
-                <!-- History sub-panel -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow">
-                    <h3 class="text-sm font-bold text-gray-900 mb-4 border-b pb-2 flex justify-between">
-                        Past Records 
-                        <span id="invCount" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">0 Total</span>
-                    </h3>
-                    <div id="invoiceHistoryList" class="space-y-3"></div>
+                <!-- PDF Viewer Panel -->
+                <div class="lg:col-span-8 bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col h-full border-4 border-gray-700">
+                    <div class="bg-gray-700 px-4 py-2 flex justify-between items-center text-xs font-bold text-gray-300 uppercase tracking-widest">
+                        <span>Invoice Preview Portal</span>
+                        <div class="flex gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+                        </div>
+                    </div>
+                    <div id="pdfPlaceholder" class="flex-grow flex flex-col items-center justify-center text-center p-12 space-y-4">
+                        <div class="p-6 bg-gray-700/50 rounded-full border border-gray-600">
+                            <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <p class="text-gray-500 font-medium max-w-xs">Complete the invoice details and click generate to render the document.</p>
+                    </div>
+                    <iframe id="pdfPreview" class="hidden w-full h-full border-none bg-white"></iframe>
                 </div>
             </div>
 
-            <!-- PDF Viewer Panel (Full Height Preview) -->
-            <div class="lg:col-span-8 bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col h-full border-4 border-gray-700">
-                <div class="bg-gray-700 px-4 py-2 flex justify-between items-center text-xs font-bold text-gray-300 uppercase tracking-widest">
-                    <span>Invoice Preview Portal</span>
-                    <div class="flex gap-1.5">
-                        <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
-                        <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
-                        <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+            <!-- GENERATED INVOICES HISTORY GRID -->
+            <div id="inv-history-view" class="hidden flex-col bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-full overflow-hidden">
+                <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                    <h3 class="text-xl font-semibold text-brand-blue">Invoice History</h3>
+                    <div>
+                        <select id="gridClientFilter" onchange="renderInvoiceGrid()" class="w-64 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm">
+                            <option value="">All Clients</option>
+                        </select>
                     </div>
                 </div>
-                <div id="pdfPlaceholder" class="flex-grow flex flex-col items-center justify-center text-center p-12 space-y-4">
-                    <div class="p-6 bg-gray-700/50 rounded-full border border-gray-600">
-                        <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </div>
-                    <p class="text-gray-500 font-medium max-w-xs">Complete the invoice details and click generate to render the document.</p>
+                <div class="overflow-y-auto custom-scroll flex-grow border border-gray-100 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Inv No</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Billing Period</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Generated</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Amt (ex GST)</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Grand Total</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceGridBody" class="bg-white divide-y divide-gray-100 text-sm"></tbody>
+                    </table>
                 </div>
-                <iframe id="pdfPreview" class="hidden w-full h-full border-none bg-white"></iframe>
+                <div id="gridEmptyState" class="hidden py-12 text-center text-gray-500 flex-shrink-0">No invoices found.</div>
             </div>
+
         </div>
     </main>
 
@@ -358,13 +404,41 @@
                 btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm";
                 btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
                 tabClients.classList.replace('hidden', 'grid');
-                tabInvoices.classList.add('hidden');
+                tabInvoices.classList.replace('flex', 'hidden');
             } else {
                 btnInvoices.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm";
                 btnClients.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
                 tabInvoices.classList.remove('hidden');
-                tabInvoices.classList.add('grid');
+                tabInvoices.classList.add('flex');
                 tabClients.classList.replace('grid', 'hidden');
+                
+                // Default subtab when opening Invoice view
+                if (document.getElementById('inv-history-view').classList.contains('hidden') === false) {
+                    renderInvoiceGrid();
+                }
+            }
+        };
+
+        // Switch between Invoice Generator and Invoice History Grid
+        window.switchInvTab = (tab) => {
+            const btnCreate = document.getElementById('subtab-btn-create');
+            const btnHistory = document.getElementById('subtab-btn-history');
+            const viewCreate = document.getElementById('inv-create-view');
+            const viewHistory = document.getElementById('inv-history-view');
+            
+            if (tab === 'create') {
+                btnCreate.className = "pb-2 font-bold text-sm text-brand-blue border-b-2 border-brand-blue transition-all";
+                btnHistory.className = "pb-2 font-bold text-sm text-gray-500 hover:text-gray-800 border-b-2 border-transparent transition-all";
+                viewCreate.classList.remove('hidden');
+                viewHistory.classList.add('hidden');
+                viewHistory.classList.remove('flex');
+            } else {
+                btnHistory.className = "pb-2 font-bold text-sm text-brand-blue border-b-2 border-brand-blue transition-all";
+                btnCreate.className = "pb-2 font-bold text-sm text-gray-500 hover:text-gray-800 border-b-2 border-transparent transition-all";
+                viewHistory.classList.remove('hidden');
+                viewHistory.classList.add('flex');
+                viewCreate.classList.add('hidden');
+                renderInvoiceGrid();
             }
         };
 
@@ -404,10 +478,15 @@
         window.renderClients = () => {
             const tbody = document.getElementById('clientsList');
             const search = document.getElementById('clientSearch').value.toLowerCase();
+            
             const invSelect = document.getElementById('invClientSelect');
+            const gridSelect = document.getElementById('gridClientFilter');
             const curVal = invSelect.value;
+            const curGridVal = gridSelect.value;
+            
             tbody.innerHTML = '';
             invSelect.innerHTML = '<option value="" disabled selected>-- Choose Client --</option>';
+            gridSelect.innerHTML = '<option value="">All Clients</option>';
             
             const filtered = allClients.filter(c => 
                 (c.name || '').toLowerCase().includes(search) || 
@@ -421,8 +500,14 @@
                 opt.value = client.id;
                 opt.textContent = `${client.name} (${client.clientCode})`;
                 invSelect.appendChild(opt);
+
+                const gridOpt = document.createElement('option');
+                gridOpt.value = client.id;
+                gridOpt.textContent = `${client.name} (${client.clientCode})`;
+                gridSelect.appendChild(gridOpt);
             });
             if (curVal) invSelect.value = curVal;
+            if (curGridVal) gridSelect.value = curGridVal;
 
             if (filtered.length === 0) document.getElementById('emptyState').classList.remove('hidden');
             else {
@@ -481,6 +566,53 @@
                     `;
                     list.appendChild(div);
                 });
+            }
+            if (typeof renderInvoiceGrid === 'function') renderInvoiceGrid();
+        };
+
+        window.renderInvoiceGrid = () => {
+            const tbody = document.getElementById('invoiceGridBody');
+            const filterClient = document.getElementById('gridClientFilter').value;
+            tbody.innerHTML = '';
+            
+            let filtered = allInvoices;
+            if (filterClient) {
+                filtered = filtered.filter(i => i.clientId === filterClient);
+            }
+            
+            if (filtered.length === 0) {
+                document.getElementById('gridEmptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('gridEmptyState').classList.add('hidden');
+                filtered.forEach(inv => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition-colors";
+                    const genDate = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-GB') : 'N/A';
+                    const period = `${new Date(inv.fromDate).toLocaleDateString('en-GB')} - ${new Date(inv.toDate).toLocaleDateString('en-GB')}`;
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-mono font-bold text-brand-blue">${inv.invoiceNo}</td>
+                        <td class="px-4 py-3 font-bold text-gray-900">${inv.clientName}</td>
+                        <td class="px-4 py-3 text-gray-600">${period}</td>
+                        <td class="px-4 py-3 text-gray-600">${genDate}</td>
+                        <td class="px-4 py-3 text-right font-medium">₹${inv.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td class="px-4 py-3 text-right font-bold text-brand-blue">₹${(inv.grandTotal || inv.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="viewInvoiceGrid('${inv.id}')" class="bg-gray-100 hover:bg-brand-blue hover:text-white text-gray-600 px-3 py-1 rounded text-xs font-bold transition-all">VIEW PDF</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        };
+
+        window.viewInvoiceGrid = (id) => {
+            const inv = allInvoices.find(i => i.id === id);
+            const client = allClients.find(c => c.id === inv.clientId);
+            if(client && inv) {
+                const doc = buildInvoiceDoc(client, inv);
+                doc.save(`TaxInvoice_${inv.invoiceNo}.pdf`);
+            } else {
+                showToast("Invoice data missing.", "error");
             }
         };
 
@@ -611,7 +743,7 @@
             showToast("Invoice processed.");
         });
 
-        const generatePDF = (client, inv) => {
+        const buildInvoiceDoc = (client, inv) => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const m = 20; const rightAlignX = 190; let y = 20;
@@ -639,7 +771,7 @@
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + 7);
 
-            doc.text(`No: ${inv.invoiceNo}`, rightAlignX, y, { align: 'right' });
+            doc.text(`Inv No: ${inv.invoiceNo}`, rightAlignX, y, { align: 'right' });
             doc.text(`Invoice Date: ${invDate.toLocaleDateString('en-GB')}`, rightAlignX, y + 5, { align: 'right' });
             doc.text(`Due Date: ${dueDate.toLocaleDateString('en-GB')}`, rightAlignX, y + 10, { align: 'right' });
             doc.text(`Place of Supply: 19 - West Bengal`, rightAlignX, y + 15, { align: 'right' });
@@ -701,12 +833,17 @@
                 "Bank Name: State Bank of India, Behala Branch"
             ], m, y + 6);
 
-            // Authorized Signatory
+            // Authorized Signatory aligned perfectly with the bank details header
             doc.setFontSize(10).setTextColor(40).setFont("helvetica", "bold");
             doc.text("For Stratedge Communications Pvt Ltd", rightAlignX, y, { align: 'right' });
             doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(100);
             doc.text("Authorized Signatory", rightAlignX, y + 24, { align: 'right' });
 
+            return doc;
+        };
+
+        const generatePDF = (client, inv) => {
+            const doc = buildInvoiceDoc(client, inv);
             const pdfUri = doc.output('datauristring');
             const preview = document.getElementById('pdfPreview');
             preview.src = pdfUri;
