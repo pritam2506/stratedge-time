@@ -623,10 +623,17 @@
             // Invoice Meta
             doc.setFontSize(18).setFont("helvetica", "bold").setTextColor(40).text("INVOICE", m, y);
             doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(80);
-            doc.text(`No: ${inv.invoiceNo}`, rightAlignX, y, { align: 'right' });
-            doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, rightAlignX, y + 5, { align: 'right' });
             
-            y += 20;
+            const invDate = new Date();
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 7);
+
+            doc.text(`No: ${inv.invoiceNo}`, rightAlignX, y, { align: 'right' });
+            doc.text(`Invoice Date: ${invDate.toLocaleDateString('en-GB')}`, rightAlignX, y + 5, { align: 'right' });
+            doc.text(`Due Date: ${dueDate.toLocaleDateString('en-GB')}`, rightAlignX, y + 10, { align: 'right' });
+            doc.text(`Place of Supply: 19 - West Bengal`, rightAlignX, y + 15, { align: 'right' });
+            
+            y += 25;
             doc.setFont("helvetica", "bold").setTextColor(40).text("BILL TO:", m, y);
             doc.setFont("helvetica", "normal").setTextColor(60).text([
                 client.name, 
@@ -682,8 +689,11 @@
                 "Bank Name: State Bank of India, Behala Branch"
             ], m, y + 6);
 
-            // Formal Footer
-            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "normal").text("This is a computer-generated invoice and does not require a physical signature.", 105, 280, { align: "center" });
+            // Authorized Signatory
+            doc.setFontSize(10).setTextColor(40).setFont("helvetica", "bold");
+            doc.text("For Stratedge Communications Pvt Ltd", rightAlignX, y + 10, { align: 'right' });
+            doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(100);
+            doc.text("Authorized Signatory", rightAlignX, y + 30, { align: 'right' });
 
             const pdfUri = doc.output('datauristring');
             const preview = document.getElementById('pdfPreview');
