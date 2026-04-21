@@ -356,6 +356,30 @@
         </div>
     </div>
 
+    <!-- Invoice Preview Modal -->
+    <div id="invoicePreviewModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Invoice Preview
+                </h3>
+                <div class="flex items-center gap-4">
+                    <button id="modalDownloadInvBtn" class="bg-brand-blue hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download PDF
+                    </button>
+                    <button onclick="closeInvoicePreviewModal()" class="text-gray-400 hover:text-gray-700 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-grow bg-gray-800 p-0 overflow-hidden">
+                <iframe id="modalPdfPreview" class="w-full h-full border-none bg-white"></iframe>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-[100] flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
         <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
         <div id="toastMessage" class="ml-3 text-sm font-semibold"></div>
@@ -610,10 +634,25 @@
             const client = allClients.find(c => c.id === inv.clientId);
             if(client && inv) {
                 const doc = buildInvoiceDoc(client, inv);
-                doc.save(`TaxInvoice_${inv.invoiceNo}.pdf`);
+                const pdfUri = doc.output('datauristring');
+                
+                const previewIframe = document.getElementById('modalPdfPreview');
+                previewIframe.src = pdfUri;
+                
+                const downloadBtn = document.getElementById('modalDownloadInvBtn');
+                downloadBtn.onclick = () => {
+                    doc.save(`TaxInvoice_${inv.invoiceNo}.pdf`);
+                };
+                
+                document.getElementById('invoicePreviewModal').classList.remove('hidden');
             } else {
                 showToast("Invoice data missing.", "error");
             }
+        };
+
+        window.closeInvoicePreviewModal = () => {
+            document.getElementById('invoicePreviewModal').classList.add('hidden');
+            document.getElementById('modalPdfPreview').src = '';
         };
 
         window.viewClient = (id) => {
@@ -775,9 +814,8 @@
             doc.text(`Inv No: ${inv.invoiceNo}`, rightAlignX, y, { align: 'right' });
             doc.text(`Invoice Date: ${invDate.toLocaleDateString('en-GB')}`, rightAlignX, y + 5, { align: 'right' });
             doc.text(`Due Date: ${dueDate.toLocaleDateString('en-GB')}`, rightAlignX, y + 10, { align: 'right' });
-            doc.text(`Place of Supply: 19 - West Bengal`, rightAlignX, y + 15, { align: 'right' });
             
-            y += 25;
+            y += 20;
             doc.setFont("helvetica", "bold").setTextColor(40).text("BILL TO:", m, y);
             doc.setFont("helvetica", "normal").setTextColor(60).text([
                 client.name, 
