@@ -641,7 +641,10 @@
                 
                 const downloadBtn = document.getElementById('modalDownloadInvBtn');
                 downloadBtn.onclick = () => {
-                    doc.save(`TaxInvoice_${inv.invoiceNo}.pdf`);
+                    const d = new Date(inv.createdAt || Date.now());
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const dateStr = `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`;
+                    doc.save(`${client.name}_TaxInvoice_${dateStr}.pdf`);
                 };
                 
                 document.getElementById('invoicePreviewModal').classList.remove('hidden');
