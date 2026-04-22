@@ -880,15 +880,21 @@
             doc.text("For Stratedge Communications Pvt Ltd", rightAlignX, y, { align: 'right' });
             
             // --- IMAGE SIGNATURE FROM GITHUB REPO ---
-            const signatureUrl = "RC Sign with Stamp.png"; 
             try {
-                const img = new Image();
-                img.src = signatureUrl;
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                });
-                doc.addImage(img, 'PNG', rightAlignX - 55, y + 2, 55, 18);
+                // Fetch image, convert to Base64 to avoid canvas-tainting and URL encoding issues
+                const response = await fetch(encodeURI("RC Sign with Stamp.png"));
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const base64Signature = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                    const format = base64Signature.substring("data:image/".length, base64Signature.indexOf(";base64")).toUpperCase();
+                    doc.addImage(base64Signature, format, rightAlignX - 55, y + 2, 55, 18);
+                } else {
+                    console.warn("Signature image not found. Ensure it is uploaded to the same folder.");
+                }
             } catch(e) {
                 console.warn("Signature could not be loaded from repository.", e);
             }
