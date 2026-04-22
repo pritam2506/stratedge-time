@@ -878,6 +878,23 @@
             // Authorized Signatory aligned perfectly with the bank details header
             doc.setFontSize(10).setTextColor(40).setFont("helvetica", "bold");
             doc.text("For Stratedge Communications Pvt Ltd", rightAlignX, y, { align: 'right' });
+            
+            // Embedded Vector Signature (Blue Ink)
+            doc.setDrawColor(0, 50, 150);
+            doc.setLineWidth(0.8);
+            const sX = rightAlignX - 35;
+            const sY = y + 15;
+            // Draw 'A'
+            doc.line(sX, sY, sX + 6, sY - 12);
+            doc.line(sX + 6, sY - 12, sX + 12, sY);
+            // Cross swoop
+            doc.line(sX + 3, sY - 5, sX + 16, sY - 7);
+            // Trailing scribble
+            doc.line(sX + 12, sY, sX + 16, sY - 4);
+            doc.line(sX + 16, sY - 4, sX + 20, sY - 1);
+            doc.line(sX + 20, sY - 1, sX + 24, sY - 3);
+            doc.line(sX + 24, sY - 3, sX + 30, sY);
+
             doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(100);
             doc.text("Authorized Signatory", rightAlignX, y + 24, { align: 'right' });
 
