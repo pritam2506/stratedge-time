@@ -115,10 +115,11 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50 sticky top-0 shadow-sm z-10">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4 border-r border-gray-200">Client Details</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Service Category</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-3/8">Description</th>
-                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider w-1/8">Actions</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[20%] border-r border-gray-200">Client Details</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[20%]">Service Category</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[35%]">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[15%]">Updated By</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider w-[10%]">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="catalogTableBody" class="bg-white divide-y divide-gray-200 text-sm">
@@ -270,13 +271,14 @@
                 showToast("No services available to export.", "error");
                 return;
             }
-            let csv = "Client Code,Client Name,Service Category,Description,Last Updated\n";
+            let csv = "Client Code,Client Name,Service Category,Description,Updated By,Last Updated\n";
             allServices.forEach(s => {
                 const c = allClients.find(cl => cl.id === s.clientId) || {name: 'Unknown', clientCode: 'N/A'};
                 const date = new Date(s.updatedAt).toLocaleDateString('en-GB');
                 const desc = `"${s.description.replace(/"/g, '""')}"`;
                 const name = `"${c.name.replace(/"/g, '""')}"`;
-                csv += `${c.clientCode},${name},${s.category},${desc},${date}\n`;
+                const updatedBy = s.updatedBy ? `"${s.updatedBy}"` : '"-"';
+                csv += `${c.clientCode},${name},${s.category},${desc},${updatedBy},${date}\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -326,23 +328,26 @@
                 const tr = document.createElement('tr');
                 tr.className = "bg-blue-50 border-b-2 border-brand-blue/20";
                 tr.innerHTML = `
-                    <td class="px-4 py-3 align-top border-r border-blue-100 w-1/4">
+                    <td class="px-4 py-3 align-top border-r border-blue-100 w-[20%]">
                         <select id="newGlobalClientId" class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm font-bold text-gray-800">
                             ${clientOpts}
                         </select>
                     </td>
-                    <td class="p-0 align-top" colspan="3">
-                        <table class="w-full h-full">
+                    <td class="p-0 align-top w-[80%]" colspan="4">
+                        <table class="w-full h-full table-fixed">
                             <tr>
-                                <td class="px-4 py-3 align-top w-1/3">
+                                <td class="px-4 py-3 align-top w-[25%]">
                                     <select id="newGlobalCategory" class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm">
                                         ${catOpts}
                                     </select>
                                 </td>
-                                <td class="px-4 py-3 align-top w-1/2">
+                                <td class="px-4 py-3 align-top w-[43.75%]">
                                     <textarea id="newGlobalDescription" rows="2" placeholder="Describe the service (Max 50 words)..." class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm custom-scroll"></textarea>
                                 </td>
-                                <td class="px-4 py-3 align-middle w-1/6 text-right whitespace-nowrap">
+                                <td class="px-4 py-3 align-middle w-[18.75%] text-gray-400 text-xs italic">
+                                    ${currentUserData ? currentUserData.name : 'You'}
+                                </td>
+                                <td class="px-4 py-3 align-middle w-[12.5%] text-right whitespace-nowrap">
                                     <button onclick="saveGlobalService()" title="Save" class="inline-flex items-center justify-center p-1.5 hover:bg-green-100 rounded-md transition-colors mr-2">
                                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                     </button>
@@ -358,7 +363,7 @@
             }
 
             if (clientsToShow.length === 0 && !isAddingGlobal) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 font-medium">No active service records found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 font-medium">No active service records found.</td></tr>`;
                 return;
             }
 
@@ -368,7 +373,7 @@
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-gray-200 hover:bg-gray-50/30 transition-colors group";
                 
-                let servicesHtml = `<table class="w-full divide-y divide-gray-100 h-full">`;
+                let servicesHtml = `<table class="w-full divide-y divide-gray-100 h-full table-fixed">`;
                 
                 services.forEach(svc => {
                     if (editingId === svc.id) {
@@ -376,15 +381,18 @@
                         serviceCategories.forEach(cat => catOpts += `<option value="${cat}" ${cat === svc.category ? 'selected' : ''}>${cat}</option>`);
                         servicesHtml += `
                             <tr class="bg-orange-50/50">
-                                <td class="px-4 py-3 align-top w-1/3">
+                                <td class="px-4 py-3 align-top w-[25%]">
                                     <select id="editCategory" class="w-full px-3 py-2 border border-brand-orange/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white text-sm">
                                         ${catOpts}
                                     </select>
                                 </td>
-                                <td class="px-4 py-3 align-top w-1/2">
+                                <td class="px-4 py-3 align-top w-[43.75%]">
                                     <textarea id="editDescription" rows="2" class="w-full px-3 py-2 border border-brand-orange/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white text-sm custom-scroll">${svc.description}</textarea>
                                 </td>
-                                <td class="px-4 py-3 align-middle w-1/6 text-right whitespace-nowrap">
+                                <td class="px-4 py-3 align-middle w-[18.75%] text-gray-500 text-xs font-medium">
+                                    ${svc.updatedBy || '-'}
+                                </td>
+                                <td class="px-4 py-3 align-middle w-[12.5%] text-right whitespace-nowrap">
                                     <button onclick="updateService('${svc.id}')" title="Save Changes" class="inline-flex items-center justify-center p-1.5 hover:bg-green-100 rounded-md transition-colors mr-2">
                                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                     </button>
@@ -397,13 +405,21 @@
                     } else {
                         servicesHtml += `
                             <tr class="hover:bg-white transition-colors">
-                                <td class="px-4 py-3 align-top w-1/3">
+                                <td class="px-4 py-3 align-top w-[25%]">
                                     <span class="bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider">${svc.category}</span>
                                 </td>
-                                <td class="px-4 py-3 align-top w-1/2">
+                                <td class="px-4 py-3 align-top w-[43.75%]">
                                     <p class="text-sm text-gray-700 leading-relaxed">${svc.description}</p>
                                 </td>
-                                <td class="px-4 py-3 align-middle w-1/6 text-right whitespace-nowrap opacity-20 group-hover:opacity-100 transition-opacity">
+                                <td class="px-4 py-3 align-middle w-[18.75%] text-gray-600 text-xs font-medium">
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-5 h-5 rounded-full bg-blue-100 text-brand-blue flex items-center justify-center text-[9px] font-bold shrink-0">
+                                            ${(svc.updatedBy || '?').charAt(0).toUpperCase()}
+                                        </div>
+                                        <span class="truncate" title="${svc.updatedBy || 'Unknown'}">${svc.updatedBy || 'Unknown'}</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 align-middle w-[12.5%] text-right whitespace-nowrap opacity-20 group-hover:opacity-100 transition-opacity">
                                     <button onclick="startEdit('${svc.id}')" title="Edit Service" class="inline-flex items-center justify-center p-1.5 hover:bg-blue-100 rounded-md transition-colors mr-1">
                                         <svg class="w-4 h-4 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
@@ -421,15 +437,18 @@
                     serviceCategories.forEach(cat => catOpts += `<option value="${cat}">${cat}</option>`);
                     servicesHtml += `
                         <tr class="bg-blue-50/50">
-                            <td class="px-4 py-3 align-top w-1/3">
+                            <td class="px-4 py-3 align-top w-[25%]">
                                 <select id="newClientCategory" class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm">
                                     ${catOpts}
                                 </select>
                             </td>
-                            <td class="px-4 py-3 align-top w-1/2">
+                            <td class="px-4 py-3 align-top w-[43.75%]">
                                 <textarea id="newClientDescription" rows="2" placeholder="Describe the service (Max 50 words)..." class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm custom-scroll"></textarea>
                             </td>
-                            <td class="px-4 py-3 align-middle w-1/6 text-right whitespace-nowrap">
+                            <td class="px-4 py-3 align-middle w-[18.75%] text-gray-400 text-xs italic">
+                                ${currentUserData ? currentUserData.name : 'You'}
+                            </td>
+                            <td class="px-4 py-3 align-middle w-[12.5%] text-right whitespace-nowrap">
                                 <button onclick="saveClientService('${client.id}')" title="Save" class="inline-flex items-center justify-center p-1.5 hover:bg-green-100 rounded-md transition-colors mr-2">
                                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 </button>
@@ -455,11 +474,11 @@
                 }
 
                 tr.innerHTML = `
-                    <td class="px-4 py-4 align-top w-1/4 border-r border-gray-200 bg-white">
+                    <td class="px-4 py-4 align-top w-[20%] border-r border-gray-200 bg-white">
                         <div class="font-bold text-gray-900 text-base">${client.name}</div>
                         <div class="text-xs font-mono text-brand-blue font-bold mt-1">${client.clientCode}</div>
                     </td>
-                    <td class="p-0 align-top w-3/4" colspan="3">
+                    <td class="p-0 align-top w-[80%]" colspan="4">
                         ${servicesHtml}
                     </td>
                 `;
@@ -502,7 +521,13 @@
             if (!description) { showToast("Description cannot be empty.", "error"); return; }
             if (!validateWordCount(description)) { showToast("Description must not exceed 50 words.", "error"); return; }
 
-            const payload = { clientId, category, description, updatedAt: Date.now() };
+            const payload = { 
+                clientId, 
+                category, 
+                description, 
+                updatedBy: currentUserData ? currentUserData.name : 'Unknown User',
+                updatedAt: Date.now() 
+            };
 
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'client_catalog'), payload);
@@ -536,7 +561,10 @@
 
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'client_catalog', id), {
-                    category, description, updatedAt: Date.now()
+                    category, 
+                    description, 
+                    updatedBy: currentUserData ? currentUserData.name : 'Unknown User',
+                    updatedAt: Date.now()
                 });
                 showToast("Service updated successfully.");
                 cancelAction();
