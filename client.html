@@ -885,7 +885,7 @@
             
             try {
                 // Adds the base64 image (x, y, width, height)
-                doc.addImage(signatureBase64, 'JPEG', rightAlignX - 55, y + 2, 55, 18);
+                doc.addImage(signatureBase64, 'PNG', rightAlignX - 55, y + 2, 55, 18);
             } catch(e) {
                 console.warn("Signature could not be loaded. Please check the Base64 string.");
             }
