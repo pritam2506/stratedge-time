@@ -366,6 +366,30 @@
         </div>
     </div>
 
+    <!-- Payslip Preview Modal -->
+    <div id="payslipPreviewModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Payslip Preview
+                </h3>
+                <div class="flex items-center gap-4">
+                    <button id="modalDownloadPayslipBtn" class="bg-brand-blue hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download PDF
+                    </button>
+                    <button onclick="closePayslipPreviewModal()" class="text-gray-400 hover:text-gray-700 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-grow bg-gray-800 p-0 overflow-hidden">
+                <iframe id="modalPayslipPreviewIframe" class="w-full h-full border-none bg-white"></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
         <div id="toastMessage" class="text-sm font-semibold"></div>
@@ -609,10 +633,24 @@
                 showToast("PDF data not available for this record.", "error");
                 return;
             }
-            const link = document.createElement('a');
-            link.href = rec.pdfDataUri;
-            link.download = `Payslip_${rec.empName.replace(' ', '')}_${rec.monthVal.replace('-', '')}.pdf`;
-            link.click();
+            
+            const previewIframe = document.getElementById('modalPayslipPreviewIframe');
+            previewIframe.src = rec.pdfDataUri;
+            
+            const downloadBtn = document.getElementById('modalDownloadPayslipBtn');
+            downloadBtn.onclick = () => {
+                const link = document.createElement('a');
+                link.href = rec.pdfDataUri;
+                link.download = `Payslip_${rec.empName.replace(' ', '')}_${rec.monthVal.replace('-', '')}.pdf`;
+                link.click();
+            };
+            
+            document.getElementById('payslipPreviewModal').classList.remove('hidden');
+        };
+
+        window.closePayslipPreviewModal = () => {
+            document.getElementById('payslipPreviewModal').classList.add('hidden');
+            document.getElementById('modalPayslipPreviewIframe').src = '';
         };
 
         window.loadPayRecord = (id) => {
