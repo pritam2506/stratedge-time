@@ -732,20 +732,15 @@
             const currentVal = select.value;
             select.innerHTML = '<option value="">All Employees</option>';
             
-            const uniqueEmpsMap = new Map();
-            allTimesheets.forEach(t => {
-                if (t.empId && t.name) {
-                    uniqueEmpsMap.set(t.empId, t.name);
+            const sortedEmps = [...allEmployees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            
+            sortedEmps.forEach(emp => {
+                if (emp.empId && emp.name) {
+                    select.innerHTML += `<option value="${emp.empId}">${emp.empId} - ${emp.name}</option>`;
                 }
             });
             
-            const sortedEmps = Array.from(uniqueEmpsMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
-            
-            sortedEmps.forEach(([empId, name]) => {
-                select.innerHTML += `<option value="${empId}">${empId} - ${name}</option>`;
-            });
-            
-            if (uniqueEmpsMap.has(currentVal)) select.value = currentVal;
+            if (sortedEmps.some(e => e.empId === currentVal)) select.value = currentVal;
         };
 
         window.renderTimesheets = () => {
@@ -974,6 +969,7 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
                     allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
                     renderEmployees(); 
+                    populateTsEmployeeFilter();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
                     allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
