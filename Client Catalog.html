@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratedge | Client Catalog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#4169E1',
+                        'brand-orange': '#FFA500',
+                        'brand-orange-hover': '#e69500',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-brand-blue to-blue-900 transition-opacity">
+        <div class="max-w-md w-full glass-effect rounded-2xl shadow-2xl overflow-hidden p-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-orange/10 rounded-2xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Client Catalog Access</h2>
+                <p class="text-sm text-gray-500 mt-2 font-medium">Restricted Portal. Please verify your identity.</p>
+            </div>
+            
+            <div id="loginErrorMsg" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg text-sm text-red-700 font-medium"></div>
+
+            <form id="catalogLoginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Employee ID</label>
+                    <input type="text" id="loginEmpId" required placeholder="e.g. E26..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-all font-mono uppercase">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Date of Birth</label>
+                    <input type="date" id="loginDob" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm">
+                </div>
+                <button type="submit" id="loginBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-black py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-4">
+                    <span>VERIFY ACCESS</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+                <div class="text-center mt-4">
+                    <a href="index.html" class="text-xs text-brand-blue font-bold hover:underline">← Back to Main Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content Application -->
+    <div id="mainApp" class="hidden flex-col min-h-screen">
+        <header class="bg-brand-blue text-white shadow-md z-20 relative flex-shrink-0">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">Client Catalog</div>
+                    <button onclick="logoutCatalog()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col h-full">
+            <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900">Service Registry</h2>
+                    <p class="text-gray-600 mt-1">Manage and track services actively provided to clients.</p>
+                </div>
+                <button onclick="startAddNew()" class="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 px-5 rounded-lg shadow transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Add Service Record
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col flex-grow">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-brand-blue flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        Active Services Directory
+                    </h3>
+                    <div class="w-full sm:w-72">
+                        <select id="clientFilter" onchange="renderTable()" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-medium">
+                            <option value="">All Clients</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-gray-200 flex-grow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Client Details</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Service Category</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-2/5">Description</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalogTableBody" class="bg-white divide-y divide-gray-100 text-sm">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification System -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all duration-300 z-[100] flex items-center p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-lg border border-gray-200" role="alert">
+        <div id="toastIcon" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"></div>
+        <div id="toastMessage" class="ml-3 text-sm font-semibold"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+            authDomain: "stratedge-time.firebaseapp.com",
+            projectId: "stratedge-time",
+            storageBucket: "stratedge-time.firebasestorage.app",
+            messagingSenderId: "550779977682",
+            appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+        };
+        const appId = 'stratedge-time-recorder';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allClients = [];
+        let allServices = [];
+        let editingId = null;
+        let isAddingNew = false;
+        let currentUserData = null;
+
+        const serviceCategories = ['Social Media', 'Brand Strategy', 'Org Design', 'Recruitment', 'Others'];
+
+        const showToast = (message, type = 'success') => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            const iconEl = document.getElementById('toastIcon');
+            if (type === 'success') {
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg';
+            } else {
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
+            }
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
+        };
+
+        const validateWordCount = (text) => {
+            const words = text.trim().split(/\s+/);
+            return words.length <= 50;
+        };
+
+        // --- SESSION LOGIC ---
+        const checkSession = () => {
+            const sessionData = sessionStorage.getItem('catalog_session');
+            if (sessionData) {
+                currentUserData = JSON.parse(sessionData);
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('flex');
+                initDataListeners();
+            }
+        };
+
+        window.logoutCatalog = () => {
+            sessionStorage.removeItem('catalog_session');
+            window.location.reload();
+        };
+
+        // --- LOGIN LOGIC ---
+        document.getElementById('catalogLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('loginErrorMsg');
+            const empId = document.getElementById('loginEmpId').value.trim().toUpperCase();
+            const dob = document.getElementById('loginDob').value;
+
+            btn.innerHTML = "VERIFYING...";
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
+
+            try {
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), 
+                                where('empId', '==', empId), 
+                                where('dob', '==', dob));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    throw new Error("Invalid Employee ID or Date of Birth.");
+                }
+
+                const userDoc = snapshot.docs[0].data();
+                
+                if (userDoc.catalogAccess !== 'Yes') {
+                    throw new Error("Access Denied. You do not have permission to view the Client Catalog.");
+                }
+
+                // Login Successful
+                sessionStorage.setItem('catalog_session', JSON.stringify(userDoc));
+                checkSession();
+
+            } catch (err) {
+                errorMsg.textContent = err.message;
+                errorMsg.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = `<span>VERIFY ACCESS</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                btn.disabled = false;
+            }
+        });
+
+        // --- DATA LISTENERS ---
+        const initDataListeners = () => {
+            onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), orderBy('name')), (s) => {
+                allClients = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                populateClientFilter();
+                renderTable();
+            });
+
+            onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'client_catalog'), orderBy('updatedAt', 'desc')), (s) => {
+                allServices = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderTable();
+            });
+        };
+
+        const populateClientFilter = () => {
+            const filter = document.getElementById('clientFilter');
+            const currentVal = filter.value;
+            filter.innerHTML = '<option value="">All Clients</option>';
+            allClients.forEach(c => {
+                filter.innerHTML += `<option value="${c.id}">${c.name} (${c.clientCode})</option>`;
+            });
+            if (allClients.some(c => c.id === currentVal)) filter.value = currentVal;
+        };
+
+        // --- GRID RENDERING ---
+        window.renderTable = () => {
+            const tbody = document.getElementById('catalogTableBody');
+            const filter = document.getElementById('clientFilter').value;
+            tbody.innerHTML = '';
+
+            let list = allServices;
+            if (filter) {
+                list = list.filter(s => s.clientId === filter);
+            }
+
+            // Render Inline Add Row
+            if (isAddingNew) {
+                const tr = document.createElement('tr');
+                tr.className = "bg-blue-50 border-b border-blue-100";
+                
+                let clientOpts = `<option value="" disabled selected>Select Client...</option>`;
+                allClients.forEach(c => clientOpts += `<option value="${c.id}">${c.name} (${c.clientCode})</option>`);
+                
+                let catOpts = '';
+                serviceCategories.forEach(cat => catOpts += `<option value="${cat}">${cat}</option>`);
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 align-top">
+                        <select id="newClientId" class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm font-bold text-gray-800">
+                            ${clientOpts}
+                        </select>
+                    </td>
+                    <td class="px-4 py-3 align-top">
+                        <select id="newCategory" class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm">
+                            ${catOpts}
+                        </select>
+                    </td>
+                    <td class="px-4 py-3 align-top relative">
+                        <textarea id="newDescription" rows="2" placeholder="Describe the service (Max 50 words)..." class="w-full px-3 py-2 border border-brand-blue/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-blue bg-white text-sm"></textarea>
+                    </td>
+                    <td class="px-4 py-3 align-top text-right whitespace-nowrap">
+                        <button onclick="saveNewService()" class="text-green-600 hover:text-green-700 bg-green-50 px-3 py-1.5 rounded-md font-bold mr-2 border border-green-200 transition-colors">SAVE</button>
+                        <button onclick="cancelAction()" class="text-gray-500 hover:text-gray-700 px-3 py-1.5 font-bold transition-colors">CANCEL</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            if (list.length === 0 && !isAddingNew) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 font-medium">No service records found.</td></tr>`;
+                return;
+            }
+
+            // Render Data Rows
+            list.forEach(svc => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors";
+                
+                if (editingId === svc.id) {
+                    // Inline Edit Mode
+                    tr.classList.add("bg-orange-50");
+                    
+                    let clientOpts = '';
+                    allClients.forEach(c => clientOpts += `<option value="${c.id}" ${c.id === svc.clientId ? 'selected' : ''}>${c.name} (${c.clientCode})</option>`);
+                    
+                    let catOpts = '';
+                    serviceCategories.forEach(cat => catOpts += `<option value="${cat}" ${cat === svc.category ? 'selected' : ''}>${cat}</option>`);
+
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 align-top">
+                            <select id="editClientId" class="w-full px-3 py-2 border border-brand-orange/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white text-sm font-bold text-gray-800">
+                                ${clientOpts}
+                            </select>
+                        </td>
+                        <td class="px-4 py-3 align-top">
+                            <select id="editCategory" class="w-full px-3 py-2 border border-brand-orange/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white text-sm">
+                                ${catOpts}
+                            </select>
+                        </td>
+                        <td class="px-4 py-3 align-top relative">
+                            <textarea id="editDescription" rows="2" class="w-full px-3 py-2 border border-brand-orange/30 rounded focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white text-sm">${svc.description}</textarea>
+                        </td>
+                        <td class="px-4 py-3 align-top text-right whitespace-nowrap">
+                            <button onclick="updateService('${svc.id}')" class="text-brand-orange hover:bg-orange-100 bg-white px-3 py-1.5 rounded-md font-bold mr-2 border border-brand-orange transition-colors">UPDATE</button>
+                            <button onclick="cancelAction()" class="text-gray-500 hover:text-gray-700 px-3 py-1.5 font-bold transition-colors">CANCEL</button>
+                        </td>
+                    `;
+                } else {
+                    // View Mode
+                    const client = allClients.find(c => c.id === svc.clientId) || { name: 'Unknown', clientCode: 'N/A' };
+                    tr.innerHTML = `
+                        <td class="px-4 py-4 align-top">
+                            <div class="font-bold text-gray-900">${client.name}</div>
+                            <div class="text-xs font-mono text-gray-500 mt-0.5">${client.clientCode}</div>
+                        </td>
+                        <td class="px-4 py-4 align-top">
+                            <span class="bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider">${svc.category}</span>
+                        </td>
+                        <td class="px-4 py-4 align-top">
+                            <p class="text-sm text-gray-700 leading-relaxed">${svc.description}</p>
+                        </td>
+                        <td class="px-4 py-4 align-top text-right whitespace-nowrap">
+                            <button onclick="startEdit('${svc.id}')" class="text-brand-blue hover:underline font-bold text-xs mr-3 transition-colors">EDIT</button>
+                            <button onclick="deleteService('${svc.id}')" class="text-red-400 hover:text-red-600 hover:underline font-bold text-xs transition-colors">DELETE</button>
+                        </td>
+                    `;
+                }
+                tbody.appendChild(tr);
+            });
+        };
+
+        // --- GRID ACTIONS ---
+        window.startAddNew = () => {
+            isAddingNew = true;
+            editingId = null;
+            document.getElementById('clientFilter').value = ''; // clear filter to see the new row clearly
+            renderTable();
+        };
+
+        window.startEdit = (id) => {
+            isAddingNew = false;
+            editingId = id;
+            renderTable();
+        };
+
+        window.cancelAction = () => {
+            isAddingNew = false;
+            editingId = null;
+            renderTable();
+        };
+
+        window.saveNewService = async () => {
+            const clientId = document.getElementById('newClientId').value;
+            const category = document.getElementById('newCategory').value;
+            const description = document.getElementById('newDescription').value.trim();
+
+            if (!clientId) { showToast("Please select a client.", "error"); return; }
+            if (!description) { showToast("Description cannot be empty.", "error"); return; }
+            if (!validateWordCount(description)) { showToast("Description must not exceed 50 words.", "error"); return; }
+
+            const payload = {
+                clientId,
+                category,
+                description,
+                updatedAt: Date.now()
+            };
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'client_catalog'), payload);
+                showToast("Service registered successfully.");
+                isAddingNew = false;
+                renderTable();
+            } catch(e) {
+                console.error(e);
+                showToast("Error saving record.", "error");
+            }
+        };
+
+        window.updateService = async (id) => {
+            const clientId = document.getElementById('editClientId').value;
+            const category = document.getElementById('editCategory').value;
+            const description = document.getElementById('editDescription').value.trim();
+
+            if (!clientId) { showToast("Please select a client.", "error"); return; }
+            if (!description) { showToast("Description cannot be empty.", "error"); return; }
+            if (!validateWordCount(description)) { showToast("Description must not exceed 50 words.", "error"); return; }
+
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'client_catalog', id), {
+                    clientId, category, description, updatedAt: Date.now()
+                });
+                showToast("Service updated successfully.");
+                editingId = null;
+                renderTable();
+            } catch(e) {
+                console.error(e);
+                showToast("Error updating record.", "error");
+            }
+        };
+
+        window.deleteService = async (id) => {
+            if (confirm("Are you sure you want to remove this service from the catalog?")) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'client_catalog', id));
+                    showToast("Service removed.");
+                } catch(e) {
+                    console.error(e);
+                    showToast("Error deleting record.", "error");
+                }
+            }
+        };
+
+        // Call checkSession immediately on script load to catch existing sessions
+        checkSession();
+        
+        // Init Auth for database connection (runs transparently behind the manual login overlay)
+        signInAnonymously(auth).catch(e => console.error("Firebase Auth Fail", e));
+
+    </script>
+</body>
+</html>
