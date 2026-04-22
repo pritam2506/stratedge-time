@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stratedge | Admin Dashboard</title>
+    <title>Stratedge | Pay Calculation</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'brand-blue': '#4169E1', // Royal Blue
-                        'brand-orange': '#FFA500', // Orange
+                        'brand-blue': '#4169E1',
+                        'brand-orange': '#FFA500',
                         'brand-orange-hover': '#e69500',
                     }
                 }
@@ -20,6 +27,14 @@
     </script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Access Denied Overlay -->
+    <div id="accessDenied" class="fixed inset-0 bg-white z-[999] hidden flex-col items-center justify-center text-center p-4">
+        <svg class="w-20 h-20 text-red-500 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Access Denied</h2>
+        <p class="text-gray-600 mb-6">Administrator credentials required for this portal.</p>
+        <button onclick="window.location.href='index.html'" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">Return to Login</button>
+    </div>
 
     <!-- Header -->
     <header class="bg-brand-blue text-white shadow-md z-20 relative">
@@ -33,28 +48,12 @@
                 <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
             </div>
             <div class="flex items-center gap-4">
-                <!-- Notification Bell -->
-                <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()" title="Notifications">
-                    <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
-                    
-                    <!-- Dropdown Panel -->
-                    <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
-                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-                            <span class="font-bold text-gray-800 text-sm">Notifications</span>
-                            <button onclick="markAllRead()" class="text-xs text-brand-blue hover:text-blue-700 font-semibold transition-colors">Mark all as read</button>
-                        </div>
-                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100"></div>
-                    </div>
-                </div>
-
-                <button onclick="window.location.href='client.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 hidden sm:flex border-r border-white/20 pr-4">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Client & Invoicing Portal
+                <button onclick="window.location.href='admin.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 hidden sm:flex border-r border-white/20 pr-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Admin Dashboard
                 </button>
-
-                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">Admin Portal</div>
-                <button onclick="window.location.href='index.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">Pay Calculation</div>
+                <button onclick="logout()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     Logout
                 </button>
@@ -62,325 +61,336 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <div class="mb-8 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h2 class="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
-                <p class="text-gray-600 mt-1">Manage users, view statistics, and approve timesheets.</p>
+                <h2 class="text-3xl font-bold text-gray-900">Payroll Center</h2>
+                <p class="text-gray-600 mt-1">Review timesheets, confirm automated LWP, and generate validated payslips.</p>
             </div>
-            
-            <!-- Navigation Tabs -->
-            <div class="flex bg-gray-200 p-1 rounded-lg">
-                <button id="tab-btn-employees" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm" onclick="switchTab('employees')">Employees</button>
-                <button id="tab-btn-timesheets" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="switchTab('timesheets')">Timesheet Approvals</button>
-                <button class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="window.location.href='paycalc.html'">Pay Calculation</button>
+
+            <!-- Tab Navigation -->
+            <div class="flex bg-gray-200 p-1 rounded-lg shadow-inner">
+                <button id="tab-btn-calc" class="px-6 py-2 rounded-md font-semibold text-sm transition-all bg-white text-brand-blue shadow-sm" onclick="switchTab('calc')">
+                    Calculator
+                </button>
+                <button id="tab-btn-summary" class="px-6 py-2 rounded-md font-semibold text-sm transition-all text-gray-600 hover:text-gray-900" onclick="switchTab('summary')">
+                    Payout Summary
+                </button>
             </div>
         </div>
 
-        <!-- TAB 1: EMPLOYEE MANAGEMENT -->
-        <div id="tab-employees" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Add User Form -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
-                <h3 class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">Add New User</h3>
-                <form id="addUserForm" class="space-y-4">
-                    <div>
-                        <label for="userName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        <input type="text" id="userName" required placeholder="John Doe" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none">
-                    </div>
-                    <div>
-                        <label for="userDOB" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                        <input type="date" id="userDOB" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none text-sm">
-                    </div>
-                    <div>
-                        <label for="userRole" class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
-                        <select id="userRole" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none">
-                            <option value="Employee" selected>Employee</option>
-                            <option value="Admin">Admin</option>
+        <!-- TAB 1: CALCULATOR VIEW -->
+        <div id="tab-calc" class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <!-- Left: Input Form & History -->
+            <div class="md:col-span-4 flex flex-col gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-bold text-brand-blue mb-4 border-b pb-2">Calculation Parameters</h3>
+                    <form id="calcForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Employee</label>
+                            <select id="empSelect" required onchange="handleEmpSelection()" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
+                                <option value="" disabled selected>-- Select Employee --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Select Month</label>
+                            <input type="month" id="payMonth" required class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Monthly Salary (INR)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2 text-gray-500 font-bold">₹</span>
+                                <input type="number" id="basePay" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-bold text-brand-blue text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-2 text-sm font-bold text-gray-700 cursor-pointer">
+                                <input type="checkbox" id="hasBonus" class="w-4 h-4 text-brand-blue rounded border-gray-300 focus:ring-brand-blue" onchange="toggleBonusInput()">
+                                Include Bonus Component? (Optional)
+                            </label>
+                        </div>
+                        <div id="bonusInputContainer" class="hidden space-y-3">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Bonus Amount (INR)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-500 font-bold">₹</span>
+                                    <input type="number" id="bonusAmount" value="0" class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 font-bold text-brand-blue text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Bonus Justification</label>
+                                <input type="text" id="bonusJustification" placeholder="e.g. Diwali Bonus, Performance" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
+                            </div>
+                        </div>
+                        <button type="submit" id="calcBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all mt-4 flex justify-center items-center gap-2">
+                            Preview Calculation
+                        </button>
+                    </form>
+                </div>
+
+                <!-- History sub-panel -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex-grow flex flex-col">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3 border-b pb-2 flex justify-between items-center">
+                        Quick History 
+                        <span id="recordCount" class="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">0 Total</span>
+                    </h3>
+                    <div class="flex gap-2 mb-4">
+                        <select id="filterEmp" onchange="renderPayRecords()" class="w-1/2 px-2 py-1.5 border border-gray-300 rounded outline-none focus:ring-1 focus:ring-brand-blue bg-gray-50 text-xs text-gray-700">
+                            <option value="">All Employees</option>
                         </select>
+                        <input type="month" id="filterMonth" onchange="renderPayRecords()" class="w-1/2 px-2 py-1.5 border border-gray-300 rounded outline-none focus:ring-1 focus:ring-brand-blue bg-gray-50 text-xs text-gray-700">
                     </div>
-                    <div>
-                        <label for="empId" class="block text-sm font-medium text-gray-700 mb-1">Employee ID <span class="text-[10px] text-gray-400 uppercase">(Auto-gen)</span></label>
-                        <input type="text" id="empId" readonly placeholder="Enter DOB first..." class="w-full px-4 py-2 bg-gray-50 border rounded-lg font-bold text-brand-blue outline-none cursor-not-allowed">
+                    <div id="payRecordList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scroll flex-grow">
+                        <!-- JS injected -->
                     </div>
-                    <div>
-                        <label for="userEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" id="userEmail" required placeholder="email@example.com" class="w-full px-4 py-2 border rounded-lg outline-none">
-                    </div>
-                    <div>
-                        <label for="userDesig" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                        <input type="text" id="userDesig" required placeholder="e.g. Designer" class="w-full px-4 py-2 border rounded-lg outline-none">
-                    </div>
-                    <div>
-                        <label for="userDept" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                        <select id="userDept" required class="w-full px-4 py-2 border rounded-lg outline-none">
-                            <option value="" disabled selected>Select Dept...</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Founder's office">Founder's office</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="userPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        <input type="tel" id="userPhone" required placeholder="+91 ..." class="w-full px-4 py-2 border rounded-lg outline-none">
-                    </div>
-                    <div>
-                        <label for="userPay" class="block text-sm font-medium text-gray-700 mb-1">Monthly Pay (INR)</label>
-                        <input type="number" id="userPay" required placeholder="e.g. 50000" class="w-full px-4 py-2 border rounded-lg outline-none">
-                    </div>
-                    <div>
-                        <label for="userDOJ" class="block text-sm font-medium text-gray-700 mb-1">Joining Date</label>
-                        <input type="date" id="userDOJ" required class="w-full px-4 py-2 border rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label for="userCatalogAccess" class="block text-sm font-medium text-gray-700 mb-1">Client Catalog Access</label>
-                        <select id="userCatalogAccess" required class="w-full px-4 py-2 border rounded-lg outline-none">
-                            <option value="No" selected>No</option>
-                            <option value="Yes">Yes</option>
-                        </select>
-                    </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm">Add Employee</button>
-                </form>
+                </div>
             </div>
 
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">Current Employees</h3>
-                    <span id="userCount" class="bg-blue-100 text-brand-blue text-xs font-bold px-3 py-1.5 rounded-full">0 Employees</span>
+            <!-- Right: Results Panel -->
+            <div class="md:col-span-8">
+                <div id="resultsEmpty" class="bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                    <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p class="font-medium">Select parameters and click "Preview Calculation" to view the detailed breakdown.</p>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <input type="text" id="filterName" oninput="renderEmployees()" placeholder="Search by name or ID..." class="flex-1 px-4 py-2 border rounded-md text-sm outline-none">
-                    <select id="filterRole" onchange="renderEmployees()" class="sm:w-40 px-3 py-2 border rounded-md text-sm text-gray-700"><option value="">All Roles</option><option value="Employee">Employee</option><option value="Admin">Admin</option></select>
-                    <select id="filterDept" onchange="renderEmployees()" class="sm:w-48 px-3 py-2 border rounded-md text-sm text-gray-700"><option value="">All Depts</option><option value="Design">Design</option><option value="Marketing">Marketing</option><option value="Founder's office">Founder's office</option></select>
+
+                <div id="resultsPanel" class="hidden bg-white p-6 rounded-xl shadow-lg border border-brand-blue/20">
+                    <div class="flex justify-between items-start border-b pb-4 mb-4">
+                        <div>
+                            <h3 class="text-2xl font-black text-gray-900" id="resEmpName">John Doe</h3>
+                            <p class="text-sm font-bold text-gray-500" id="resMonthLabel">PAYSLIP FOR OCT 2026</p>
+                            <p class="text-xs text-gray-400 mt-1" id="resPeriodLabel">Period: -- to --</p>
+                        </div>
+                        
+                        <div class="text-right">
+                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Net Payable</p>
+                            <p class="text-3xl font-black text-brand-blue" id="resNetPay">₹0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm mb-6">
+                        <!-- Monthly Time Summary -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <h4 class="text-xs font-bold text-brand-blue uppercase tracking-widest mb-3 border-b pb-1">Monthly Time Summary</h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 font-bold">Target Total</span>
+                                    <span class="font-bold text-gray-900" id="resMonthlyTarget">0 hrs (0 days)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 font-bold">Logged Total</span>
+                                    <span class="font-bold text-brand-blue" id="resMonthlyLogged">0 hrs (0 days)</span>
+                                </div>
+                                <div class="border-t border-gray-200 pt-2 flex justify-between">
+                                    <span class="text-gray-500">Regular Work</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlyWork">0 hrs (0 days)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 ml-4">- Sick Leave</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlySL">0 hrs</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 ml-4">- Earned Leave</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlyEL">0 hrs</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 ml-4">- Public Holiday</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlyPH">0 hrs</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- YTD Leave Summary -->
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                            <h4 class="text-xs font-bold text-brand-blue uppercase tracking-widest mb-3 border-b border-blue-200 pb-1">YTD Leave Summary</h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 font-medium">Sick Leave (SL)</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-gray-900" id="resYtdSlHrs">0 / 0 hrs</span><br>
+                                        <span class="text-[10px] text-gray-500" id="resYtdSlDays">(0 / 0 days)</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 font-medium">Earned Leave (EL)</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-gray-900" id="resYtdElHrs">0 / 0 hrs</span><br>
+                                        <span class="text-[10px] text-gray-500" id="resYtdElDays">(0 / 0 days)</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 font-medium">Public Holiday (PH)</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-gray-900" id="resYtdPhHrs">0 / 0 hrs</span><br>
+                                        <span class="text-[10px] text-gray-500" id="resYtdPhDays">(0 / 0 days)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Earnings -->
+                    <div class="mb-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-1">Earnings</h4>
+                        <div id="earningsList" class="space-y-2 text-gray-700 text-sm bg-gray-50 p-3 rounded border border-gray-100">
+                            <!-- JS injected -->
+                        </div>
+                    </div>
+
+                    <!-- Deductions -->
+                    <div class="mb-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b pb-1">Deductions (Leave Without Pay)</h4>
+                        <div id="deductionList" class="space-y-2 text-gray-700 text-sm bg-red-50/50 p-3 rounded border border-red-100">
+                            <!-- JS injected -->
+                        </div>
+                        <div class="flex justify-between items-center font-bold text-red-600 mt-2 p-3 bg-red-50 rounded border border-red-100">
+                            <span>Total Deductions</span>
+                            <span id="resTotalDed">- ₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Grand Total -->
+                    <div class="flex justify-between items-center font-black text-xl text-brand-blue mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200 shadow-sm">
+                        <span>GRAND TOTAL PAYABLE</span>
+                        <span id="resGrandTotal">₹0</span>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-8 pt-4 border-t flex justify-end gap-3" id="actionPanel">
+                        <button type="button" id="editBtn" onclick="editParameters()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">
+                            Edit Parameters
+                        </button>
+                        <button type="button" id="confirmBtn" onclick="confirmAndSavePay()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow transition-all flex items-center gap-2 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Confirm Calculations & Save
+                        </button>
+                        <button type="button" id="pdfBtn" onclick="downloadPDF()" class="hidden bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg shadow transition-all flex items-center gap-2 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download Payslip PDF
+                        </button>
+                    </div>
+                    
+                    <div id="confirmedBadge" class="hidden text-center mt-3 text-sm font-bold text-green-600 bg-green-50 p-2 rounded-lg border border-green-200">
+                        Record Confirmed & Saved to Database
+                    </div>
                 </div>
-                <div class="overflow-x-auto border border-gray-200 rounded-lg text-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
+            </div>
+        </div>
+
+        <!-- TAB 2: PAYOUT SUMMARY VIEW -->
+        <div id="tab-summary" class="hidden flex flex-col gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex flex-col md:flex-row justify-between items-end gap-4 mb-6">
+                    <div class="w-full md:w-auto flex flex-col md:flex-row gap-4 flex-grow">
+                        <div class="flex-grow">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter Employee</label>
+                            <select id="summaryFilterEmp" onchange="renderPayoutSummary()" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm font-medium">
+                                <option value="">All Employees</option>
+                            </select>
+                        </div>
+                        <div class="w-full md:w-64">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter Month</label>
+                            <input type="month" id="summaryFilterMonth" onchange="renderPayoutSummary()" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none text-sm font-medium">
+                        </div>
+                    </div>
+                    <button onclick="clearSummaryFilters()" class="text-xs font-bold text-brand-blue hover:underline pb-2">Clear Filters</button>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-gray-100">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Role/Dept</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Pay (INR)</th>
-                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                                <th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Catalog Access</th>
-                                <th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th class="px-6 py-4 text-left font-bold text-gray-500 uppercase tracking-wider">Employee</th>
+                                <th class="px-6 py-4 text-left font-bold text-gray-500 uppercase tracking-wider text-center">Month</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Base Pay</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Bonus</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Deductions</th>
+                                <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Net Payable</th>
+                                <th class="px-6 py-4 text-center font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="usersList" class="bg-white divide-y divide-gray-200"></tbody>
+                        <tbody id="summaryTableBody" class="bg-white divide-y divide-gray-100">
+                            <!-- JS injected -->
+                        </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-
-        <!-- TAB 2: TIMESHEET APPROVALS -->
-        <div id="tab-timesheets" class="hidden bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h3 class="text-xl font-semibold text-brand-blue mb-4 border-b pb-3 flex items-center gap-2">Timesheet Approvals</h3>
-            <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                
-                <!-- Updated Filter Dropdown -->
-                <select id="tsFilterName" onchange="renderTimesheets()" class="flex-1 px-4 py-2.5 border rounded-md text-sm outline-none text-gray-700 bg-white">
-                    <option value="">All Employees</option>
-                </select>
-
-                <!-- New Status Filter Dropdown -->
-                <select id="tsFilterStatus" onchange="renderTimesheets()" class="w-full sm:w-48 px-4 py-2.5 border rounded-md text-sm outline-none text-gray-700 bg-white">
-                    <option value="">All Statuses</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Unapproved">Unapproved / Pending</option>
-                </select>
-
-                <div class="w-full sm:w-72 relative">
-                    <button id="adminWeekSelectorBtn" onclick="toggleAdminWeekDropdown()" class="w-full px-4 py-2.5 bg-white border rounded-md flex justify-between items-center text-sm text-gray-700"><span id="adminWeekSelectorDisplay">All Weeks</span><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
-                    <div id="adminWeekDropdown" class="hidden absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-white border rounded-lg shadow-xl right-0 p-2"></div>
-                    <input type="hidden" id="tsFilterWeek" value="">
+                <div id="summaryEmptyState" class="hidden py-20 text-center flex flex-col items-center">
+                    <div class="p-4 bg-gray-50 rounded-full mb-4">
+                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5"></path></svg>
+                    </div>
+                    <p class="text-gray-400 font-medium">No payout records found for the selected criteria.</p>
                 </div>
-            </div>
-            <div class="overflow-x-auto border border-gray-200 rounded-lg text-sm">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Week</th><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Employee</th><th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Total Hours</th><th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Status</th><th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th></tr></thead>
-                    <tbody id="timesheetsList" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
             </div>
         </div>
     </main>
 
-    <!-- Modal: View Employee -->
-    <div id="viewEmployeeModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold">View Employee Details</h3>
-                <button onclick="closeModal('viewEmployeeModal')" class="text-gray-400 hover:text-gray-600">✕</button>
-            </div>
-            <div class="p-6 overflow-y-auto">
-                <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                    <div class="col-span-2 pb-2 border-b">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Employee ID</p>
-                        <p class="font-bold text-brand-blue text-xl font-mono mt-1" id="viewEmpId"></p>
+    <!-- Calculation Review Modal (Centralized Override & Warnings) -->
+    <div id="calcReviewModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-1">Calculation Review</h3>
+                <p id="modalProgressText" class="text-sm text-gray-500 mb-4">Logged 0.0 hrs of 0.0 hrs target (0%).</p>
+
+                <!-- Conditional Shortfall Warning -->
+                <div id="modalShortfallAlert" class="bg-red-50 border border-red-100 rounded-lg p-3 text-xs text-red-700 text-left mb-6 hidden">
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <strong class="font-bold">Incomplete Timesheet detected!</strong>
                     </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Full Name</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserName"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Role</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserRole"></p>
-                    </div>
-                    <div class="col-span-2">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Address</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserEmail"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Designation</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDesig"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Department</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDept"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Phone</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserPhone"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly Pay</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserPay"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Date of Joining</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDOJ"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Date of Birth</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDOB"></p>
-                    </div>
-                    <div class="col-span-1">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Catalog Access</p>
-                        <p class="font-semibold text-gray-800 mt-1" id="viewUserCatalogAccess"></p>
+                    Standard process will deduct <span id="modalShortfallHrs" class="font-bold">0.0 hrs</span> as Leave Without Pay.
+                </div>
+
+                <!-- Override Input -->
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 text-left">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" id="modalOverrideToggle" class="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer" onchange="updateModalWarnings()">
+                        </div>
+                        <div>
+                            <span class="block text-sm font-bold text-gray-800">Grant Full 30-Day Pay</span>
+                            <span class="block text-[10px] text-gray-500">Override pro-rated calculation and shortfall logic.</span>
+                        </div>
+                    </label>
+                    <div id="modalOverrideWarning" class="mt-3 text-[10px] font-bold text-orange-600 bg-orange-50 p-2 rounded border border-orange-200 hidden animate-pulse">
+                        ⚠️ WARNING: You are granting full pay despite the employee being below 100% target.
                     </div>
                 </div>
-            </div>
-            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
-                <button onclick="closeModal('viewEmployeeModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button type="button" onclick="cancelReview()" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+                    <button type="button" onclick="applyReviewAndPreview()" class="flex-1 px-3 py-2 bg-brand-blue hover:bg-blue-700 text-white rounded-lg font-bold transition-colors shadow-sm text-sm">Generate Preview</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Edit Employee -->
-    <div id="editEmployeeModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold">Edit Employee</h3>
-                <button onclick="closeModal('editEmployeeModal')" class="text-gray-400">✕</button>
+    <!-- Payslip Preview Modal -->
+    <div id="payslipPreviewModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Payslip Preview
+                </h3>
+                <div class="flex items-center gap-4">
+                    <button id="modalDownloadPayslipBtn" class="bg-brand-blue hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download PDF
+                    </button>
+                    <button onclick="closePayslipPreviewModal()" class="text-gray-400 hover:text-gray-700 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
             </div>
-            <div class="p-6 overflow-y-auto">
-                <form id="editEmployeeForm" class="space-y-4">
-                    <input type="hidden" id="editDocId">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth <span class="text-gray-400 font-normal italic">(Updating DOB will regenerate ID)</span></label>
-                            <input type="date" id="editUserDOB" required class="w-full px-4 py-2 border rounded-lg text-sm">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Employee ID</label>
-                            <input type="text" id="editEmpId" readonly class="w-full px-4 py-2 bg-gray-100 border rounded-lg font-bold text-brand-blue outline-none cursor-not-allowed">
-                        </div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Name</label><input type="text" id="editUserName" required class="w-full px-4 py-2 border rounded-lg"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Role</label><select id="editUserRole" required class="w-full px-4 py-2 border rounded-lg"><option value="Employee">Employee</option><option value="Admin">Admin</option></select></div>
-                        <div class="col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Email</label><input type="email" id="editUserEmail" required class="w-full px-4 py-2 border rounded-lg"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Designation</label><input type="text" id="editUserDesig" required class="w-full px-4 py-2 border rounded-lg"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Dept</label><select id="editUserDept" required class="w-full px-4 py-2 border rounded-lg"><option value="Design">Design</option><option value="Marketing">Marketing</option><option value="Founder's office">Founder's office</option></select></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Phone</label><input type="tel" id="editUserPhone" required class="w-full px-4 py-2 border rounded-lg"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Monthly Pay</label><input type="number" id="editUserPay" required class="w-full px-4 py-2 border rounded-lg"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Joined</label><input type="date" id="editUserDOJ" required class="w-full px-4 py-2 border rounded-lg text-sm"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Catalog Access</label><select id="editUserCatalogAccess" required class="w-full px-4 py-2 border rounded-lg"><option value="No">No</option><option value="Yes">Yes</option></select></div>
-                    </div>
-                </form>
-            </div>
-            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-                <button onclick="closeModal('editEmployeeModal')" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
-                <button type="submit" form="editEmployeeForm" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm">Save Changes</button>
+            <div class="flex-grow bg-gray-800 p-0 overflow-hidden">
+                <iframe id="modalPayslipPreviewIframe" class="w-full h-full border-none bg-white"></iframe>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Employee Stats -->
-    <div id="statsModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold" id="statsModalTitle">Employee Statistics</h3>
-                <button onclick="closeModal('statsModal')" class="text-gray-400 text-2xl">✕</button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div>
-                    <div class="flex justify-between items-center mb-3 border-b pb-1">
-                        <h4 class="text-lg font-bold text-brand-blue">Monthly Stats</h4>
-                        <select id="statsMonthSelector" onchange="updateMonthlyStats()" class="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded px-2 py-1 outline-none cursor-pointer hover:bg-indigo-100 transition-colors"></select>
-                    </div>
-                    
-                    <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
-                        <div class="flex justify-between items-center mb-1">
-                            <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div>
-                            <div id="stat-m-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div>
-                        </div>
-                        <div id="stat-m-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
-                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-m-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-6 text-center sm:text-left">
-                        <div class="bg-blue-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Work Hours</div><div id="stat-m-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
-                        <div class="bg-orange-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Sick Leave</div><div id="stat-m-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
-                        <div class="bg-purple-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Earned Leave</div><div id="stat-m-el" class="text-2xl font-black text-purple-600">0.0</div></div>
-                        <div class="bg-gray-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Public Holiday</div><div id="stat-m-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
-                    </div>
-                </div>
-                <div>
-                    <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1 mt-[26px]">Year To Date</h4>
-                    <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
-                        <div class="flex justify-between items-center mb-1">
-                            <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div>
-                            <div id="stat-y-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div>
-                        </div>
-                        <div id="stat-y-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
-                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-y-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 text-center sm:text-left">
-                        <div class="bg-blue-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Work Hours</div><div id="stat-y-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
-                        <div class="bg-orange-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Sick Leave</div><div id="stat-y-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
-                        <div class="bg-purple-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Earned Leave</div><div id="stat-y-el" class="text-2xl font-black text-purple-600">0.0</div></div>
-                        <div class="bg-gray-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Public Holiday</div><div id="stat-y-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
-                    </div>
-                </div>
-            </div>
-            <div class="px-6 py-4 border-t bg-gray-50 text-right text-xs text-gray-500">* Approved hours only. 1 day = 8 hrs.</div>
-        </div>
-    </div>
-
-    <!-- Modal: Review Timesheet -->
-    <div id="reviewModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h3 id="reviewModalTitle" class="text-xl font-bold">Review Timesheet</h3>
-                <button onclick="closeModal('reviewModal')" class="text-gray-400 text-2xl">✕</button>
-            </div>
-            <div class="p-6 overflow-y-auto">
-                <div class="flex justify-between items-end mb-4">
-                    <div><p id="reviewEmpDetails" class="text-sm text-gray-500"></p><p id="reviewTotalHours" class="text-2xl font-bold text-brand-blue"></p></div>
-                    <div id="reviewStatusBadge" class="px-3 py-1 rounded-full text-xs font-bold"></div>
-                </div>
-                <div id="reviewJustificationBlock" class="bg-red-50 p-4 rounded-lg mb-6 hidden"><h4 class="text-xs font-bold text-red-800">Justification:</h4><p id="reviewJustificationText" class="text-sm text-red-700 italic"></p></div>
-                <table class="min-w-full divide-y border text-sm rounded-lg overflow-hidden">
-                    <thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Day</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Date</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Project</th><th class="px-4 py-2 text-center text-xs text-gray-500 uppercase">Hours</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Type</th></tr></thead>
-                    <tbody id="reviewTableBody" class="divide-y"></tbody>
-                </table>
-            </div>
-            <div id="reviewActions" class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-                <button id="btnDeleteTs" class="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm mr-auto">Delete / Re-open</button>
-                <button id="btnReject" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm">Reject</button>
-                <button id="btnApprove" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm">Approve</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notifications -->
+    <!-- Toast -->
     <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
         <div id="toastMessage" class="text-sm font-semibold"></div>
     </div>
@@ -388,8 +398,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, doc, setDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // ==========================================
+        // 1. INIT & AUTH
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
             authDomain: "stratedge-time.firebaseapp.com",
@@ -404,95 +417,23 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUser = null;
+        const sessionUser = sessionStorage.getItem('stratedge_active_user');
+        const activeUser = sessionUser ? JSON.parse(sessionUser) : null;
+        if (!activeUser || activeUser.role !== 'Admin') {
+            document.getElementById('accessDenied').classList.remove('hidden');
+        }
+
         let allEmployees = [];
         let allTimesheets = [];
-        let readNotifIds = new Set();
-        let currentReviewDocId = null;
-        let currentStatsEmpId = null;
+        let allPayRecords = [];
+        
+        let currentModalStats = null;
+        window.pendingPayloadData = null;
+        window.currentPayslipData = null;
 
-        // Public Holidays Data 2026
-        const publicHolidays2026 = [
-            { date: '2026-01-26', name: 'Republic Day' },
-            { date: '2026-03-03', name: 'Dol Jatra / Holi' },
-            { date: '2026-04-15', name: 'Poila Boishakh' },
-            { date: '2026-08-15', name: 'Independence Day' },
-            { date: '2026-10-02', name: 'Gandhi Jayanti' },
-            { date: '2026-10-18', name: 'Maha Saptami' },
-            { date: '2026-10-19', name: 'Maha Ashtami' },
-            { date: '2026-10-20', name: 'Maha Navami' },
-            { date: '2026-10-21', name: 'Maha Dashami' },
-            { date: '2026-11-08', name: 'Kali Puja' },
-            { date: '2026-11-09', name: 'Diwali' },
-            { date: '2026-12-25', name: 'Christmas Day' }
-        ];
-
-        const getISODate = (dateObj) => {
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const d = String(dateObj.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        };
-
-        // --- LEAVE LIMITS CALCULATOR ---
-        const calculateLeaveLimits = (dojString) => {
-            let slLimit = 5, elLimit = 12, phLimit = 12;
-            const currentYearNum = new Date().getFullYear();
-            if (dojString) {
-                const dojDate = new Date(dojString);
-                if (dojDate.getFullYear() === currentYearNum) {
-                    const endOfYear = new Date(currentYearNum, 11, 31);
-                    const startOfYear = new Date(currentYearNum, 0, 1);
-                    const daysWorked = Math.floor((endOfYear - dojDate) / (1000 * 60 * 60 * 24)) + 1;
-                    const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
-                    const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
-                    
-                    slLimit = Math.round(5 * ratio);
-                    elLimit = Math.round(12 * ratio);
-                    
-                    const dojJustDate = getISODate(dojDate);
-                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString()) && h.date >= dojJustDate).length;
-                } else if (dojDate.getFullYear() > currentYearNum) {
-                    slLimit = 0; elLimit = 0; phLimit = 0;
-                } else {
-                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString())).length;
-                }
-            }
-            return { slLimit, elLimit, phLimit, limitsCalculatedYear: currentYearNum };
-        };
-
-        // --- ID GENERATION LOGIC ---
-        const generateID = (role, dob) => {
-            if (!dob) return "";
-            const prefix = role === "Admin" ? "AD" : "E";
-            const date = new Date(dob);
-            const yy = date.getFullYear().toString().slice(-2);
-            const dd = date.getDate().toString().padStart(2, '0');
-            const mm = (date.getMonth() + 1).toString().padStart(2, '0');
-            const seq = (allEmployees.length + 1).toString().padStart(4, '0');
-            return `${prefix}${yy}${dd}${mm}${seq}`;
-        };
-
-        const updateID = (formPrefix) => {
-            const roleEl = document.getElementById(formPrefix === 'add' ? 'userRole' : 'editUserRole');
-            const dobEl = document.getElementById(formPrefix === 'add' ? 'userDOB' : 'editUserDOB');
-            const idEl = document.getElementById(formPrefix === 'add' ? 'empId' : 'editEmpId');
-            idEl.value = generateID(roleEl.value, dobEl.value);
-        };
-
-        ['userRole', 'userDOB'].forEach(id => document.getElementById(id).addEventListener('change', () => updateID('add')));
-        ['editUserRole', 'editUserDOB'].forEach(id => document.getElementById(id).addEventListener('change', () => updateID('edit')));
-
-        // --- UI CORE ---
-        window.switchTab = (tab) => {
-            const tabs = ['employees', 'timesheets'];
-            tabs.forEach(t => {
-                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
-                document.getElementById(`tab-${t}`).classList.toggle('grid', t === tab);
-                document.getElementById(`tab-btn-${t}`).className = t === tab 
-                    ? "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm"
-                    : "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
-            });
+        window.logout = () => {
+            sessionStorage.removeItem('stratedge_active_user');
+            window.location.href = 'index.html';
         };
 
         const showToast = (msg, type='success') => {
@@ -503,9 +444,37 @@
             setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
         };
 
-        window.closeModal = (m) => document.getElementById(m).classList.add('hidden');
+        window.switchTab = (tabName) => {
+            const btnCalc = document.getElementById('tab-btn-calc');
+            const btnSummary = document.getElementById('tab-btn-summary');
+            const tabCalc = document.getElementById('tab-calc');
+            const tabSummary = document.getElementById('tab-summary');
+            
+            if (tabName === 'calc') {
+                btnCalc.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm";
+                btnSummary.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
+                tabCalc.classList.remove('hidden');
+                tabSummary.classList.add('hidden');
+            } else {
+                btnSummary.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm";
+                btnCalc.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
+                tabSummary.classList.remove('hidden');
+                tabCalc.classList.add('hidden');
+                renderPayoutSummary();
+            }
+        };
 
-        // --- DATE UTILS ---
+        window.toggleBonusInput = () => {
+            const container = document.getElementById('bonusInputContainer');
+            if (document.getElementById('hasBonus').checked) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('bonusAmount').value = '0';
+                document.getElementById('bonusJustification').value = '';
+            }
+        };
+
         const getDatesFromWeek = (w) => {
             const [yStr, wkStr] = w.split('-W');
             const d = new Date(parseInt(yStr), 0, 1 + (parseInt(wkStr) - 1) * 7);
@@ -526,493 +495,365 @@
             return count;
         };
 
-        // --- STATS & EXPORT ---
-        window.openStats = (id, name) => {
-            currentStatsEmpId = id;
-            const emp = allEmployees.find(e => e.empId === id);
-            const userTS = allTimesheets.filter(ts => ts.empId === id && ts.status === 'Approved');
-            const now = new Date();
-            
-            // Initialize Month Selector
-            const selector = document.getElementById('statsMonthSelector');
-            selector.innerHTML = '';
-            
-            const dojDate = (emp && emp.doj) ? new Date(emp.doj) : new Date(now.getFullYear(), 0, 1);
-            let iterDate = new Date(dojDate.getFullYear(), dojDate.getMonth(), 1);
-            const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            
-            if (iterDate > endDate) iterDate = endDate; 
-            
-            while (iterDate <= endDate) {
-                const val = `${iterDate.getFullYear()}-${(iterDate.getMonth()+1).toString().padStart(2, '0')}`;
-                const label = iterDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                const opt = document.createElement('option');
-                opt.value = val;
-                opt.textContent = label;
-                selector.appendChild(opt);
-                iterDate.setMonth(iterDate.getMonth() + 1);
-            }
-            selector.value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
-
-            // CALCULATE YTD
-            let ytd = { work: 0, SL: 0, EL: 0, PH: 0 };
-            userTS.forEach(ts => {
-                if (!ts.week || !ts.week.startsWith(now.getFullYear().toString())) return;
-                const dates = getDatesFromWeek(ts.week);
-                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
-                    if(ts.entries && ts.entries[day]) {
-                        const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
-                        entries.forEach(e => {
-                            if(!e) return;
-                            const h = parseFloat(e.hours) || 0;
-                            const type = e.type || '';
-                            if (type.includes('Work')) ytd.work += h; 
-                            else if (type.includes('SL')) ytd.SL += h; 
-                            else if (type.includes('EL')) ytd.EL += h; 
-                            else if (type.includes('PH')) ytd.PH += h;
-                        });
-                    }
-                });
-            });
-
-            let actualYtdStart = new Date(now.getFullYear(), 0, 1);
-            if (dojDate > actualYtdStart) actualYtdStart = dojDate;
-            const ytdEnd = new Date(now.getFullYear(), 11, 31);
-            const ytdGoalDays = actualYtdStart > ytdEnd ? 0 : getMonSatDays(actualYtdStart, ytdEnd);
-            const ytdGoalHours = ytdGoalDays * 8;
-            const yTotal = ytd.work + ytd.SL + ytd.EL + ytd.PH;
-            const yPct = ytdGoalHours > 0 ? Math.min((yTotal / ytdGoalHours) * 100, 100).toFixed(0) : 0;
-            
-            const yProg = document.getElementById('stat-y-prog');
-            yProg.classList.remove('hidden');
-            yProg.textContent = `${yPct}% of Goal (${ytdGoalHours}h)`;
-            document.getElementById('stat-y-bar').style.width = `${yPct}%`;
-            document.getElementById('stat-y-bar').className = `h-1.5 rounded-full transition-all duration-500 ${yPct >= 100 ? 'bg-green-500' : 'bg-indigo-600'}`;
-
-            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-[10px] uppercase opacity-60'>days</span><br><span class='text-sm opacity-80'>${h.toFixed(1)} hrs</span>`;
-            document.getElementById('stat-y-total').innerHTML = formatStat(yTotal);
-            document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
-            
-            // Calculate Limits from DB or fallback
-            const currentYearNum = now.getFullYear();
-            let slLimit = emp.slLimit;
-            let elLimit = emp.elLimit;
-            let phLimit = emp.phLimit;
-
-            if (slLimit === undefined || elLimit === undefined || phLimit === undefined) {
-                slLimit = 5; elLimit = 12; phLimit = 12;
-                if (emp.doj) {
-                    const dDate = new Date(emp.doj);
-                    if (dDate.getFullYear() === currentYearNum) {
-                        const endOfYear = new Date(currentYearNum, 11, 31);
-                        const startOfYear = new Date(currentYearNum, 0, 1);
-                        const daysWorked = Math.floor((endOfYear - dDate) / (1000 * 60 * 60 * 24)) + 1;
-                        const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
-                        const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
-                        slLimit = Math.round(5 * ratio);
-                        elLimit = Math.round(12 * ratio);
-                        const dojJustDate = getISODate(dDate);
-                        phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString()) && h.date >= dojJustDate).length;
-                    } else if (dDate.getFullYear() > currentYearNum) {
-                        slLimit = 0; elLimit = 0; phLimit = 0;
-                    } else {
-                        phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString())).length;
-                    }
-                }
-            }
-
-            // New dynamic formatter specifically for YTD leaves with limits
-            const formatYtdLeave = (elId, h, limit) => {
-                const d = h / 8;
-                const isExceeded = d > limit;
-                const color = isExceeded ? 'text-red-600' : 'text-green-600';
-                const el = document.getElementById(elId);
-                
-                el.className = `font-black ${color} flex flex-col justify-start`;
-                let html = `<div class="text-2xl">${d.toFixed(1)}<span class="text-sm font-bold text-gray-400">/${limit}</span> <span class='text-[10px] uppercase opacity-60 text-gray-500'>days</span></div>`;
-                html += `<div class='text-sm opacity-80 text-gray-500'>${h.toFixed(1)} hrs</div>`;
-                
-                if (isExceeded) {
-                    html += `<div class="mt-1"><span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200 shadow-sm leading-none inline-block">Limit Exceeded</span></div>`;
-                }
-                el.innerHTML = html;
-            };
-
-            formatYtdLeave('stat-y-sl', ytd.SL, slLimit);
-            formatYtdLeave('stat-y-el', ytd.EL, elLimit);
-            formatYtdLeave('stat-y-ph', ytd.PH, phLimit);
-            
-            window.updateMonthlyStats();
-            
-            document.getElementById('statsModal').classList.remove('hidden');
-        };
-
-        window.updateMonthlyStats = () => {
-            if (!currentStatsEmpId) return;
-            const emp = allEmployees.find(e => e.empId === currentStatsEmpId);
-            const userTS = allTimesheets.filter(ts => ts.empId === currentStatsEmpId && ts.status === 'Approved');
-            
-            const [selYear, selMonth] = document.getElementById('statsMonthSelector').value.split('-').map(Number);
-            let monthly = { work: 0, SL: 0, EL: 0, PH: 0 };
-            
-            userTS.forEach(ts => {
-                if (!ts.week) return;
-                const dates = getDatesFromWeek(ts.week);
-                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
-                    if(ts.entries && ts.entries[day]) {
-                        const entryDate = dates[idx];
-                        if (entryDate && entryDate.getFullYear() === selYear && (entryDate.getMonth() + 1) === selMonth) {
-                            const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
-                            entries.forEach(e => {
-                                if(!e) return;
-                                const h = parseFloat(e.hours) || 0;
-                                const type = e.type || '';
-                                if (type.includes('Work')) monthly.work += h; 
-                                else if (type.includes('SL')) monthly.SL += h; 
-                                else if (type.includes('EL')) monthly.EL += h; 
-                                else if (type.includes('PH')) monthly.PH += h;
-                            });
-                        }
-                    }
-                });
-            });
-
-            const dojDate = (emp && emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
-            let actualMonthStart = new Date(selYear, selMonth - 1, 1);
-            if (dojDate > actualMonthStart) actualMonthStart = dojDate;
-            const monthEnd = new Date(selYear, selMonth, 0); 
-            
-            const monthGoalDays = actualMonthStart > monthEnd ? 0 : getMonSatDays(actualMonthStart, monthEnd);
-            const monthGoalHours = monthGoalDays * 8;
-            const mTotal = monthly.work + monthly.SL + monthly.EL + monthly.PH;
-            const mPct = monthGoalHours > 0 ? Math.min((mTotal / monthGoalHours) * 100, 100).toFixed(0) : 0;
-
-            const mProg = document.getElementById('stat-m-prog');
-            mProg.classList.remove('hidden');
-            mProg.textContent = `${mPct}% of Goal (${monthGoalHours}h)`;
-            document.getElementById('stat-m-bar').style.width = `${mPct}%`;
-            document.getElementById('stat-m-bar').className = `h-1.5 rounded-full transition-all duration-500 ${mPct >= 100 ? 'bg-green-500' : 'bg-indigo-600'}`;
-
-            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-[10px] uppercase opacity-60'>days</span><br><span class='text-sm opacity-80'>${h.toFixed(1)} hrs</span>`;
-            document.getElementById('stat-m-total').innerHTML = formatStat(mTotal);
-            document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
-            document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
-            document.getElementById('stat-m-el').innerHTML = formatStat(monthly.EL);
-            document.getElementById('stat-m-ph').innerHTML = formatStat(monthly.PH);
-        };
-
-        window.exportYTD = (id, name) => {
-            let csv = "Week,Day,Date,Project,Type,Hours\n";
-            allTimesheets.filter(ts => ts.empId === id).sort((a,b)=>a.week.localeCompare(b.week)).forEach(ts => {
-                const dates = getDatesFromWeek(ts.week);
-                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, i) => {
-                    if(ts.entries && ts.entries[day]) {
-                        const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
-                        entries.forEach(e => { if(e && parseFloat(e.hours)>0) csv += `${ts.week},${day},${dates[i].toLocaleDateString()},"${e.project}",${e.type},${e.hours}\n`; });
-                    }
-                });
-            });
-            const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-            link.download = `TS_${name}_${new Date().getFullYear()}.csv`; link.click();
-        };
-
-        // --- RENDERING ---
-        window.renderEmployees = () => {
-            const tbody = document.getElementById('usersList');
-            const search = document.getElementById('filterName').value.toLowerCase();
-            const roleF = document.getElementById('filterRole').value;
-            const deptF = document.getElementById('filterDept').value;
-            tbody.innerHTML = '';
-            
-            const filtered = allEmployees.filter(e => {
-                return (e.name.toLowerCase().includes(search) || e.empId.toLowerCase().includes(search)) && (roleF==='' || e.role===roleF) && (deptF==='' || e.department===deptF);
-            });
-            
-            filtered.forEach(e => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition-colors";
-                tr.innerHTML = `<td class="px-4 py-3 whitespace-nowrap"><b>${e.name}</b><br><span class="text-[10px] font-mono text-gray-400">${e.empId}</span></td>
-                    <td class="px-4 py-3 text-xs whitespace-nowrap">${e.email}<br>${e.phone}</td>
-                    <td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.role==='Admin'?'bg-purple-100 text-purple-700':'bg-blue-100 text-brand-blue'}">${e.role}</span><br><span class="text-[10px] text-gray-500">${e.department}</span></td>
-                    <td class="px-4 py-3 text-xs whitespace-nowrap font-bold text-gray-700">₹ ${e.pay ? parseInt(e.pay).toLocaleString('en-IN') : '0'}</td>
-                    <td class="px-4 py-3 text-xs whitespace-nowrap">${e.doj}</td>
-                    <td class="px-4 py-3 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.catalogAccess === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${e.catalogAccess || 'No'}</span></td>
-                    <td class="px-4 py-3 text-right whitespace-nowrap">
-                        <button onclick="viewUser('${e.id}')" class="text-gray-600 hover:text-gray-900 font-bold mr-3 transition-colors">View</button>
-                        <button onclick="editUser('${e.id}')" class="text-brand-blue font-bold mr-3 transition-colors">Edit</button>
-                        <button onclick="openStats('${e.empId}', '${e.name}')" class="text-brand-orange font-bold mr-3 transition-colors">Stats</button>
-                        <button onclick="exportYTD('${e.empId}', '${e.name}')" class="text-green-600 font-bold mr-3 transition-colors">Export</button>
-                        <button id="del-btn-${e.id}" onclick="deleteUser('${e.id}')" class="text-red-500 font-bold transition-colors">Delete</button>
-                    </td>`;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('userCount').textContent = `${allEmployees.length} Employees`;
-        };
-
-        const populateTsEmployeeFilter = () => {
-            const select = document.getElementById('tsFilterName');
-            if(!select) return;
-            const currentVal = select.value;
-            select.innerHTML = '<option value="">All Employees</option>';
-            
-            const sortedEmps = [...allEmployees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-            
-            sortedEmps.forEach(emp => {
-                if (emp.empId && emp.name) {
-                    select.innerHTML += `<option value="${emp.empId}">${emp.empId} - ${emp.name}</option>`;
-                }
-            });
-            
-            if (sortedEmps.some(e => e.empId === currentVal)) select.value = currentVal;
-        };
-
-        window.renderTimesheets = () => {
-            const tbody = document.getElementById('timesheetsList');
-            const searchEmpId = document.getElementById('tsFilterName').value;
-            const wk = document.getElementById('tsFilterWeek').value;
-            const statusFilter = document.getElementById('tsFilterStatus').value;
-            tbody.innerHTML = '';
-            
-            allTimesheets.filter(ts => {
-                const matchesName = (searchEmpId === '' || ts.empId === searchEmpId);
-                const matchesWeek = (wk === '' || ts.week === wk);
-                let matchesStatus = true;
-                if (statusFilter === 'Approved') {
-                    matchesStatus = (ts.status === 'Approved');
-                } else if (statusFilter === 'Unapproved') {
-                    matchesStatus = (ts.status !== 'Approved');
-                }
-                return matchesName && matchesWeek && matchesStatus;
-            }).forEach(ts => {
-                const dates = getDatesFromWeek(ts.week);
-                const dateRange = `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="px-4 py-3">
-                        <div class="font-bold text-gray-900">${ts.week}</div>
-                        <div class="text-[10px] font-semibold text-gray-400 mt-0.5 uppercase tracking-tighter">${dateRange}</div>
-                    </td>
-                    <td class="px-4 py-3">${ts.name}<br><span class="text-[10px] text-gray-400">${ts.empId}</span></td>
-                    <td class="px-4 py-3 text-center font-bold">${ts.totalHours}</td>
-                    <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${ts.status==='Approved'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${ts.status}</span></td>
-                    <td class="px-4 py-3 text-right"><button onclick="reviewTimesheet('${ts.id}')" class="bg-blue-50 text-brand-blue px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 transition-colors">Review</button></td>`;
-                tbody.appendChild(tr);
-            });
-        };
-
-        window.viewUser = (id) => {
-            const e = allEmployees.find(emp => emp.id === id);
-            if(!e) return;
-            document.getElementById('viewEmpId').textContent = e.empId || '-';
-            document.getElementById('viewUserName').textContent = e.name || '-';
-            document.getElementById('viewUserRole').textContent = e.role || '-';
-            document.getElementById('viewUserEmail').textContent = e.email || '-';
-            document.getElementById('viewUserDesig').textContent = e.designation || '-';
-            document.getElementById('viewUserDept').textContent = e.department || '-';
-            document.getElementById('viewUserPhone').textContent = e.phone || '-';
-            document.getElementById('viewUserPay').textContent = e.pay ? `₹ ${parseInt(e.pay).toLocaleString('en-IN')}` : '-';
-            document.getElementById('viewUserDOJ').textContent = e.doj || '-';
-            document.getElementById('viewUserDOB').textContent = e.dob || '-';
-            document.getElementById('viewUserCatalogAccess').textContent = e.catalogAccess || 'No';
-            document.getElementById('viewEmployeeModal').classList.remove('hidden');
-        };
-
-        window.reviewTimesheet = (id) => {
-            const ts = allTimesheets.find(t => t.id === id);
-            currentReviewDocId = id;
-            document.getElementById('reviewEmpDetails').textContent = `${ts.name} (${ts.empId})`;
-            document.getElementById('reviewTotalHours').textContent = `${ts.totalHours} hrs logged`;
-            const tbody = document.getElementById('reviewTableBody'); tbody.innerHTML = '';
-            const dates = getDatesFromWeek(ts.week);
-            ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((d, idx) => {
-                if(ts.entries && ts.entries[d]) {
-                    const dateStr = dates[idx].toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                    const ents = Array.isArray(ts.entries[d]) ? ts.entries[d] : [ts.entries[d]];
-                    ents.forEach(e => {
-                        if(e && parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="px-4 py-2 font-medium">${d}</td><td class="px-4 py-2 text-gray-500">${dateStr}</td><td class="px-4 py-2">${e.project}</td><td class="px-4 py-2 text-center font-bold text-brand-blue">${e.hours}</td><td class="px-4 py-2 text-gray-500">${e.type}</td></tr>`;
-                    });
-                }
-            });
-            
-            const badge = document.getElementById('reviewStatusBadge');
-            badge.textContent = ts.status;
-            badge.className = `px-3 py-1 rounded-full text-xs font-bold ${ts.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`;
-            
-            const justBlock = document.getElementById('reviewJustificationBlock');
-            if (ts.justification) {
-                justBlock.classList.remove('hidden');
-                document.getElementById('reviewJustificationText').textContent = ts.justification;
-            } else {
-                justBlock.classList.add('hidden');
-            }
-
-            document.getElementById('reviewModal').classList.remove('hidden');
-        };
-
-        window.editUser = (id) => {
-            const e = allEmployees.find(emp => emp.id === id);
-            document.getElementById('editDocId').value = e.id;
-            document.getElementById('editUserName').value = e.name;
-            document.getElementById('editUserDOB').value = e.dob || "";
-            document.getElementById('editUserRole').value = e.role;
-            document.getElementById('editEmpId').value = e.empId;
-            document.getElementById('editUserEmail').value = e.email;
-            document.getElementById('editUserDesig').value = e.designation;
-            document.getElementById('editUserDept').value = e.department;
-            document.getElementById('editUserPhone').value = e.phone;
-            document.getElementById('editUserPay').value = e.pay || '';
-            document.getElementById('editUserDOJ').value = e.doj;
-            document.getElementById('editUserCatalogAccess').value = e.catalogAccess || 'No';
-            document.getElementById('editEmployeeModal').classList.remove('hidden');
-        };
-
-        window.deleteUser = async (id) => {
-            const btn = document.getElementById(`del-btn-${id}`);
-            if (btn.textContent === "Delete") {
-                btn.textContent = "Sure?"; btn.className = "text-red-500 bg-red-100 px-2 py-0.5 rounded transition-colors";
-                setTimeout(() => { 
-                    if(btn) {
-                        btn.textContent = "Delete"; 
-                        btn.className = "text-red-500 font-bold transition-colors";
-                    }
-                }, 3000);
-                return;
-            }
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id));
-            showToast("User removed.");
-        };
-
-        // --- SUBMIT HANDLERS ---
-        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dojVal = document.getElementById('userDOJ').value;
-            const limits = calculateLeaveLimits(dojVal);
-
-            const payload = {
-                name: document.getElementById('userName').value,
-                dob: document.getElementById('userDOB').value,
-                role: document.getElementById('userRole').value,
-                empId: document.getElementById('empId').value,
-                email: document.getElementById('userEmail').value,
-                designation: document.getElementById('userDesig').value,
-                department: document.getElementById('userDept').value,
-                phone: document.getElementById('userPhone').value,
-                pay: document.getElementById('userPay').value,
-                doj: dojVal,
-                catalogAccess: document.getElementById('userCatalogAccess').value,
-                slLimit: limits.slLimit,
-                elLimit: limits.elLimit,
-                phLimit: limits.phLimit,
-                limitsCalculatedYear: limits.limitsCalculatedYear,
-                createdAt: Date.now()
-            };
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), payload);
-            showToast("Employee registered.");
-            e.target.reset(); updateID('add');
-        });
-
-        document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('editDocId').value;
-            const dojVal = document.getElementById('editUserDOJ').value;
-            const limits = calculateLeaveLimits(dojVal);
-
-            const payload = {
-                name: document.getElementById('editUserName').value,
-                dob: document.getElementById('editUserDOB').value,
-                role: document.getElementById('editUserRole').value,
-                empId: document.getElementById('editEmpId').value,
-                email: document.getElementById('editUserEmail').value,
-                designation: document.getElementById('editUserDesig').value,
-                department: document.getElementById('editUserDept').value,
-                phone: document.getElementById('editUserPhone').value,
-                pay: document.getElementById('editUserPay').value,
-                doj: dojVal,
-                catalogAccess: document.getElementById('editUserCatalogAccess').value,
-                slLimit: limits.slLimit,
-                elLimit: limits.elLimit,
-                phLimit: limits.phLimit,
-                limitsCalculatedYear: limits.limitsCalculatedYear
-            };
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id), payload);
-            showToast("Employee updated.");
-            closeModal('editEmployeeModal');
-        });
-
-        const updateTSStatus = async (s) => {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', currentReviewDocId), { status: s });
-            showToast(`Timesheet ${s}.`); closeModal('reviewModal');
-        };
-        document.getElementById('btnApprove').onclick = () => updateTSStatus('Approved');
-        document.getElementById('btnReject').onclick = () => updateTSStatus('Rejected');
-        document.getElementById('btnDeleteTs').onclick = async () => {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', currentReviewDocId));
-            showToast("TS Deleted."); closeModal('reviewModal');
-        };
-
-        // --- NOTIFICATIONS & WEEK FILTER ---
-        window.toggleNotifications = () => document.getElementById('notifDropdown').classList.toggle('hidden');
-        window.toggleAdminWeekDropdown = () => document.getElementById('adminWeekDropdown').classList.toggle('hidden');
-        
-        window.selectAdminWeek = (w) => {
-            document.getElementById('tsFilterWeek').value = w;
-            document.getElementById('adminWeekSelectorDisplay').textContent = w === '' ? 'All Weeks' : w;
-            document.getElementById('adminWeekDropdown').classList.add('hidden');
-            renderTimesheets();
-        };
-
-        const generateAdminCalendarList = () => {
-            const dropdown = document.getElementById('adminWeekDropdown');
-            dropdown.innerHTML = `<div onclick="selectAdminWeek('')" class="p-2 hover:bg-gray-100 cursor-pointer text-sm font-bold">All Weeks</div>`;
-            const uniqueWeeks = [...new Set(allTimesheets.map(t => t.week))].sort().reverse();
-            uniqueWeeks.forEach(w => {
-                const dates = getDatesFromWeek(w);
-                const rangeText = `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
-                dropdown.innerHTML += `<div onclick="selectAdminWeek('${w}')" class="p-2 hover:bg-gray-100 cursor-pointer text-sm border-t flex justify-between items-center"><span>${w}</span><span class="text-[10px] text-gray-500">${rangeText}</span></div>`;
-            });
-        };
-
-        const updateNotifications = () => {
-            const list = document.getElementById('notifList');
-            const badge = document.getElementById('notificationBadge');
-            const pending = allTimesheets.filter(t => t.status === 'Submitted' && !readNotifIds.has(t.id));
-            list.innerHTML = '';
-            if (pending.length === 0) {
-                list.innerHTML = '<p class="p-4 text-center text-xs text-gray-500">No new submissions.</p>';
-                badge.classList.add('hidden');
-            } else {
-                pending.forEach(t => {
-                    list.innerHTML += `<div onclick="switchTab('timesheets'); selectAdminWeek('${t.week}'); toggleNotifications();" class="p-4 hover:bg-blue-50 cursor-pointer text-xs text-gray-800 border-b last:border-b-0 transition-colors"><b>${t.name}</b> submitted hours for ${t.week}.</div>`;
-                });
-                badge.textContent = pending.length;
-                badge.classList.remove('hidden');
-            }
-        };
-
-        // --- INIT ---
         onAuthStateChanged(auth, u => {
-            currentUser = u;
             if (u) {
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
                     allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
-                    renderEmployees(); 
-                    populateTsEmployeeFilter();
+                    const sel = document.getElementById('empSelect');
+                    const filterSel = document.getElementById('filterEmp');
+                    const summaryFilterSel = document.getElementById('summaryFilterEmp');
+                    
+                    const curSel = sel.value;
+                    const curFil = filterSel.value;
+                    const curSumFil = summaryFilterSel.value;
+                    
+                    const options = '<option value="" disabled selected>-- Select Employee --</option>';
+                    const filterOptions = '<option value="">All Employees</option>';
+                    
+                    sel.innerHTML = options;
+                    filterSel.innerHTML = filterOptions;
+                    summaryFilterSel.innerHTML = filterOptions;
+                    
+                    allEmployees.sort((a,b)=>a.name.localeCompare(b.name)).forEach(emp => {
+                        const opt = `<option value="${emp.empId}">${emp.name} (${emp.empId})</option>`;
+                        const filterOpt = `<option value="${emp.empId}">${emp.name}</option>`;
+                        sel.innerHTML += opt;
+                        filterSel.innerHTML += filterOpt;
+                        summaryFilterSel.innerHTML += filterOpt;
+                    });
+                    
+                    if(curSel) sel.value = curSel;
+                    if(curFil) filterSel.value = curFil;
+                    if(curSumFil) summaryFilterSel.value = curSumFil;
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
                     allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
-                    populateTsEmployeeFilter();
-                    generateAdminCalendarList();
-                    renderTimesheets(); 
-                    updateNotifications();
                 });
+                onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'pay_records'), orderBy('updatedAt', 'desc')), s => {
+                    allPayRecords = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderPayRecords();
+                    renderPayoutSummary();
+                });
+                if (!document.getElementById('payMonth').value) {
+                    const now = new Date();
+                    document.getElementById('payMonth').value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
+                }
             }
         });
         signInAnonymously(auth);
 
-        window.markAllRead = () => {
-            allTimesheets.filter(t => t.status === 'Submitted').forEach(t => readNotifIds.add(t.id));
-            updateNotifications();
-            document.getElementById('notifDropdown').classList.add('hidden');
+        window.handleEmpSelection = () => {
+            const empId = document.getElementById('empSelect').value;
+            const emp = allEmployees.find(e => e.empId === empId);
+            if (emp && emp.pay) document.getElementById('basePay').value = emp.pay;
+            else document.getElementById('basePay').value = '';
+        };
+
+        window.renderPayRecords = () => {
+            const list = document.getElementById('payRecordList');
+            const filterEmp = document.getElementById('filterEmp').value;
+            const filterMonth = document.getElementById('filterMonth').value;
+
+            let filtered = allPayRecords;
+            if (filterEmp) filtered = filtered.filter(r => r.empId === filterEmp);
+            if (filterMonth) filtered = filtered.filter(r => r.monthVal === filterMonth);
+
+            document.getElementById('recordCount').textContent = `${filtered.length} Total`;
+            list.innerHTML = '';
+            if (filtered.length === 0) list.innerHTML = '<div class="text-center py-4 text-gray-400 text-sm italic">No records found.</div>';
+            else {
+                filtered.forEach(rec => {
+                    const div = document.createElement('div');
+                    div.className = "bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center group transition-all hover:bg-blue-50/30";
+                    let badge = rec.useFullPay ? `<span class="bg-green-100 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Override</span>` : (rec.bypassedShortfall ? `<span class="bg-yellow-100 text-yellow-700 text-[8px] font-bold px-1.5 py-0.5 rounded ml-2">Bypassed</span>` : '');
+                    div.innerHTML = `
+                        <div class="overflow-hidden">
+                            <div class="text-[10px] font-bold text-brand-blue uppercase flex items-center">${rec.monthVal} ${badge}</div>
+                            <div class="font-bold text-sm truncate text-gray-800">${rec.empName}</div>
+                            <div class="text-[10px] text-gray-500 font-medium mt-0.5">Net Pay: ₹${rec.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
+                        </div>
+                        <div class="flex gap-1.5 ml-2">
+                            <button onclick="event.stopPropagation(); loadPayRecord('${rec.id}')" class="px-2 py-1 bg-white border border-gray-300 shadow-sm hover:bg-blue-50 hover:text-blue-600 rounded text-gray-600 text-xs font-bold transition-colors">VIEW</button>
+                            <button onclick="event.stopPropagation(); deletePayRecord('${rec.id}')" class="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>`;
+                    list.appendChild(div);
+                });
+            }
+        };
+
+        window.renderPayoutSummary = () => {
+            const tbody = document.getElementById('summaryTableBody');
+            const filterEmp = document.getElementById('summaryFilterEmp').value;
+            const filterMonth = document.getElementById('summaryFilterMonth').value;
+
+            let filtered = allPayRecords;
+            if (filterEmp) filtered = filtered.filter(r => r.empId === filterEmp);
+            if (filterMonth) filtered = filtered.filter(r => r.monthVal === filterMonth);
+
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                document.getElementById('summaryEmptyState').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('summaryEmptyState').classList.add('hidden');
+            filtered.forEach(rec => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-gray-900">${rec.empName}</div>
+                        <div class="text-xs text-gray-400 font-mono">${rec.empId}</div>
+                    </td>
+                    <td class="px-6 py-4 text-center font-semibold text-gray-600">${rec.monthVal}</td>
+                    <td class="px-6 py-4 text-right text-gray-900">₹${(rec.proRatedBasePay || rec.basePay).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-right text-brand-blue font-medium">₹${(rec.bonusAmount || 0).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-right text-red-500 font-medium">- ₹${(rec.deductionAmount || 0).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-right font-black text-brand-blue text-lg">₹${rec.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="downloadHistoryPdf('${rec.id}')" class="bg-gray-100 hover:bg-brand-blue hover:text-white text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            PDF
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.clearSummaryFilters = () => {
+            document.getElementById('summaryFilterEmp').value = '';
+            document.getElementById('summaryFilterMonth').value = '';
+            renderPayoutSummary();
+        };
+
+        window.downloadHistoryPdf = (id) => {
+            const rec = allPayRecords.find(r => r.id === id);
+            if (!rec || !rec.pdfDataUri) {
+                showToast("PDF data not available for this record.", "error");
+                return;
+            }
+            
+            const previewIframe = document.getElementById('modalPayslipPreviewIframe');
+            previewIframe.src = rec.pdfDataUri;
+            
+            const downloadBtn = document.getElementById('modalDownloadPayslipBtn');
+            downloadBtn.onclick = () => {
+                const link = document.createElement('a');
+                link.href = rec.pdfDataUri;
+                link.download = `Payslip_${rec.empName.replace(' ', '')}_${rec.monthVal.replace('-', '')}.pdf`;
+                link.click();
+            };
+            
+            document.getElementById('payslipPreviewModal').classList.remove('hidden');
+        };
+
+        window.closePayslipPreviewModal = () => {
+            document.getElementById('payslipPreviewModal').classList.add('hidden');
+            document.getElementById('modalPayslipPreviewIframe').src = '';
+        };
+
+        window.loadPayRecord = (id) => {
+            const rec = allPayRecords.find(r => r.id === id);
+            if (!rec) return;
+            switchTab('calc');
+            document.getElementById('empSelect').value = rec.empId;
+            document.getElementById('payMonth').value = rec.monthVal;
+            document.getElementById('basePay').value = rec.basePay;
+            document.getElementById('hasBonus').checked = (rec.bonusAmount > 0);
+            window.toggleBonusInput();
+            document.getElementById('bonusAmount').value = rec.bonusAmount || 0;
+            document.getElementById('bonusJustification').value = rec.bonusJustification || '';
+            runCalculation(true, !!rec.bypassedShortfall, true, !!rec.useFullPay); 
+        };
+
+        window.deletePayRecord = async (id) => {
+            if(confirm('Delete this pay record?')) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', id));
+        };
+
+        window.cancelReview = () => { document.getElementById('calcReviewModal').classList.add('hidden'); currentModalStats = null; };
+        window.updateModalWarnings = () => {
+            const override = document.getElementById('modalOverrideToggle').checked;
+            const warningEl = document.getElementById('modalOverrideWarning');
+            if (override && currentModalStats && !currentModalStats.is100Percent) warningEl.classList.remove('hidden');
+            else warningEl.classList.add('hidden');
+        };
+        window.applyReviewAndPreview = () => {
+            const useFullPay = document.getElementById('modalOverrideToggle').checked;
+            document.getElementById('calcReviewModal').classList.add('hidden');
+            runCalculation(true, false, false, useFullPay);
+        };
+
+        document.getElementById('calcForm').addEventListener('submit', (e) => { e.preventDefault(); runCalculation(false, false, false, false); });
+
+        const runCalculation = async (forceProceed, bypassShortfall, isViewingPast, useFullPay) => {
+            try {
+                const empId = document.getElementById('empSelect').value;
+                const monthVal = document.getElementById('payMonth').value; 
+                const basePayStr = document.getElementById('basePay').value;
+                if(!empId || !monthVal || !basePayStr) return;
+                const basePay = parseFloat(basePayStr);
+                const emp = allEmployees.find(e => e.empId === empId);
+                if(!emp) return;
+                let bonusAmount = 0, bonusJustification = "";
+                if (document.getElementById('hasBonus').checked) {
+                    bonusAmount = parseFloat(document.getElementById('bonusAmount').value) || 0;
+                    bonusJustification = document.getElementById('bonusJustification').value.trim() || "Bonus";
+                }
+                const [selYear, selMonth] = monthVal.split('-').map(Number);
+                const dojDate = (emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
+                let actualMonthStart = new Date(selYear, selMonth - 1, 1);
+                if (dojDate > actualMonthStart) actualMonthStart = dojDate; 
+                const actualMonthEnd = new Date(selYear, selMonth, 0); 
+                const monthGoalDays = actualMonthStart > actualMonthEnd ? 0 : getMonSatDays(actualMonthStart, actualMonthEnd);
+                const monthGoalHours = monthGoalDays * 8;
+                if (monthGoalHours === 0) { showToast("Employee joined after this month.", "error"); return; }
+                const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
+                let loggedInMonth = 0, workInMonth = 0, slInMonth = 0, elInMonth = 0, phInMonth = 0, ytdSL = 0, ytdEL = 0, ytdPH = 0;
+                userTS.forEach(ts => {
+                    if (!ts.week) return;
+                    const dates = getDatesFromWeek(ts.week);
+                    ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
+                        if(ts.entries && ts.entries[day]) {
+                            const entryDate = dates[idx];
+                            if (entryDate.getFullYear() === selYear && entryDate.getMonth() + 1 <= selMonth) {
+                                const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                                entries.forEach(e => {
+                                    if(!e) return;
+                                    const h = parseFloat(e.hours) || 0, type = e.type || '';
+                                    if (type.includes('SL')) ytdSL += h; if (type.includes('EL')) ytdEL += h; if (type.includes('PH')) ytdPH += h;
+                                    if (entryDate.getMonth() + 1 === selMonth) {
+                                        loggedInMonth += h; if (type.includes('Work')) workInMonth += h;
+                                        if (type.includes('SL')) slInMonth += h; if (type.includes('EL')) elInMonth += h; if (type.includes('PH')) phInMonth += h;
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+                const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
+                const is100Percent = loggedInMonth >= monthGoalHours && monthGoalHours > 0;
+                if (!forceProceed) {
+                    currentModalStats = { loggedInMonth, monthGoalHours, is100Percent, actualShortfallHours };
+                    document.getElementById('modalProgressText').textContent = `Logged ${loggedInMonth.toFixed(1)} hrs of ${monthGoalHours.toFixed(1)} hrs target (${Math.round((loggedInMonth / monthGoalHours) * 100)}%).`;
+                    const alert = document.getElementById('modalShortfallAlert');
+                    if (actualShortfallHours > 0) { alert.classList.remove('hidden'); document.getElementById('modalShortfallHrs').textContent = `${actualShortfallHours.toFixed(1)} hrs`; }
+                    else alert.classList.add('hidden');
+                    document.getElementById('modalOverrideToggle').checked = false;
+                    document.getElementById('modalOverrideWarning').classList.add('hidden');
+                    document.getElementById('calcReviewModal').classList.remove('hidden'); return;
+                }
+                const chargeableShortfall = (bypassShortfall || useFullPay) ? 0 : actualShortfallHours;
+                const hourlyRate = basePay / 240; 
+                let proRatedBasePay = useFullPay ? basePay : monthGoalHours * hourlyRate;
+                const slLimitHrs = (emp.slLimit !== undefined ? emp.slLimit : 5) * 8, elLimitHrs = (emp.elLimit !== undefined ? emp.elLimit : 12) * 8, phLimitHrs = (emp.phLimit !== undefined ? emp.phLimit : 12) * 8;
+                const chargeableSL = Math.min(Math.max(0, ytdSL - slLimitHrs), slInMonth), chargeableEL = Math.min(Math.max(0, ytdEL - elLimitHrs), elInMonth);
+                const totalLWPHours = chargeableShortfall + chargeableSL + chargeableEL, deductionAmount = totalLWPHours * hourlyRate;
+                const finalPay = Math.max(0, (proRatedBasePay + bonusAmount) - deductionAmount);
+                document.getElementById('resultsEmpty').classList.add('hidden'); document.getElementById('resultsPanel').classList.remove('hidden');
+                const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                document.getElementById('resEmpName').textContent = emp.name; document.getElementById('resMonthLabel').textContent = `PAYSLIP FOR ${monthNames[selMonth-1]} ${selYear}`;
+                document.getElementById('resPeriodLabel').textContent = `Period: ${actualMonthStart.toLocaleDateString('en-GB')} to ${actualMonthEnd.toLocaleDateString('en-GB')}`;
+                const d = (hrs) => (hrs/8).toFixed(1);
+                document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${monthGoalDays} days)`;
+                document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
+                document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
+                document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs`; document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs`; document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs`;
+                document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`; document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`; document.getElementById('resYtdPhHrs').textContent = `${ytdPH.toFixed(1)} / ${phLimitHrs} hrs`;
+                let basicPayLabel = useFullPay ? (is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
+                const earnList = document.getElementById('earningsList');
+                earnList.innerHTML = `<div class="flex justify-between items-center py-1"><div><span class="block font-medium">${basicPayLabel}</span><span class="text-[10px] text-gray-500">${useFullPay ? "(Full 30-Day Pay Applied)" : `(${monthGoalDays} working days out of 30)`}</span></div><span class="font-semibold">₹${proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
+                if (bonusAmount > 0) earnList.innerHTML += `<div class="flex justify-between items-center py-1 text-brand-blue"><span class="font-medium">${bonusJustification}</span><span class="font-semibold">+ ₹${bonusAmount.toLocaleString('en-IN')}</span></div>`;
+                const dedList = document.getElementById('deductionList'); dedList.innerHTML = '';
+                if (actualShortfallHours > 0 && (bypassShortfall || useFullPay)) dedList.innerHTML += `<div class="flex justify-between text-yellow-700 bg-yellow-50/50 p-2 rounded mb-2 text-xs border border-yellow-200"><span>Shortfall suppressed.</span><span>₹0</span></div>`;
+                if (totalLWPHours === 0) dedList.innerHTML += '<div class="text-gray-400 italic text-xs p-2">No active deductions.</div>';
+                else {
+                    const addRow = (label, hrs, rate) => `<div class="flex justify-between items-center py-1"><div><span class="block font-medium">${label}</span><span class="text-xs text-red-400">(${hrs.toFixed(1)} hrs × ₹${rate.toFixed(2)}/hr)</span></div><span class="font-semibold">- ₹${(hrs*rate).toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
+                    if (chargeableShortfall > 0) dedList.innerHTML += addRow("Shortfall LWP", chargeableShortfall, hourlyRate);
+                    if (chargeableSL > 0) dedList.innerHTML += addRow("Excess Sick Leave", chargeableSL, hourlyRate);
+                    if (chargeableEL > 0) dedList.innerHTML += addRow("Excess Earned Leave", chargeableEL, hourlyRate);
+                }
+                document.getElementById('resTotalDed').textContent = `- ₹${deductionAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+                document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
+                document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
+                window.pendingPayloadData = { empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, is100Percent, bonusAmount, bonusJustification, finalPay, shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount, bypassedShortfall: bypassShortfall, updatedAt: Date.now() };
+                window.currentPayslipData = { emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, useFullPay, is100Percent, monthGoalDays, bonusAmount, bonusJustification, finalPay, deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL, actualStart: actualMonthStart, actualEnd: actualMonthEnd, monthGoalHours, loggedInMonth, workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs };
+                if (isViewingPast) { document.getElementById('confirmBtn').classList.add('hidden'); document.getElementById('pdfBtn').classList.remove('hidden'); document.getElementById('confirmedBadge').classList.remove('hidden'); }
+                else { document.getElementById('confirmBtn').classList.remove('hidden'); document.getElementById('pdfBtn').classList.add('hidden'); document.getElementById('confirmedBadge').classList.add('hidden'); document.getElementById('confirmBtn').disabled = false; }
+            } catch (err) { console.error(err); showToast(`Calculation Error: ${err.message}`, "error"); }
+        };
+
+        const createPDFDocument = (ps) => {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); const m = 20; const rightAlignX = 190; let y = 20;
+            const iconX = m; const iconY = y - 14; doc.setDrawColor(105, 105, 105); doc.setLineWidth(1.5);
+            doc.line(iconX, iconY, iconX + 10, iconY); doc.line(iconX, iconY, iconX, iconY + 8); 
+            doc.line(iconX + 4, iconY + 14, iconX + 14, iconY + 14); doc.line(iconX + 14, iconY + 14, iconX + 14, iconY + 6);
+            doc.setDrawColor(225, 90, 30); doc.line(iconX - 1, iconY + 12, iconX + 15, iconY + 2); 
+            const headerX = m + 22; doc.setFont("helvetica", "normal").setFontSize(22);
+            doc.setTextColor(225, 90, 30); doc.text("S", headerX, y); let curX = headerX + doc.getTextWidth("S") + 0.5;
+            doc.setTextColor(105, 105, 105); doc.text("TRAT", curX, y); curX += doc.getTextWidth("TRAT") + 0.5;
+            doc.setTextColor(225, 90, 30); doc.text("E", curX, y); curX += doc.getTextWidth("E") + 0.5;
+            doc.setTextColor(105, 105, 105); doc.text("DGÉ", curX, y);
+            doc.setFontSize(9).setTextColor(150).text("Communications Pvt. Ltd.", headerX, y + 6);
+            doc.setFontSize(7).setTextColor(100).text(`CIN: U70200WB2025PTC277733 | PAN: ABPCS6820D`, headerX, y + 12);
+            doc.setFontSize(9).setTextColor(80).text("42/22 New Ballygunge Road, Kolkata - 700039", rightAlignX, y, { align: 'right' });
+            y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
+            const periodStr = `${new Date(ps.actualStart).toLocaleDateString('en-GB')} to ${new Date(ps.actualEnd).toLocaleDateString('en-GB')}`;
+            doc.setFontSize(14).setFont("helvetica", "bold").setTextColor(40).text("PAYSLIP", m, y);
+            doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text(`For the period: ${periodStr}`, m, y + 6);
+            doc.setFontSize(8).setTextColor(120).text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, rightAlignX, y, {align: 'right'});
+            y += 18; doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold");
+            doc.text(`Employee Name:`, m, y); doc.setFont("helvetica", "normal").text(ps.emp.name, m + 35, y);
+            doc.setFont("helvetica", "bold").text(`Employee ID:`, m, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.empId, m + 35, y + 6);
+            doc.setFont("helvetica", "bold").text(`Designation:`, m, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.designation || 'N/A', m + 35, y + 12);
+            doc.setFont("helvetica", "bold").text(`Department:`, m + 90, y); doc.setFont("helvetica", "normal").text(ps.emp.department || 'N/A', m + 122, y);
+            doc.setFont("helvetica", "bold").text(`Date of Joining:`, m + 90, y + 6); doc.setFont("helvetica", "normal").text(ps.emp.doj ? new Date(ps.emp.doj).toLocaleDateString('en-GB') : 'N/A', m + 122, y + 6);
+            doc.setFont("helvetica", "bold").text(`Email ID:`, m + 90, y + 12); doc.setFont("helvetica", "normal").text(ps.emp.email || 'N/A', m + 122, y + 12);
+            y += 22; doc.setDrawColor(230).line(m, y, 190, y); y += 10;
+            doc.setFontSize(10).setFont("helvetica", "bold").setTextColor(40); doc.text("MONTHLY TIME SUMMARY", m, y); doc.text("YTD LEAVE SUMMARY", m + 90, y);
+            y += 6; doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60); const d = (hrs) => (hrs/8).toFixed(1);
+            doc.text(`Target: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y); doc.text(`Logged: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
+            doc.text(`Work: ${ps.workInMonth.toFixed(1)} hrs | SL: ${ps.slInMonth.toFixed(1)} | EL: ${ps.elInMonth.toFixed(1)} | PH: ${ps.phInMonth.toFixed(1)}`, m, y + 10);
+            doc.text(`SL: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs`, m + 90, y); doc.text(`EL: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs`, m + 90, y + 5); doc.text(`PH: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs`, m + 90, y + 10);
+            y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
+            doc.setFillColor(245).rect(m, y-5, 170, 8, 'F'); doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
+            doc.text("EARNINGS", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
+            y += 8; doc.setFont("helvetica", "normal").setTextColor(60);
+            let bpl = ps.useFullPay ? (ps.is100Percent ? "Full Basic Pay (Goal Met)" : "Full Basic Pay (Override)") : "Pro-rated Basic Pay";
+            doc.text(bpl, m + 2, y); doc.text(`Rs. ${ps.proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            y += 8; if (ps.bonusAmount > 0) { const bt = ps.bonusJustification ? `Bonus: ${ps.bonusJustification}` : "Bonus"; const sbt = doc.splitTextToSize(bt, 140); doc.text(sbt, m + 2, y); doc.text(`Rs. ${ps.bonusAmount.toLocaleString('en-IN')}`, rightAlignX - 2, y, {align: 'right'}); y += 8 + ((sbt.length - 1) * 5); }
+            y += 6; doc.setFillColor(253, 242, 242).rect(m, y-5, 170, 8, 'F'); doc.setFont("helvetica", "bold").setTextColor(220, 38, 38);
+            doc.text("DEDUCTIONS (Leave Without Pay)", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
+            y += 8; doc.setFont("helvetica", "normal").setTextColor(60);
+            if (ps.deductions === 0) { doc.text("None", m + 2, y); doc.text("-", rightAlignX - 2, y, {align: 'right'}); y += 8; }
+            else { const amt = (h, r) => (h * r).toLocaleString('en-IN', {maximumFractionDigits:0}); if (ps.shortfallHours > 0) { doc.text(`Shortfall LWP (${ps.shortfallHours.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.shortfallHours, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; } if (ps.chargeableSL > 0) { doc.text(`Excess SL (${ps.chargeableSL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableSL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; } if (ps.chargeableEL > 0) { doc.text(`Excess EL (${ps.chargeableEL.toFixed(1)}h)`, m + 2, y); doc.text(`Rs. ${amt(ps.chargeableEL, ps.hourlyRate)}`, rightAlignX - 2, y, {align: 'right'}); y += 8; } }
+            y += 2; doc.setDrawColor(230).line(m, y, 190, y); y += 8;
+            doc.setFont("helvetica", "bold").setTextColor(40); doc.text("Total Earnings:", m + 2, y); doc.text(`Rs. ${(ps.proRatedBasePay + ps.bonusAmount).toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            y += 8; doc.text("Total Deductions:", m + 2, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
+            y += 10; doc.setFillColor(235).rect(m, y, 170, 12, 'F'); doc.setFontSize(12); doc.text("NET PAYABLE:", m + 5, y + 8);
+            doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
+            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic"); doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" }); return doc;
+        };
+
+        window.confirmAndSavePay = async () => {
+            if (!window.pendingPayloadData || !window.currentPayslipData) { showToast("Missing data. Preview again.", "error"); return; }
+            const btn = document.getElementById('confirmBtn'); btn.innerHTML = "Saving..."; btn.disabled = true;
+            const p = window.pendingPayloadData, recordId = `${p.empId}_${p.monthVal}`;
+            try {
+                const pdfDoc = createPDFDocument(window.currentPayslipData);
+                p.pdfDataUri = pdfDoc.output('datauristring');
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pay_records', recordId), p);
+                document.getElementById('confirmBtn').classList.add('hidden');
+                document.getElementById('pdfBtn').classList.remove('hidden');
+                document.getElementById('confirmedBadge').classList.remove('hidden');
+                showToast("Pay record confirmed!", "success");
+            } catch (err) { console.error(err); showToast("Failed to save.", "error"); btn.innerHTML = "Confirm & Save"; btn.disabled = false; }
+        };
+
+        window.downloadPDF = () => {
+            if(!window.currentPayslipData) return;
+            const doc = createPDFDocument(window.currentPayslipData);
+            doc.save(`Payslip_${window.currentPayslipData.emp.name}_${window.currentPayslipData.monthStr.replace(' ', '')}.pdf`);
         };
     </script>
 </body>
