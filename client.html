@@ -28,9 +28,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Hidden Signature Image loaded natively by the browser -->
-    <img id="invoiceSignature" src="RCSignwithStamp.png" alt="Signature" style="display:none;">
-
     <!-- Access Denied Overlay -->
     <div id="accessDenied" class="fixed inset-0 bg-white z-[999] hidden flex-col items-center justify-center text-center p-4">
         <svg class="w-20 h-20 text-red-500 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -881,18 +878,8 @@
             // Authorized Signatory aligned perfectly with the bank details header
             doc.setFontSize(10).setTextColor(40).setFont("helvetica", "bold");
             doc.text("For Stratedge Communications Pvt Ltd", rightAlignX, y, { align: 'right' });
-            
-            try {
-                const sigImg = document.getElementById('invoiceSignature');
-                if (sigImg && sigImg.complete && sigImg.naturalWidth > 0) {
-                    doc.addImage(sigImg, 'PNG', rightAlignX - 55, y + 2, 55, 20);
-                }
-            } catch(e) {
-                console.warn("Signature image could not be embedded.", e);
-            }
-
             doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(100);
-            doc.text("Authorized Signatory", rightAlignX, y + 26, { align: 'right' });
+            doc.text("Authorized Signatory", rightAlignX, y + 24, { align: 'right' });
 
             return doc;
         };
