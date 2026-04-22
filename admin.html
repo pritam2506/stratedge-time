@@ -3,124 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stratedge | Portal Login</title>
+    <title>Stratedge | Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'brand-blue': '#4169E1',
-                        'brand-orange': '#FFA500',
+                        'brand-blue': '#4169E1', // Royal Blue
+                        'brand-orange': '#FFA500', // Orange
                         'brand-orange-hover': '#e69500',
                     }
                 }
             }
         }
     </script>
-    <style>
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
-    </style>
 </head>
-<body class="bg-gradient-to-br from-brand-blue to-blue-800 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Login Container -->
-    <div class="max-w-md w-full glass-effect rounded-2xl shadow-2xl overflow-hidden">
-        <!-- Branding Header -->
-        <div class="bg-white p-8 text-center border-b border-gray-100">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-orange/10 rounded-2xl mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Header -->
+    <header class="bg-brand-blue text-white shadow-md z-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
                     <path d="M2 17l10 5 10-5"></path>
                     <path d="M2 12l10 5 10-5"></path>
                 </svg>
+                <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
             </div>
-            <h1 class="text-3xl font-black text-brand-blue tracking-tight">Stratedge</h1>
-            <p class="text-gray-500 text-sm mt-1 font-medium">Enterprise Resource Portal</p>
+            <div class="flex items-center gap-4">
+                <!-- Notification Bell -->
+                <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()" title="Notifications">
+                    <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    
+                    <!-- Dropdown Panel -->
+                    <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
+                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <span class="font-bold text-gray-800 text-sm">Notifications</span>
+                            <button onclick="markAllRead()" class="text-xs text-brand-blue hover:text-blue-700 font-semibold transition-colors">Mark all as read</button>
+                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100"></div>
+                    </div>
+                </div>
+
+                <button onclick="window.location.href='client.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 hidden sm:flex border-r border-white/20 pr-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Client & Invoicing Portal
+                </button>
+
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">Admin Portal</div>
+                <button onclick="window.location.href='index.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
+                <p class="text-gray-600 mt-1">Manage users, view statistics, and approve timesheets.</p>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex bg-gray-200 p-1 rounded-lg">
+                <button id="tab-btn-employees" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors bg-white text-brand-blue shadow-sm" onclick="switchTab('employees')">Employees</button>
+                <button id="tab-btn-timesheets" class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="switchTab('timesheets')">Timesheet Approvals</button>
+                <button class="px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900" onclick="window.location.href='paycalc.html'">Pay Calculation</button>
+            </div>
         </div>
 
-        <!-- Form Section -->
-        <div class="p-8">
-            <form id="loginForm" class="space-y-6">
+        <!-- TAB 1: EMPLOYEE MANAGEMENT -->
+        <div id="tab-employees" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Add User Form -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit sticky top-8">
+                <h3 class="text-xl font-semibold mb-4 text-brand-blue flex items-center gap-2 border-b pb-3">Add New User</h3>
+                <form id="addUserForm" class="space-y-4">
+                    <div>
+                        <label for="userName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="userName" required placeholder="John Doe" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label for="userDOB" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                        <input type="date" id="userDOB" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none text-sm">
+                    </div>
+                    <div>
+                        <label for="userRole" class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
+                        <select id="userRole" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue outline-none">
+                            <option value="Employee" selected>Employee</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="empId" class="block text-sm font-medium text-gray-700 mb-1">Employee ID <span class="text-[10px] text-gray-400 uppercase">(Auto-gen)</span></label>
+                        <input type="text" id="empId" readonly placeholder="Enter DOB first..." class="w-full px-4 py-2 bg-gray-50 border rounded-lg font-bold text-brand-blue outline-none cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="userEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="userEmail" required placeholder="email@example.com" class="w-full px-4 py-2 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label for="userDesig" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                        <input type="text" id="userDesig" required placeholder="e.g. Designer" class="w-full px-4 py-2 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label for="userDept" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select id="userDept" required class="w-full px-4 py-2 border rounded-lg outline-none">
+                            <option value="" disabled selected>Select Dept...</option>
+                            <option value="Design">Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Founder's office">Founder's office</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="userPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input type="tel" id="userPhone" required placeholder="+91 ..." class="w-full px-4 py-2 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label for="userPay" class="block text-sm font-medium text-gray-700 mb-1">Monthly Pay (INR)</label>
+                        <input type="number" id="userPay" required placeholder="e.g. 50000" class="w-full px-4 py-2 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label for="userDOJ" class="block text-sm font-medium text-gray-700 mb-1">Joining Date</label>
+                        <input type="date" id="userDOJ" required class="w-full px-4 py-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label for="userCatalogAccess" class="block text-sm font-medium text-gray-700 mb-1">Client Catalog Access</label>
+                        <select id="userCatalogAccess" required class="w-full px-4 py-2 border rounded-lg outline-none">
+                            <option value="No" selected>No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm">Add Employee</button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-brand-blue flex items-center gap-2">Current Employees</h3>
+                    <span id="userCount" class="bg-blue-100 text-brand-blue text-xs font-bold px-3 py-1.5 rounded-full">0 Employees</span>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <input type="text" id="filterName" oninput="renderEmployees()" placeholder="Search by name or ID..." class="flex-1 px-4 py-2 border rounded-md text-sm outline-none">
+                    <select id="filterRole" onchange="renderEmployees()" class="sm:w-40 px-3 py-2 border rounded-md text-sm text-gray-700"><option value="">All Roles</option><option value="Employee">Employee</option><option value="Admin">Admin</option></select>
+                    <select id="filterDept" onchange="renderEmployees()" class="sm:w-48 px-3 py-2 border rounded-md text-sm text-gray-700"><option value="">All Depts</option><option value="Design">Design</option><option value="Marketing">Marketing</option><option value="Founder's office">Founder's office</option></select>
+                </div>
+                <div class="overflow-x-auto border border-gray-200 rounded-lg text-sm">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Role/Dept</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Pay (INR)</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Catalog Access</th>
+                                <th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersList" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: TIMESHEET APPROVALS -->
+        <div id="tab-timesheets" class="hidden bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h3 class="text-xl font-semibold text-brand-blue mb-4 border-b pb-3 flex items-center gap-2">Timesheet Approvals</h3>
+            <div class="flex flex-col sm:flex-row gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                
+                <!-- Updated Filter Dropdown -->
+                <select id="tsFilterName" onchange="renderTimesheets()" class="flex-1 px-4 py-2.5 border rounded-md text-sm outline-none text-gray-700 bg-white">
+                    <option value="">All Employees</option>
+                </select>
+
+                <!-- New Status Filter Dropdown -->
+                <select id="tsFilterStatus" onchange="renderTimesheets()" class="w-full sm:w-48 px-4 py-2.5 border rounded-md text-sm outline-none text-gray-700 bg-white">
+                    <option value="">All Statuses</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Unapproved">Unapproved / Pending</option>
+                </select>
+
+                <div class="w-full sm:w-72 relative">
+                    <button id="adminWeekSelectorBtn" onclick="toggleAdminWeekDropdown()" class="w-full px-4 py-2.5 bg-white border rounded-md flex justify-between items-center text-sm text-gray-700"><span id="adminWeekSelectorDisplay">All Weeks</span><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                    <div id="adminWeekDropdown" class="hidden absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-white border rounded-lg shadow-xl right-0 p-2"></div>
+                    <input type="hidden" id="tsFilterWeek" value="">
+                </div>
+            </div>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg text-sm">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Week</th><th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Employee</th><th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Total Hours</th><th class="px-4 py-3 text-center font-medium text-gray-500 uppercase tracking-wider">Status</th><th class="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th></tr></thead>
+                    <tbody id="timesheetsList" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: View Employee -->
+    <div id="viewEmployeeModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold">View Employee Details</h3>
+                <button onclick="closeModal('viewEmployeeModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                    <div class="col-span-2 pb-2 border-b">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Employee ID</p>
+                        <p class="font-bold text-brand-blue text-xl font-mono mt-1" id="viewEmpId"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Full Name</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserName"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Role</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserRole"></p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Email Address</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserEmail"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Designation</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDesig"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Department</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDept"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Phone</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserPhone"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Monthly Pay</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserPay"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Date of Joining</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDOJ"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Date of Birth</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserDOB"></p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Catalog Access</p>
+                        <p class="font-semibold text-gray-800 mt-1" id="viewUserCatalogAccess"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+                <button onclick="closeModal('viewEmployeeModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Employee -->
+    <div id="editEmployeeModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold">Edit Employee</h3>
+                <button onclick="closeModal('editEmployeeModal')" class="text-gray-400">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <form id="editEmployeeForm" class="space-y-4">
+                    <input type="hidden" id="editDocId">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Date of Birth <span class="text-gray-400 font-normal italic">(Updating DOB will regenerate ID)</span></label>
+                            <input type="date" id="editUserDOB" required class="w-full px-4 py-2 border rounded-lg text-sm">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Employee ID</label>
+                            <input type="text" id="editEmpId" readonly class="w-full px-4 py-2 bg-gray-100 border rounded-lg font-bold text-brand-blue outline-none cursor-not-allowed">
+                        </div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Name</label><input type="text" id="editUserName" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Role</label><select id="editUserRole" required class="w-full px-4 py-2 border rounded-lg"><option value="Employee">Employee</option><option value="Admin">Admin</option></select></div>
+                        <div class="col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Email</label><input type="email" id="editUserEmail" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Designation</label><input type="text" id="editUserDesig" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Dept</label><select id="editUserDept" required class="w-full px-4 py-2 border rounded-lg"><option value="Design">Design</option><option value="Marketing">Marketing</option><option value="Founder's office">Founder's office</option></select></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Phone</label><input type="tel" id="editUserPhone" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Monthly Pay</label><input type="number" id="editUserPay" required class="w-full px-4 py-2 border rounded-lg"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Joined</label><input type="date" id="editUserDOJ" required class="w-full px-4 py-2 border rounded-lg text-sm"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-gray-700 mb-1">Catalog Access</label><select id="editUserCatalogAccess" required class="w-full px-4 py-2 border rounded-lg"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button onclick="closeModal('editEmployeeModal')" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
+                <button type="submit" form="editEmployeeForm" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Employee Stats -->
+    <div id="statsModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold" id="statsModalTitle">Employee Statistics</h3>
+                <button onclick="closeModal('statsModal')" class="text-gray-400 text-2xl">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                    <label for="empId" class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2 ml-1">Employee ID</label>
-                    <input type="text" id="empId" required placeholder="e.g. SE-1001" 
-                        class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-brand-blue focus:ring-0 outline-none transition-all font-semibold text-gray-800">
+                    <div class="flex justify-between items-center mb-3 border-b pb-1">
+                        <h4 class="text-lg font-bold text-brand-blue">Monthly Stats</h4>
+                        <select id="statsMonthSelector" onchange="updateMonthlyStats()" class="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded px-2 py-1 outline-none cursor-pointer hover:bg-indigo-100 transition-colors"></select>
+                    </div>
+                    
+                    <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div>
+                            <div id="stat-m-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div>
+                        </div>
+                        <div id="stat-m-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
+                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-m-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-6 text-center sm:text-left">
+                        <div class="bg-blue-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Work Hours</div><div id="stat-m-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
+                        <div class="bg-orange-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Sick Leave</div><div id="stat-m-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
+                        <div class="bg-purple-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Earned Leave</div><div id="stat-m-el" class="text-2xl font-black text-purple-600">0.0</div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Public Holiday</div><div id="stat-m-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
+                    </div>
                 </div>
-
-                <!-- NEW PASSWORD FIELD -->
-                <div id="passwordContainer">
-                    <label for="empPassword" class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2 ml-1">Password</label>
-                    <input type="password" id="empPassword" required placeholder="DDMMYY" 
-                        class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-brand-blue focus:ring-0 outline-none transition-all font-semibold text-gray-800 tracking-widest">
-                    <p class="text-[10px] text-gray-400 mt-1 ml-1 font-medium">Use your Date of Joining (e.g. 150823 for 15 Aug 2023)</p>
+                <div>
+                    <h4 class="text-lg font-bold text-brand-blue mb-3 border-b pb-1 mt-[26px]">Year To Date</h4>
+                    <div class="bg-indigo-50 p-4 rounded-xl border mb-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Total Logged</div>
+                            <div id="stat-y-prog" class="text-[10px] font-bold px-2 py-1 bg-white rounded shadow-sm border hidden"></div>
+                        </div>
+                        <div id="stat-y-total" class="text-3xl font-black text-indigo-900 mt-1">0.0</div>
+                        <div class="w-full bg-indigo-200 rounded-full h-1.5 mt-3"><div id="stat-y-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-center sm:text-left">
+                        <div class="bg-blue-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Work Hours</div><div id="stat-y-work" class="text-2xl font-black text-brand-blue">0.0</div></div>
+                        <div class="bg-orange-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Sick Leave</div><div id="stat-y-sl" class="text-2xl font-black text-brand-orange">0.0</div></div>
+                        <div class="bg-purple-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Earned Leave</div><div id="stat-y-el" class="text-2xl font-black text-purple-600">0.0</div></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border"><div class="text-xs font-bold text-gray-500 mb-1">Public Holiday</div><div id="stat-y-ph" class="text-2xl font-black text-gray-700">0.0</div></div>
+                    </div>
                 </div>
-
-                <div id="errorMessage" class="hidden text-red-500 text-xs font-bold bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2">
-                    <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                    <span id="errorText">Invalid Employee ID. Please try again.</span>
-                </div>
-
-                <button type="submit" id="loginBtn" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-black py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2">
-                    <span>SECURE LOGIN</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </button>
-            </form>
-        </div>
-
-        <div class="bg-gray-50 px-8 py-4 border-t border-gray-100 relative">
-            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter text-center">© 2025 Stratedge Communications Pvt Ltd</p>
-            <a href="Client Catalog.html" title="View Client Catalog" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-brand-orange transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-            </a>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 text-right text-xs text-gray-500">* Approved hours only. 1 day = 8 hrs.</div>
         </div>
     </div>
 
-    <!-- Admin Choice Modal -->
-    <div id="adminChoiceModal" class="fixed inset-0 bg-brand-blue/90 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 transform scale-95 transition-transform duration-300" id="modalCard">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-full mb-4">
-                    <svg class="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <h2 class="text-2xl font-black text-gray-900">Welcome, Administrator</h2>
-                <p class="text-gray-500 mt-2 font-medium">Where would you like to proceed?</p>
+    <!-- Modal: Review Timesheet -->
+    <div id="reviewModal" class="fixed inset-0 bg-gray-900/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 id="reviewModalTitle" class="text-xl font-bold">Review Timesheet</h3>
+                <button onclick="closeModal('reviewModal')" class="text-gray-400 text-2xl">✕</button>
             </div>
-
-            <div class="grid gap-4">
-                <button onclick="navigate('admin.html')" class="group p-5 border-2 border-brand-blue hover:bg-brand-blue transition-all rounded-2xl flex items-center gap-4 text-left">
-                    <div class="w-12 h-12 bg-blue-50 group-hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors">
-                        <svg class="w-6 h-6 text-brand-blue group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    </div>
-                    <div>
-                        <div class="font-black text-brand-blue group-hover:text-white text-lg leading-tight uppercase tracking-tight">Admin Dashboard</div>
-                        <div class="text-gray-400 group-hover:text-white/60 text-xs font-medium">Manage users & approvals</div>
-                    </div>
-                </button>
-
-                <button onclick="navigate('timesheet.html')" class="group p-5 border-2 border-brand-orange hover:bg-brand-orange transition-all rounded-2xl flex items-center gap-4 text-left">
-                    <div class="w-12 h-12 bg-orange-50 group-hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors">
-                        <svg class="w-6 h-6 text-brand-orange group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div>
-                        <div class="font-black text-brand-orange group-hover:text-white text-lg leading-tight uppercase tracking-tight">Personal Timesheet</div>
-                        <div class="text-gray-400 group-hover:text-white/60 text-xs font-medium">Log your weekly work hours</div>
-                    </div>
-                </button>
+            <div class="p-6 overflow-y-auto">
+                <div class="flex justify-between items-end mb-4">
+                    <div><p id="reviewEmpDetails" class="text-sm text-gray-500"></p><p id="reviewTotalHours" class="text-2xl font-bold text-brand-blue"></p></div>
+                    <div id="reviewStatusBadge" class="px-3 py-1 rounded-full text-xs font-bold"></div>
+                </div>
+                <div id="reviewJustificationBlock" class="bg-red-50 p-4 rounded-lg mb-6 hidden"><h4 class="text-xs font-bold text-red-800">Justification:</h4><p id="reviewJustificationText" class="text-sm text-red-700 italic"></p></div>
+                <table class="min-w-full divide-y border text-sm rounded-lg overflow-hidden">
+                    <thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Day</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Date</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Project</th><th class="px-4 py-2 text-center text-xs text-gray-500 uppercase">Hours</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Type</th></tr></thead>
+                    <tbody id="reviewTableBody" class="divide-y"></tbody>
+                </table>
+            </div>
+            <div id="reviewActions" class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button id="btnDeleteTs" class="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm mr-auto">Delete / Re-open</button>
+                <button id="btnReject" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm">Reject</button>
+                <button id="btnApprove" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm">Approve</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase Implementation -->
+    <!-- Toast Notifications -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
+        <div id="toastMessage" class="text-sm font-semibold"></div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
             authDomain: "stratedge-time.firebaseapp.com",
@@ -135,95 +404,616 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let fbUser = null;
+        let currentUser = null;
+        let allEmployees = [];
+        let allTimesheets = [];
+        let readNotifIds = new Set();
+        let currentReviewDocId = null;
+        let currentStatsEmpId = null;
 
-        const empIdInput = document.getElementById('empId');
-        const pwdContainer = document.getElementById('passwordContainer');
-        const pwdInput = document.getElementById('empPassword');
-        const errorMsg = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
+        // Public Holidays Data 2026
+        const publicHolidays2026 = [
+            { date: '2026-01-26', name: 'Republic Day' },
+            { date: '2026-03-03', name: 'Dol Jatra / Holi' },
+            { date: '2026-04-15', name: 'Poila Boishakh' },
+            { date: '2026-08-15', name: 'Independence Day' },
+            { date: '2026-10-02', name: 'Gandhi Jayanti' },
+            { date: '2026-10-18', name: 'Maha Saptami' },
+            { date: '2026-10-19', name: 'Maha Ashtami' },
+            { date: '2026-10-20', name: 'Maha Navami' },
+            { date: '2026-10-21', name: 'Maha Dashami' },
+            { date: '2026-11-08', name: 'Kali Puja' },
+            { date: '2026-11-09', name: 'Diwali' },
+            { date: '2026-12-25', name: 'Christmas Day' }
+        ];
 
-        // Dynamically hide/show password field based on Admin ID prefix
-        empIdInput.addEventListener('input', (e) => {
-            const val = e.target.value.trim().toUpperCase();
-            if (val.startsWith('AD')) {
-                pwdContainer.classList.add('hidden');
-                pwdInput.required = false;
-                pwdInput.value = '';
-            } else {
-                pwdContainer.classList.remove('hidden');
-                pwdInput.required = true;
-            }
-        });
-
-        // Login Logic
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const empId = empIdInput.value.trim();
-            const btn = document.getElementById('loginBtn');
-
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> VERIFYING...`;
-            errorMsg.classList.add('hidden');
-
-            try {
-                // Fetch employee by ID
-                const empsRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
-                const q = query(empsRef, where("empId", "==", empId));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    throw new Error("User not found. Please verify your Employee ID.");
-                }
-
-                const userData = querySnapshot.docs[0].data();
-                const docId = querySnapshot.docs[0].id;
-                
-                // Password Validation for Employees
-                if (userData.role !== 'Admin') {
-                    const doj = userData.doj;
-                    if (!doj) throw new Error("Account incomplete: No Date of Joining found.");
-                    
-                    const parts = doj.split('-'); // Format is YYYY-MM-DD
-                    if (parts.length !== 3) throw new Error("Account incomplete: Invalid DOJ format.");
-                    
-                    const expectedPwd = `${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
-                    const enteredPwd = pwdInput.value.trim();
-
-                    if (enteredPwd !== expectedPwd) {
-                        throw new Error("Invalid password. Use your DOJ in DDMMYY format.");
-                    }
-                }
-
-                // Store in session
-                sessionStorage.setItem('stratedge_active_user', JSON.stringify({ ...userData, id: docId }));
-
-                if (userData.role === 'Admin') {
-                    // Show Admin Choice Modal
-                    document.getElementById('adminChoiceModal').classList.replace('hidden', 'flex');
-                    setTimeout(() => {
-                        document.getElementById('modalCard').classList.replace('scale-95', 'scale-100');
-                    }, 50);
-                } else {
-                    // Direct redirect for employees
-                    window.location.href = 'timesheet.html';
-                }
-            } catch (err) {
-                console.error(err);
-                errorText.textContent = err.message || "An error occurred during login.";
-                errorMsg.classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerHTML = `<span>SECURE LOGIN</span> <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
-            }
-        });
-
-        // Navigation Helper
-        window.navigate = (page) => {
-            window.location.href = page;
+        const getISODate = (dateObj) => {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
         };
 
-        // Init Auth
-        signInAnonymously(auth).catch(e => console.error("Firebase Auth Fail", e));
+        // --- LEAVE LIMITS CALCULATOR ---
+        const calculateLeaveLimits = (dojString) => {
+            let slLimit = 5, elLimit = 12, phLimit = 12;
+            const currentYearNum = new Date().getFullYear();
+            if (dojString) {
+                const dojDate = new Date(dojString);
+                if (dojDate.getFullYear() === currentYearNum) {
+                    const endOfYear = new Date(currentYearNum, 11, 31);
+                    const startOfYear = new Date(currentYearNum, 0, 1);
+                    const daysWorked = Math.floor((endOfYear - dojDate) / (1000 * 60 * 60 * 24)) + 1;
+                    const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+                    const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
+                    
+                    slLimit = Math.round(5 * ratio);
+                    elLimit = Math.round(12 * ratio);
+                    
+                    const dojJustDate = getISODate(dojDate);
+                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString()) && h.date >= dojJustDate).length;
+                } else if (dojDate.getFullYear() > currentYearNum) {
+                    slLimit = 0; elLimit = 0; phLimit = 0;
+                } else {
+                    phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString())).length;
+                }
+            }
+            return { slLimit, elLimit, phLimit, limitsCalculatedYear: currentYearNum };
+        };
+
+        // --- ID GENERATION LOGIC ---
+        const generateID = (role, dob) => {
+            if (!dob) return "";
+            const prefix = role === "Admin" ? "AD" : "E";
+            const date = new Date(dob);
+            const yy = date.getFullYear().toString().slice(-2);
+            const dd = date.getDate().toString().padStart(2, '0');
+            const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+            const seq = (allEmployees.length + 1).toString().padStart(4, '0');
+            return `${prefix}${yy}${dd}${mm}${seq}`;
+        };
+
+        const updateID = (formPrefix) => {
+            const roleEl = document.getElementById(formPrefix === 'add' ? 'userRole' : 'editUserRole');
+            const dobEl = document.getElementById(formPrefix === 'add' ? 'userDOB' : 'editUserDOB');
+            const idEl = document.getElementById(formPrefix === 'add' ? 'empId' : 'editEmpId');
+            idEl.value = generateID(roleEl.value, dobEl.value);
+        };
+
+        ['userRole', 'userDOB'].forEach(id => document.getElementById(id).addEventListener('change', () => updateID('add')));
+        ['editUserRole', 'editUserDOB'].forEach(id => document.getElementById(id).addEventListener('change', () => updateID('edit')));
+
+        // --- UI CORE ---
+        window.switchTab = (tab) => {
+            const tabs = ['employees', 'timesheets'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+                document.getElementById(`tab-${t}`).classList.toggle('grid', t === tab);
+                document.getElementById(`tab-btn-${t}`).className = t === tab 
+                    ? "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm"
+                    : "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900";
+            });
+        };
+
+        const showToast = (msg, type='success') => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.className = `fixed bottom-4 right-4 transform transition-all z-[100] flex items-center p-4 rounded-lg shadow-xl border bg-white ${type === 'error' ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`;
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 4000);
+        };
+
+        window.closeModal = (m) => document.getElementById(m).classList.add('hidden');
+
+        // --- DATE UTILS ---
+        const getDatesFromWeek = (w) => {
+            const [yStr, wkStr] = w.split('-W');
+            const d = new Date(parseInt(yStr), 0, 1 + (parseInt(wkStr) - 1) * 7);
+            const ISOwkStart = new Date(d);
+            if (d.getDay() <= 4) ISOwkStart.setDate(d.getDate() - d.getDay() + 1);
+            else ISOwkStart.setDate(d.getDate() + 8 - d.getDay());
+            return Array.from({length:6}, (_,i) => { let dt = new Date(ISOwkStart); dt.setDate(dt.getDate()+i); return dt; });
+        };
+
+        const getMonSatDays = (start, end) => {
+            let count = 0;
+            let cur = new Date(start); cur.setHours(0,0,0,0);
+            let endCopy = new Date(end); endCopy.setHours(23,59,59,999);
+            while (cur <= endCopy) {
+                if (cur.getDay() !== 0) count++;
+                cur.setDate(cur.getDate() + 1);
+            }
+            return count;
+        };
+
+        // --- STATS & EXPORT ---
+        window.openStats = (id, name) => {
+            currentStatsEmpId = id;
+            const emp = allEmployees.find(e => e.empId === id);
+            const userTS = allTimesheets.filter(ts => ts.empId === id && ts.status === 'Approved');
+            const now = new Date();
+            
+            // Initialize Month Selector
+            const selector = document.getElementById('statsMonthSelector');
+            selector.innerHTML = '';
+            
+            const dojDate = (emp && emp.doj) ? new Date(emp.doj) : new Date(now.getFullYear(), 0, 1);
+            let iterDate = new Date(dojDate.getFullYear(), dojDate.getMonth(), 1);
+            const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            if (iterDate > endDate) iterDate = endDate; 
+            
+            while (iterDate <= endDate) {
+                const val = `${iterDate.getFullYear()}-${(iterDate.getMonth()+1).toString().padStart(2, '0')}`;
+                const label = iterDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = label;
+                selector.appendChild(opt);
+                iterDate.setMonth(iterDate.getMonth() + 1);
+            }
+            selector.value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}`;
+
+            // CALCULATE YTD
+            let ytd = { work: 0, SL: 0, EL: 0, PH: 0 };
+            userTS.forEach(ts => {
+                if (!ts.week || !ts.week.startsWith(now.getFullYear().toString())) return;
+                const dates = getDatesFromWeek(ts.week);
+                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
+                    if(ts.entries && ts.entries[day]) {
+                        const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                        entries.forEach(e => {
+                            if(!e) return;
+                            const h = parseFloat(e.hours) || 0;
+                            const type = e.type || '';
+                            if (type.includes('Work')) ytd.work += h; 
+                            else if (type.includes('SL')) ytd.SL += h; 
+                            else if (type.includes('EL')) ytd.EL += h; 
+                            else if (type.includes('PH')) ytd.PH += h;
+                        });
+                    }
+                });
+            });
+
+            let actualYtdStart = new Date(now.getFullYear(), 0, 1);
+            if (dojDate > actualYtdStart) actualYtdStart = dojDate;
+            const ytdEnd = new Date(now.getFullYear(), 11, 31);
+            const ytdGoalDays = actualYtdStart > ytdEnd ? 0 : getMonSatDays(actualYtdStart, ytdEnd);
+            const ytdGoalHours = ytdGoalDays * 8;
+            const yTotal = ytd.work + ytd.SL + ytd.EL + ytd.PH;
+            const yPct = ytdGoalHours > 0 ? Math.min((yTotal / ytdGoalHours) * 100, 100).toFixed(0) : 0;
+            
+            const yProg = document.getElementById('stat-y-prog');
+            yProg.classList.remove('hidden');
+            yProg.textContent = `${yPct}% of Goal (${ytdGoalHours}h)`;
+            document.getElementById('stat-y-bar').style.width = `${yPct}%`;
+            document.getElementById('stat-y-bar').className = `h-1.5 rounded-full transition-all duration-500 ${yPct >= 100 ? 'bg-green-500' : 'bg-indigo-600'}`;
+
+            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-[10px] uppercase opacity-60'>days</span><br><span class='text-sm opacity-80'>${h.toFixed(1)} hrs</span>`;
+            document.getElementById('stat-y-total').innerHTML = formatStat(yTotal);
+            document.getElementById('stat-y-work').innerHTML = formatStat(ytd.work);
+            
+            // Calculate Limits from DB or fallback
+            const currentYearNum = now.getFullYear();
+            let slLimit = emp.slLimit;
+            let elLimit = emp.elLimit;
+            let phLimit = emp.phLimit;
+
+            if (slLimit === undefined || elLimit === undefined || phLimit === undefined) {
+                slLimit = 5; elLimit = 12; phLimit = 12;
+                if (emp.doj) {
+                    const dDate = new Date(emp.doj);
+                    if (dDate.getFullYear() === currentYearNum) {
+                        const endOfYear = new Date(currentYearNum, 11, 31);
+                        const startOfYear = new Date(currentYearNum, 0, 1);
+                        const daysWorked = Math.floor((endOfYear - dDate) / (1000 * 60 * 60 * 24)) + 1;
+                        const daysInYear = Math.floor((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+                        const ratio = Math.max(0, Math.min(1, daysWorked / daysInYear));
+                        slLimit = Math.round(5 * ratio);
+                        elLimit = Math.round(12 * ratio);
+                        const dojJustDate = getISODate(dDate);
+                        phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString()) && h.date >= dojJustDate).length;
+                    } else if (dDate.getFullYear() > currentYearNum) {
+                        slLimit = 0; elLimit = 0; phLimit = 0;
+                    } else {
+                        phLimit = publicHolidays2026.filter(h => h.date.startsWith(currentYearNum.toString())).length;
+                    }
+                }
+            }
+
+            // New dynamic formatter specifically for YTD leaves with limits
+            const formatYtdLeave = (elId, h, limit) => {
+                const d = h / 8;
+                const isExceeded = d > limit;
+                const color = isExceeded ? 'text-red-600' : 'text-green-600';
+                const el = document.getElementById(elId);
+                
+                el.className = `font-black ${color} flex flex-col justify-start`;
+                let html = `<div class="text-2xl">${d.toFixed(1)}<span class="text-sm font-bold text-gray-400">/${limit}</span> <span class='text-[10px] uppercase opacity-60 text-gray-500'>days</span></div>`;
+                html += `<div class='text-sm opacity-80 text-gray-500'>${h.toFixed(1)} hrs</div>`;
+                
+                if (isExceeded) {
+                    html += `<div class="mt-1"><span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200 shadow-sm leading-none inline-block">Limit Exceeded</span></div>`;
+                }
+                el.innerHTML = html;
+            };
+
+            formatYtdLeave('stat-y-sl', ytd.SL, slLimit);
+            formatYtdLeave('stat-y-el', ytd.EL, elLimit);
+            formatYtdLeave('stat-y-ph', ytd.PH, phLimit);
+            
+            window.updateMonthlyStats();
+            
+            document.getElementById('statsModal').classList.remove('hidden');
+        };
+
+        window.updateMonthlyStats = () => {
+            if (!currentStatsEmpId) return;
+            const emp = allEmployees.find(e => e.empId === currentStatsEmpId);
+            const userTS = allTimesheets.filter(ts => ts.empId === currentStatsEmpId && ts.status === 'Approved');
+            
+            const [selYear, selMonth] = document.getElementById('statsMonthSelector').value.split('-').map(Number);
+            let monthly = { work: 0, SL: 0, EL: 0, PH: 0 };
+            
+            userTS.forEach(ts => {
+                if (!ts.week) return;
+                const dates = getDatesFromWeek(ts.week);
+                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, idx) => {
+                    if(ts.entries && ts.entries[day]) {
+                        const entryDate = dates[idx];
+                        if (entryDate && entryDate.getFullYear() === selYear && (entryDate.getMonth() + 1) === selMonth) {
+                            const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                            entries.forEach(e => {
+                                if(!e) return;
+                                const h = parseFloat(e.hours) || 0;
+                                const type = e.type || '';
+                                if (type.includes('Work')) monthly.work += h; 
+                                else if (type.includes('SL')) monthly.SL += h; 
+                                else if (type.includes('EL')) monthly.EL += h; 
+                                else if (type.includes('PH')) monthly.PH += h;
+                            });
+                        }
+                    }
+                });
+            });
+
+            const dojDate = (emp && emp.doj) ? new Date(emp.doj) : new Date(selYear, 0, 1);
+            let actualMonthStart = new Date(selYear, selMonth - 1, 1);
+            if (dojDate > actualMonthStart) actualMonthStart = dojDate;
+            const monthEnd = new Date(selYear, selMonth, 0); 
+            
+            const monthGoalDays = actualMonthStart > monthEnd ? 0 : getMonSatDays(actualMonthStart, monthEnd);
+            const monthGoalHours = monthGoalDays * 8;
+            const mTotal = monthly.work + monthly.SL + monthly.EL + monthly.PH;
+            const mPct = monthGoalHours > 0 ? Math.min((mTotal / monthGoalHours) * 100, 100).toFixed(0) : 0;
+
+            const mProg = document.getElementById('stat-m-prog');
+            mProg.classList.remove('hidden');
+            mProg.textContent = `${mPct}% of Goal (${monthGoalHours}h)`;
+            document.getElementById('stat-m-bar').style.width = `${mPct}%`;
+            document.getElementById('stat-m-bar').className = `h-1.5 rounded-full transition-all duration-500 ${mPct >= 100 ? 'bg-green-500' : 'bg-indigo-600'}`;
+
+            const formatStat = (h) => `${(h/8).toFixed(1)} <span class='text-[10px] uppercase opacity-60'>days</span><br><span class='text-sm opacity-80'>${h.toFixed(1)} hrs</span>`;
+            document.getElementById('stat-m-total').innerHTML = formatStat(mTotal);
+            document.getElementById('stat-m-work').innerHTML = formatStat(monthly.work);
+            document.getElementById('stat-m-sl').innerHTML = formatStat(monthly.SL);
+            document.getElementById('stat-m-el').innerHTML = formatStat(monthly.EL);
+            document.getElementById('stat-m-ph').innerHTML = formatStat(monthly.PH);
+        };
+
+        window.exportYTD = (id, name) => {
+            let csv = "Week,Day,Date,Project,Type,Hours\n";
+            allTimesheets.filter(ts => ts.empId === id).sort((a,b)=>a.week.localeCompare(b.week)).forEach(ts => {
+                const dates = getDatesFromWeek(ts.week);
+                ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((day, i) => {
+                    if(ts.entries && ts.entries[day]) {
+                        const entries = Array.isArray(ts.entries[day]) ? ts.entries[day] : [ts.entries[day]];
+                        entries.forEach(e => { if(e && parseFloat(e.hours)>0) csv += `${ts.week},${day},${dates[i].toLocaleDateString()},"${e.project}",${e.type},${e.hours}\n`; });
+                    }
+                });
+            });
+            const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+            link.download = `TS_${name}_${new Date().getFullYear()}.csv`; link.click();
+        };
+
+        // --- RENDERING ---
+        window.renderEmployees = () => {
+            const tbody = document.getElementById('usersList');
+            const search = document.getElementById('filterName').value.toLowerCase();
+            const roleF = document.getElementById('filterRole').value;
+            const deptF = document.getElementById('filterDept').value;
+            tbody.innerHTML = '';
+            
+            const filtered = allEmployees.filter(e => {
+                return (e.name.toLowerCase().includes(search) || e.empId.toLowerCase().includes(search)) && (roleF==='' || e.role===roleF) && (deptF==='' || e.department===deptF);
+            });
+            
+            filtered.forEach(e => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `<td class="px-4 py-3 whitespace-nowrap"><b>${e.name}</b><br><span class="text-[10px] font-mono text-gray-400">${e.empId}</span></td>
+                    <td class="px-4 py-3 text-xs whitespace-nowrap">${e.email}<br>${e.phone}</td>
+                    <td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.role==='Admin'?'bg-purple-100 text-purple-700':'bg-blue-100 text-brand-blue'}">${e.role}</span><br><span class="text-[10px] text-gray-500">${e.department}</span></td>
+                    <td class="px-4 py-3 text-xs whitespace-nowrap font-bold text-gray-700">₹ ${e.pay ? parseInt(e.pay).toLocaleString('en-IN') : '0'}</td>
+                    <td class="px-4 py-3 text-xs whitespace-nowrap">${e.doj}</td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.catalogAccess === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${e.catalogAccess || 'No'}</span></td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                        <button onclick="viewUser('${e.id}')" class="text-gray-600 hover:text-gray-900 font-bold mr-3 transition-colors">View</button>
+                        <button onclick="editUser('${e.id}')" class="text-brand-blue font-bold mr-3 transition-colors">Edit</button>
+                        <button onclick="openStats('${e.empId}', '${e.name}')" class="text-brand-orange font-bold mr-3 transition-colors">Stats</button>
+                        <button onclick="exportYTD('${e.empId}', '${e.name}')" class="text-green-600 font-bold mr-3 transition-colors">Export</button>
+                        <button id="del-btn-${e.id}" onclick="deleteUser('${e.id}')" class="text-red-500 font-bold transition-colors">Delete</button>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('userCount').textContent = `${allEmployees.length} Employees`;
+        };
+
+        const populateTsEmployeeFilter = () => {
+            const select = document.getElementById('tsFilterName');
+            if(!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">All Employees</option>';
+            
+            const sortedEmps = [...allEmployees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            
+            sortedEmps.forEach(emp => {
+                if (emp.empId && emp.name) {
+                    select.innerHTML += `<option value="${emp.empId}">${emp.empId} - ${emp.name}</option>`;
+                }
+            });
+            
+            if (sortedEmps.some(e => e.empId === currentVal)) select.value = currentVal;
+        };
+
+        window.renderTimesheets = () => {
+            const tbody = document.getElementById('timesheetsList');
+            const searchEmpId = document.getElementById('tsFilterName').value;
+            const wk = document.getElementById('tsFilterWeek').value;
+            const statusFilter = document.getElementById('tsFilterStatus').value;
+            tbody.innerHTML = '';
+            
+            allTimesheets.filter(ts => {
+                const matchesName = (searchEmpId === '' || ts.empId === searchEmpId);
+                const matchesWeek = (wk === '' || ts.week === wk);
+                let matchesStatus = true;
+                if (statusFilter === 'Approved') {
+                    matchesStatus = (ts.status === 'Approved');
+                } else if (statusFilter === 'Unapproved') {
+                    matchesStatus = (ts.status !== 'Approved');
+                }
+                return matchesName && matchesWeek && matchesStatus;
+            }).forEach(ts => {
+                const dates = getDatesFromWeek(ts.week);
+                const dateRange = `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-4 py-3">
+                        <div class="font-bold text-gray-900">${ts.week}</div>
+                        <div class="text-[10px] font-semibold text-gray-400 mt-0.5 uppercase tracking-tighter">${dateRange}</div>
+                    </td>
+                    <td class="px-4 py-3">${ts.name}<br><span class="text-[10px] text-gray-400">${ts.empId}</span></td>
+                    <td class="px-4 py-3 text-center font-bold">${ts.totalHours}</td>
+                    <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${ts.status==='Approved'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${ts.status}</span></td>
+                    <td class="px-4 py-3 text-right"><button onclick="reviewTimesheet('${ts.id}')" class="bg-blue-50 text-brand-blue px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 transition-colors">Review</button></td>`;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.viewUser = (id) => {
+            const e = allEmployees.find(emp => emp.id === id);
+            if(!e) return;
+            document.getElementById('viewEmpId').textContent = e.empId || '-';
+            document.getElementById('viewUserName').textContent = e.name || '-';
+            document.getElementById('viewUserRole').textContent = e.role || '-';
+            document.getElementById('viewUserEmail').textContent = e.email || '-';
+            document.getElementById('viewUserDesig').textContent = e.designation || '-';
+            document.getElementById('viewUserDept').textContent = e.department || '-';
+            document.getElementById('viewUserPhone').textContent = e.phone || '-';
+            document.getElementById('viewUserPay').textContent = e.pay ? `₹ ${parseInt(e.pay).toLocaleString('en-IN')}` : '-';
+            document.getElementById('viewUserDOJ').textContent = e.doj || '-';
+            document.getElementById('viewUserDOB').textContent = e.dob || '-';
+            document.getElementById('viewUserCatalogAccess').textContent = e.catalogAccess || 'No';
+            document.getElementById('viewEmployeeModal').classList.remove('hidden');
+        };
+
+        window.reviewTimesheet = (id) => {
+            const ts = allTimesheets.find(t => t.id === id);
+            currentReviewDocId = id;
+            document.getElementById('reviewEmpDetails').textContent = `${ts.name} (${ts.empId})`;
+            document.getElementById('reviewTotalHours').textContent = `${ts.totalHours} hrs logged`;
+            const tbody = document.getElementById('reviewTableBody'); tbody.innerHTML = '';
+            const dates = getDatesFromWeek(ts.week);
+            ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach((d, idx) => {
+                if(ts.entries && ts.entries[d]) {
+                    const dateStr = dates[idx].toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const ents = Array.isArray(ts.entries[d]) ? ts.entries[d] : [ts.entries[d]];
+                    ents.forEach(e => {
+                        if(e && parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="px-4 py-2 font-medium">${d}</td><td class="px-4 py-2 text-gray-500">${dateStr}</td><td class="px-4 py-2">${e.project}</td><td class="px-4 py-2 text-center font-bold text-brand-blue">${e.hours}</td><td class="px-4 py-2 text-gray-500">${e.type}</td></tr>`;
+                    });
+                }
+            });
+            
+            const badge = document.getElementById('reviewStatusBadge');
+            badge.textContent = ts.status;
+            badge.className = `px-3 py-1 rounded-full text-xs font-bold ${ts.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`;
+            
+            const justBlock = document.getElementById('reviewJustificationBlock');
+            if (ts.justification) {
+                justBlock.classList.remove('hidden');
+                document.getElementById('reviewJustificationText').textContent = ts.justification;
+            } else {
+                justBlock.classList.add('hidden');
+            }
+
+            document.getElementById('reviewModal').classList.remove('hidden');
+        };
+
+        window.editUser = (id) => {
+            const e = allEmployees.find(emp => emp.id === id);
+            document.getElementById('editDocId').value = e.id;
+            document.getElementById('editUserName').value = e.name;
+            document.getElementById('editUserDOB').value = e.dob || "";
+            document.getElementById('editUserRole').value = e.role;
+            document.getElementById('editEmpId').value = e.empId;
+            document.getElementById('editUserEmail').value = e.email;
+            document.getElementById('editUserDesig').value = e.designation;
+            document.getElementById('editUserDept').value = e.department;
+            document.getElementById('editUserPhone').value = e.phone;
+            document.getElementById('editUserPay').value = e.pay || '';
+            document.getElementById('editUserDOJ').value = e.doj;
+            document.getElementById('editUserCatalogAccess').value = e.catalogAccess || 'No';
+            document.getElementById('editEmployeeModal').classList.remove('hidden');
+        };
+
+        window.deleteUser = async (id) => {
+            const btn = document.getElementById(`del-btn-${id}`);
+            if (btn.textContent === "Delete") {
+                btn.textContent = "Sure?"; btn.className = "text-red-500 bg-red-100 px-2 py-0.5 rounded transition-colors";
+                setTimeout(() => { 
+                    if(btn) {
+                        btn.textContent = "Delete"; 
+                        btn.className = "text-red-500 font-bold transition-colors";
+                    }
+                }, 3000);
+                return;
+            }
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id));
+            showToast("User removed.");
+        };
+
+        // --- SUBMIT HANDLERS ---
+        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const dojVal = document.getElementById('userDOJ').value;
+            const limits = calculateLeaveLimits(dojVal);
+
+            const payload = {
+                name: document.getElementById('userName').value,
+                dob: document.getElementById('userDOB').value,
+                role: document.getElementById('userRole').value,
+                empId: document.getElementById('empId').value,
+                email: document.getElementById('userEmail').value,
+                designation: document.getElementById('userDesig').value,
+                department: document.getElementById('userDept').value,
+                phone: document.getElementById('userPhone').value,
+                pay: document.getElementById('userPay').value,
+                doj: dojVal,
+                catalogAccess: document.getElementById('userCatalogAccess').value,
+                slLimit: limits.slLimit,
+                elLimit: limits.elLimit,
+                phLimit: limits.phLimit,
+                limitsCalculatedYear: limits.limitsCalculatedYear,
+                createdAt: Date.now()
+            };
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), payload);
+            showToast("Employee registered.");
+            e.target.reset(); updateID('add');
+        });
+
+        document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editDocId').value;
+            const dojVal = document.getElementById('editUserDOJ').value;
+            const limits = calculateLeaveLimits(dojVal);
+
+            const payload = {
+                name: document.getElementById('editUserName').value,
+                dob: document.getElementById('editUserDOB').value,
+                role: document.getElementById('editUserRole').value,
+                empId: document.getElementById('editEmpId').value,
+                email: document.getElementById('editUserEmail').value,
+                designation: document.getElementById('editUserDesig').value,
+                department: document.getElementById('editUserDept').value,
+                phone: document.getElementById('editUserPhone').value,
+                pay: document.getElementById('editUserPay').value,
+                doj: dojVal,
+                catalogAccess: document.getElementById('editUserCatalogAccess').value,
+                slLimit: limits.slLimit,
+                elLimit: limits.elLimit,
+                phLimit: limits.phLimit,
+                limitsCalculatedYear: limits.limitsCalculatedYear
+            };
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', id), payload);
+            showToast("Employee updated.");
+            closeModal('editEmployeeModal');
+        });
+
+        const updateTSStatus = async (s) => {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', currentReviewDocId), { status: s });
+            showToast(`Timesheet ${s}.`); closeModal('reviewModal');
+        };
+        document.getElementById('btnApprove').onclick = () => updateTSStatus('Approved');
+        document.getElementById('btnReject').onclick = () => updateTSStatus('Rejected');
+        document.getElementById('btnDeleteTs').onclick = async () => {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', currentReviewDocId));
+            showToast("TS Deleted."); closeModal('reviewModal');
+        };
+
+        // --- NOTIFICATIONS & WEEK FILTER ---
+        window.toggleNotifications = () => document.getElementById('notifDropdown').classList.toggle('hidden');
+        window.toggleAdminWeekDropdown = () => document.getElementById('adminWeekDropdown').classList.toggle('hidden');
+        
+        window.selectAdminWeek = (w) => {
+            document.getElementById('tsFilterWeek').value = w;
+            document.getElementById('adminWeekSelectorDisplay').textContent = w === '' ? 'All Weeks' : w;
+            document.getElementById('adminWeekDropdown').classList.add('hidden');
+            renderTimesheets();
+        };
+
+        const generateAdminCalendarList = () => {
+            const dropdown = document.getElementById('adminWeekDropdown');
+            dropdown.innerHTML = `<div onclick="selectAdminWeek('')" class="p-2 hover:bg-gray-100 cursor-pointer text-sm font-bold">All Weeks</div>`;
+            const uniqueWeeks = [...new Set(allTimesheets.map(t => t.week))].sort().reverse();
+            uniqueWeeks.forEach(w => {
+                const dates = getDatesFromWeek(w);
+                const rangeText = `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${dates[5].toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+                dropdown.innerHTML += `<div onclick="selectAdminWeek('${w}')" class="p-2 hover:bg-gray-100 cursor-pointer text-sm border-t flex justify-between items-center"><span>${w}</span><span class="text-[10px] text-gray-500">${rangeText}</span></div>`;
+            });
+        };
+
+        const updateNotifications = () => {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notificationBadge');
+            const pending = allTimesheets.filter(t => t.status === 'Submitted' && !readNotifIds.has(t.id));
+            list.innerHTML = '';
+            if (pending.length === 0) {
+                list.innerHTML = '<p class="p-4 text-center text-xs text-gray-500">No new submissions.</p>';
+                badge.classList.add('hidden');
+            } else {
+                pending.forEach(t => {
+                    list.innerHTML += `<div onclick="switchTab('timesheets'); selectAdminWeek('${t.week}'); toggleNotifications();" class="p-4 hover:bg-blue-50 cursor-pointer text-xs text-gray-800 border-b last:border-b-0 transition-colors"><b>${t.name}</b> submitted hours for ${t.week}.</div>`;
+                });
+                badge.textContent = pending.length;
+                badge.classList.remove('hidden');
+            }
+        };
+
+        // --- INIT ---
+        onAuthStateChanged(auth, u => {
+            currentUser = u;
+            if (u) {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
+                    allEmployees = s.docs.map(d=>({id:d.id, ...d.data()})); 
+                    renderEmployees(); 
+                    populateTsEmployeeFilter();
+                });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'timesheets'), s => { 
+                    allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
+                    populateTsEmployeeFilter();
+                    generateAdminCalendarList();
+                    renderTimesheets(); 
+                    updateNotifications();
+                });
+            }
+        });
+        signInAnonymously(auth);
+
+        window.markAllRead = () => {
+            allTimesheets.filter(t => t.status === 'Submitted').forEach(t => readNotifIds.add(t.id));
+            updateNotifications();
+            document.getElementById('notifDropdown').classList.add('hidden');
+        };
     </script>
 </body>
 </html>
