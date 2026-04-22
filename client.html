@@ -882,7 +882,7 @@
             // --- IMAGE SIGNATURE FROM GITHUB REPO ---
             try {
                 // Fetch image, convert to Base64 to avoid canvas-tainting and URL encoding issues
-                const response = await fetch(encodeURI("RC Sign with Stamp.png"));
+                const response = await fetch(encodeURI("RCSignwithStamp.png"));
                 if (response.ok) {
                     const blob = await response.blob();
                     const base64Signature = await new Promise((resolve) => {
