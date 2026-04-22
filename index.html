@@ -179,6 +179,11 @@
                 const userData = querySnapshot.docs[0].data();
                 const docId = querySnapshot.docs[0].id;
                 
+                // Check Active Status
+                if (userData.status === 'Inactive') {
+                    throw new Error("Account is inactive. Please contact the administrator.");
+                }
+
                 // Password Validation for Employees
                 if (userData.role !== 'Admin') {
                     const doj = userData.doj;
