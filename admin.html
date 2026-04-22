@@ -731,22 +731,32 @@
             if(!select) return;
             const currentVal = select.value;
             select.innerHTML = '<option value="">All Employees</option>';
-            const empsWithTs = [...new Set(allTimesheets.map(t => t.name))].sort();
-            empsWithTs.forEach(name => {
-                select.innerHTML += `<option value="${name}">${name}</option>`;
+            
+            const uniqueEmpsMap = new Map();
+            allTimesheets.forEach(t => {
+                if (t.empId && t.name) {
+                    uniqueEmpsMap.set(t.empId, t.name);
+                }
             });
-            if (empsWithTs.includes(currentVal)) select.value = currentVal;
+            
+            const sortedEmps = Array.from(uniqueEmpsMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+            
+            sortedEmps.forEach(([empId, name]) => {
+                select.innerHTML += `<option value="${empId}">${empId} - ${name}</option>`;
+            });
+            
+            if (uniqueEmpsMap.has(currentVal)) select.value = currentVal;
         };
 
         window.renderTimesheets = () => {
             const tbody = document.getElementById('timesheetsList');
-            const searchName = document.getElementById('tsFilterName').value;
+            const searchEmpId = document.getElementById('tsFilterName').value;
             const wk = document.getElementById('tsFilterWeek').value;
             const statusFilter = document.getElementById('tsFilterStatus').value;
             tbody.innerHTML = '';
             
             allTimesheets.filter(ts => {
-                const matchesName = (searchName === '' || ts.name === searchName);
+                const matchesName = (searchEmpId === '' || ts.empId === searchEmpId);
                 const matchesWeek = (wk === '' || ts.week === wk);
                 let matchesStatus = true;
                 if (statusFilter === 'Approved') {
