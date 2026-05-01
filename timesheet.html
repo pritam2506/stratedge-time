@@ -147,7 +147,7 @@
                         <!-- Callout -->
                         <div class="mt-3 bg-blue-50 border border-blue-100 p-2.5 rounded-lg flex items-start gap-1.5 shadow-sm">
                             <svg class="w-4 h-4 text-brand-blue shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <p class="text-[11px] text-brand-blue font-semibold leading-snug">Note: Leaves are allocated on a pro-rated basis relative to your joining date.</p>
+                            <p class="text-[11px] text-brand-blue font-semibold leading-snug">Note: Earned and Sick leaves are allocated on a pro-rated basis relative to your joining date.</p>
                         </div>
                     </div>
                 </div>
@@ -183,19 +183,6 @@
                             <!-- Injected dynamically via JS -->
                         </div>
                         <input type="hidden" id="weekSelector" value="">
-                    </div>
-                </div>
-
-                <!-- Pre-fill Warning -->
-                <div id="prefillWarning" class="hidden bg-orange-50 border-l-4 border-brand-orange p-4 mb-6 rounded-r-lg">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-brand-orange" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-orange-800 font-medium">Auto-filled Template</p>
-                            <p class="text-sm text-orange-700 mt-1">This week's timesheet hasn't been submitted yet. We've pre-filled it based on your last approved timesheet to save you time. Please verify and adjust the hours below before submitting.</p>
-                        </div>
                     </div>
                 </div>
 
@@ -942,37 +929,16 @@
             const currentData = myTimesheets.find(ts => ts.week === weekStr);
             
             if (!currentData) {
-                const approvedSheets = myTimesheets.filter(ts => ts.status === 'Approved').sort((a,b) => b.week.localeCompare(a.week));
-                if (approvedSheets.length > 0) {
-                    const lastApproved = approvedSheets[0];
-                    document.getElementById('prefillWarning').classList.remove('hidden');
-                    daysOfWeek.forEach((day, index) => {
-                        const rowDate = dates[index];
-                        const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                        const beforeDoj = isBeforeDoj(rowDate);
-                        if (beforeDoj) {
-                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
-                        } else if (holidayInfo) {
-                            window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
-                        } else if (lastApproved.entries && lastApproved.entries[day] && Array.isArray(lastApproved.entries[day])) {
-                            lastApproved.entries[day].forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, false, holidayInfo));
-                        } else {
-                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 8, project: '', type: 'Regular Work'}, false, holidayInfo);
-                        }
-                    });
-                } else {
-                    document.getElementById('prefillWarning').classList.add('hidden');
-                    daysOfWeek.forEach((day, index) => {
-                        const rowDate = dates[index];
-                        const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                        const beforeDoj = isBeforeDoj(rowDate);
-                        if (beforeDoj) {
-                            window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
-                        } else {
-                            window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
-                        }
-                    });
-                }
+                daysOfWeek.forEach((day, index) => {
+                    const rowDate = dates[index];
+                    const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
+                    const beforeDoj = isBeforeDoj(rowDate);
+                    if (beforeDoj) {
+                        window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
+                    } else {
+                        window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
+                    }
+                });
             } 
             checkSubmissionStatus(weekStr);
             calculateTotals();
