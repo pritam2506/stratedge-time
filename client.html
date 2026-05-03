@@ -1028,6 +1028,8 @@
             
             y += 18;
             
+            const pageHeight = doc.internal.pageSize.getHeight();
+            
             // Loop through multiple line items
             const invoiceItems = inv.items && inv.items.length > 0 ? inv.items : [{
                 serviceType: inv.serviceType || '',
@@ -1037,6 +1039,11 @@
             }];
 
             invoiceItems.forEach(item => {
+                // Add page break if we run out of vertical space
+                if (y > pageHeight - 50) {
+                    doc.addPage();
+                    y = 20;
+                }
                 doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(40).text(item.serviceType || '', m + 5, y);
                 doc.setFontSize(8).setTextColor(120).text(item.comments || '', m + 5, y + 5);
                 doc.setFontSize(10).setTextColor(60).text(item.hsn || '', rightAlignX - 45, y, { align: 'right' });
@@ -1047,6 +1054,7 @@
             y += 6;
             
             if (inv.applyGst) {
+                if (y > pageHeight - 30) { doc.addPage(); y = 20; }
                 const cgst = inv.amount * 0.09;
                 const sgst = inv.amount * 0.09;
                 doc.setFontSize(9).setTextColor(80);
@@ -1058,6 +1066,7 @@
                 y += 8;
             }
 
+            if (y > pageHeight - 30) { doc.addPage(); y = 20; }
             doc.setDrawColor(230).line(rightAlignX - 70, y, 190, y);
             y += 10;
             const totalToDisplay = inv.grandTotal || inv.amount;
@@ -1069,16 +1078,22 @@
             doc.setFontSize(9).setTextColor(100).setFont("helvetica", "italic").text(words, rightAlignX - 5, y, { align: 'right' });
 
             // Anchor Bank Details and Signatory to the bottom of the page
-            const pageHeight = doc.internal.pageSize.getHeight();
-            y = Math.max(y + 30, pageHeight - 45);
+            if (y > pageHeight - 45) {
+                doc.addPage();
+                y = 20;
+            }
+            y = Math.max(y + 20, pageHeight - 45);
 
-            doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold").text("BANK DETAILS FOR DIGITAL TRANSFER:", m, y);
-            doc.setFont("helvetica", "normal").setFontSize(9).text([
-                "A/c Name: Stratedge Communications Private Limited",
-                "A/c Number: 44057725082",
-                "IFSC Code: SBIN0001522",
-                "Bank Name: State Bank of India, Behala Branch"
-            ], m, y + 6);
+            // Hide Bank Details specifically for Proforma Invoices
+            if (inv.invoiceType !== 'Proforma Invoice') {
+                doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold").text("BANK DETAILS FOR DIGITAL TRANSFER:", m, y);
+                doc.setFont("helvetica", "normal").setFontSize(9).text([
+                    "A/c Name: Stratedge Communications Private Limited",
+                    "A/c Number: 44057725082",
+                    "IFSC Code: SBIN0001522",
+                    "Bank Name: State Bank of India, Behala Branch"
+                ], m, y + 6);
+            }
 
             // Authorized Signatory aligned perfectly with the bank details header
             doc.setFontSize(10).setTextColor(40).setFont("helvetica", "bold");
