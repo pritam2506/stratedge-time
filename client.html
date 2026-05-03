@@ -1029,6 +1029,7 @@
             y += 18;
             
             const pageHeight = doc.internal.pageSize.getHeight();
+            const isProforma = inv.invoiceType === 'Proforma Invoice';
             
             // Loop through multiple line items
             const invoiceItems = inv.items && inv.items.length > 0 ? inv.items : [{
@@ -1038,23 +1039,38 @@
                 amount: inv.amount || 0
             }];
 
-            invoiceItems.forEach(item => {
-                // Add page break if we run out of vertical space
-                if (y > pageHeight - 50) {
-                    doc.addPage();
-                    y = 20;
+            let itemSpacing = 14;
+            let titleFontSize = 10;
+            let commentFontSize = 8;
+            let hsnAmtFontSize = 10;
+            let amtTotalFontSize = 11;
+            
+            // Calculate if we need to dynamically shrink rows to fit exactly on ONE page
+            const bottomSpaceRequired = isProforma ? 80 : 110; 
+            const availableSpace = pageHeight - y - bottomSpaceRequired;
+            const requiredSpace = invoiceItems.length * 14;
+            
+            if (requiredSpace > availableSpace) {
+                itemSpacing = availableSpace / invoiceItems.length;
+                if (itemSpacing < 10) {
+                    titleFontSize = 8; commentFontSize = 6; hsnAmtFontSize = 8; amtTotalFontSize = 9;
                 }
-                doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(40).text(item.serviceType || '', m + 5, y);
-                doc.setFontSize(8).setTextColor(120).text(item.comments || '', m + 5, y + 5);
-                doc.setFontSize(10).setTextColor(60).text(item.hsn || '', rightAlignX - 45, y, { align: 'right' });
-                doc.setFontSize(11).setTextColor(40).text(`Rs. ${(item.amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}/-`, rightAlignX - 5, y, { align: 'right' });
-                y += 14;
+                if (itemSpacing < 6) {
+                    titleFontSize = 6; commentFontSize = 5; hsnAmtFontSize = 6; amtTotalFontSize = 7;
+                }
+            }
+
+            invoiceItems.forEach(item => {
+                doc.setFont("helvetica", "normal").setFontSize(titleFontSize).setTextColor(40).text(item.serviceType || '', m + 5, y);
+                doc.setFontSize(commentFontSize).setTextColor(120).text(item.comments || '', m + 5, y + (itemSpacing * 0.35));
+                doc.setFontSize(hsnAmtFontSize).setTextColor(60).text(item.hsn || '', rightAlignX - 45, y, { align: 'right' });
+                doc.setFontSize(amtTotalFontSize).setTextColor(40).text(`Rs. ${(item.amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}/-`, rightAlignX - 5, y, { align: 'right' });
+                y += itemSpacing;
             });
             
             y += 6;
             
             if (inv.applyGst) {
-                if (y > pageHeight - 30) { doc.addPage(); y = 20; }
                 const cgst = inv.amount * 0.09;
                 const sgst = inv.amount * 0.09;
                 doc.setFontSize(9).setTextColor(80);
@@ -1066,7 +1082,6 @@
                 y += 8;
             }
 
-            if (y > pageHeight - 30) { doc.addPage(); y = 20; }
             doc.setDrawColor(230).line(rightAlignX - 70, y, 190, y);
             y += 10;
             const totalToDisplay = inv.grandTotal || inv.amount;
@@ -1077,15 +1092,11 @@
             const words = `In Words: ${amountToWords(totalToDisplay)}`;
             doc.setFontSize(9).setTextColor(100).setFont("helvetica", "italic").text(words, rightAlignX - 5, y, { align: 'right' });
 
-            // Anchor Bank Details and Signatory to the bottom of the page
-            if (y > pageHeight - 45) {
-                doc.addPage();
-                y = 20;
-            }
+            // Anchor Bank Details and Signatory to the bottom of the page exactly
             y = Math.max(y + 20, pageHeight - 45);
 
             // Hide Bank Details specifically for Proforma Invoices
-            if (inv.invoiceType !== 'Proforma Invoice') {
+            if (!isProforma) {
                 doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold").text("BANK DETAILS FOR DIGITAL TRANSFER:", m, y);
                 doc.setFont("helvetica", "normal").setFontSize(9).text([
                     "A/c Name: Stratedge Communications Private Limited",
