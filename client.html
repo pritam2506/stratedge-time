@@ -1068,7 +1068,10 @@
             const words = `In Words: ${amountToWords(totalToDisplay)}`;
             doc.setFontSize(9).setTextColor(100).setFont("helvetica", "italic").text(words, rightAlignX - 5, y, { align: 'right' });
 
-            y += 30;
+            // Anchor Bank Details and Signatory to the bottom of the page
+            const pageHeight = doc.internal.pageSize.getHeight();
+            y = Math.max(y + 30, pageHeight - 45);
+
             doc.setFontSize(10).setTextColor(60).setFont("helvetica", "bold").text("BANK DETAILS FOR DIGITAL TRANSFER:", m, y);
             doc.setFont("helvetica", "normal").setFontSize(9).text([
                 "A/c Name: Stratedge Communications Private Limited",
