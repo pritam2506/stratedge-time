@@ -752,11 +752,21 @@
                     <td class="px-4 py-3 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.status === 'Inactive' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${e.status || 'Active'}</span></td>
                     <td class="px-4 py-3 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${e.catalogAccess === 'Yes' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${e.catalogAccess || 'No'}</span></td>
                     <td class="px-4 py-3 text-right whitespace-nowrap">
-                        <button onclick="viewUser('${e.id}')" class="text-gray-600 hover:text-gray-900 font-bold mr-3 transition-colors">View</button>
-                        <button onclick="editUser('${e.id}')" class="text-brand-blue font-bold mr-3 transition-colors">Edit</button>
-                        <button onclick="openStats('${e.empId}', '${e.name}')" class="text-brand-orange font-bold mr-3 transition-colors">Stats</button>
-                        <button onclick="exportYTD('${e.empId}', '${e.name}')" class="text-green-600 font-bold mr-3 transition-colors">Export</button>
-                        <button id="del-btn-${e.id}" onclick="deleteUser('${e.id}')" class="text-red-500 font-bold transition-colors">Delete</button>
+                        <button onclick="viewUser('${e.id}')" title="View" class="text-gray-500 hover:text-gray-900 inline-flex items-center justify-center p-1.5 rounded hover:bg-gray-100 transition-colors mr-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                        <button onclick="editUser('${e.id}')" title="Edit" class="text-brand-blue hover:text-blue-700 inline-flex items-center justify-center p-1.5 rounded hover:bg-blue-50 transition-colors mr-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button onclick="openStats('${e.empId}', '${e.name}')" title="Stats" class="text-brand-orange hover:text-orange-600 inline-flex items-center justify-center p-1.5 rounded hover:bg-orange-50 transition-colors mr-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </button>
+                        <button onclick="exportYTD('${e.empId}', '${e.name}')" title="Export" class="text-green-600 hover:text-green-700 inline-flex items-center justify-center p-1.5 rounded hover:bg-green-50 transition-colors mr-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </button>
+                        <button id="del-btn-${e.id}" onclick="deleteUser('${e.id}')" title="Delete" class="text-red-400 hover:text-red-600 inline-flex items-center justify-center p-1.5 rounded hover:bg-red-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
                     </td>`;
                 tbody.appendChild(tr);
             });
@@ -884,12 +894,19 @@
 
         window.deleteUser = async (id) => {
             const btn = document.getElementById(`del-btn-${id}`);
-            if (btn.textContent === "Delete") {
-                btn.textContent = "Sure?"; btn.className = "text-red-500 bg-red-100 px-2 py-0.5 rounded transition-colors";
+            if (!btn.dataset.confirm) {
+                btn.dataset.confirm = "true";
+                btn.dataset.originalHtml = btn.innerHTML;
+                btn.dataset.originalClass = btn.className;
+                
+                btn.innerHTML = "<span class='text-[10px] font-bold uppercase'>Sure?</span>"; 
+                btn.className = "text-red-500 bg-red-100 px-2 py-0.5 rounded transition-colors inline-flex items-center justify-center";
+                
                 setTimeout(() => { 
                     if(btn) {
-                        btn.textContent = "Delete"; 
-                        btn.className = "text-red-500 font-bold transition-colors";
+                        delete btn.dataset.confirm;
+                        btn.innerHTML = btn.dataset.originalHtml; 
+                        btn.className = btn.dataset.originalClass;
                     }
                 }, 3000);
                 return;
