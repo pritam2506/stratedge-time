@@ -225,10 +225,16 @@
                                 <input type="checkbox" id="invApplyGst" class="w-4 h-4 text-brand-blue rounded border-gray-300 focus:ring-brand-blue">
                                 <label for="invApplyGst" class="text-xs font-bold text-gray-700">Apply GST (18%)</label>
                             </div>
+                            
+                            <!-- Step 1: Preview. Step 2: Confirm -->
                             <div class="flex flex-col gap-2 pt-2">
-                                <button type="submit" class="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transition-all">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    GENERATE INVOICE
+                                <button type="submit" id="previewInvBtn" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7z"></path></svg>
+                                    PREVIEW INVOICE
+                                </button>
+                                <button type="button" id="confirmInvBtn" onclick="confirmAndSaveInvoice()" class="hidden w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    CONFIRM & GENERATE
                                 </button>
                                 <button type="button" id="cancelInvBtn" onclick="resetInvoiceForm()" class="hidden w-full py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 text-sm">Discard Changes</button>
                             </div>
@@ -259,7 +265,7 @@
                         <div class="p-6 bg-gray-700/50 rounded-full border border-gray-600">
                             <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
-                        <p class="text-gray-500 font-medium max-w-xs">Complete the invoice details and click generate to render the document.</p>
+                        <p class="text-gray-500 font-medium max-w-xs">Complete the invoice details and click preview to render the document.</p>
                     </div>
                     <iframe id="pdfPreview" class="hidden w-full h-full border-none bg-white"></iframe>
                 </div>
@@ -406,6 +412,9 @@
         let allClients = [];
         let allInvoices = [];
 
+        // Global storage for the two-step preview to save workflow
+        window.pendingInvoiceData = null;
+
         if (!activeUser || activeUser.role !== 'Admin') {
             document.getElementById('accessDenied').classList.remove('hidden');
         }
@@ -541,6 +550,8 @@
 
         window.removeInvoiceLineItem = (btn) => {
             btn.closest('.line-item').remove();
+            // Re-hide the confirm button if they change the form by deleting an item
+            document.getElementById('confirmInvBtn').classList.add('hidden');
         };
 
         window.renderClients = () => {
@@ -765,6 +776,8 @@
 
             document.getElementById('invFormTitle').innerHTML = 'Edit Invoice';
             document.getElementById('cancelInvBtn').classList.remove('hidden');
+            document.getElementById('confirmInvBtn').classList.add('hidden');
+            
             const client = allClients.find(c => c.id === inv.clientId);
             if(client) generatePDF(client, inv);
         };
@@ -783,10 +796,12 @@
             document.getElementById('editingInvId').value = '';
             document.getElementById('invFormTitle').innerHTML = 'Invoice Details';
             document.getElementById('cancelInvBtn').classList.add('hidden');
+            document.getElementById('confirmInvBtn').classList.add('hidden');
             document.getElementById('pdfPreview').classList.add('hidden');
             document.getElementById('pdfPlaceholder').classList.remove('hidden');
             document.getElementById('invoiceLineItems').innerHTML = '';
             window.addInvoiceLineItem();
+            window.pendingInvoiceData = null;
         };
 
         window.deleteClient = async (id) => {
@@ -815,6 +830,12 @@
             resetForm();
         });
 
+        // Hide confirm button if they start modifying fields
+        document.getElementById('invoiceForm').addEventListener('input', () => {
+            document.getElementById('confirmInvBtn').classList.add('hidden');
+        });
+
+        // STEP 1: Preview Generator
         document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const client = allClients.find(c => c.id === document.getElementById('invClientSelect').value);
@@ -868,14 +889,53 @@
             let invNo = '';
             if (editId) {
                 invNo = allInvoices.find(i => i.id === editId).invoiceNo;
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'invoices', editId), data);
             } else {
                 invNo = generateNextInvoiceNo(client.clientCode);
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'invoices'), { ...data, invoiceNo: invNo, createdAt: Date.now() });
             }
+            
+            // Store pending payload for Step 2
+            window.pendingInvoiceData = { data, editId, invNo, client };
+
+            // Generate Preview visually
             generatePDF(client, { ...data, invoiceNo: invNo });
-            showToast("Invoice processed.");
+            
+            // Show Confirm controls
+            document.getElementById('confirmInvBtn').classList.remove('hidden');
+            document.getElementById('cancelInvBtn').classList.remove('hidden');
+            
+            showToast("Preview generated. Please confirm to save.");
         });
+
+        // STEP 2: Finalize and Save
+        window.confirmAndSaveInvoice = async () => {
+            if (!window.pendingInvoiceData) return;
+            
+            const btn = document.getElementById('confirmInvBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = "SAVING...";
+            btn.disabled = true;
+            
+            const { data, editId, invNo, client } = window.pendingInvoiceData;
+            
+            try {
+                if (editId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'invoices', editId), data);
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'invoices'), { ...data, invoiceNo: invNo, createdAt: Date.now() });
+                }
+                
+                showToast("Invoice processed and saved successfully.");
+                btn.classList.add('hidden');
+                window.pendingInvoiceData = null;
+                
+            } catch (e) {
+                console.error(e);
+                showToast("Error saving invoice.");
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        };
 
         const buildInvoiceDoc = (client, inv) => {
             const { jsPDF } = window.jspdf;
