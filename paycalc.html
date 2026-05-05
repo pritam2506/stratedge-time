@@ -97,13 +97,6 @@
                             <input type="month" id="payMonth" required class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Calculation Base</label>
-                            <select id="calcBase" required class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 text-sm">
-                                <option value="30" selected>30 Days (Fixed)</option>
-                                <option value="actual">Actual Working Days (Mon-Sat)</option>
-                            </select>
-                        </div>
-                        <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">Monthly Salary (INR)</label>
                             <div class="relative">
                                 <span class="absolute left-3 top-2 text-gray-500 font-bold">₹</span>
@@ -190,6 +183,10 @@
                                 <div class="border-t border-gray-200 pt-2 flex justify-between">
                                     <span class="text-gray-500">Regular Work</span>
                                     <span class="font-semibold text-gray-800" id="resMonthlyWork">0 hrs (0 days)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500 ml-4">- Sundays (Auto)</span>
+                                    <span class="font-semibold text-gray-800" id="resMonthlySun">0 hrs (0 days)</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-500 ml-4">- Sick Leave</span>
@@ -509,17 +506,6 @@
             return Array.from({length:6}, (_,i) => { let dt = new Date(ISOwkStart); dt.setDate(dt.getDate()+i); return dt; });
         };
 
-        const getMonSatDays = (start, end) => {
-            let count = 0;
-            let cur = new Date(start); cur.setHours(0,0,0,0);
-            let endCopy = new Date(end); endCopy.setHours(23,59,59,999);
-            while (cur <= endCopy) {
-                if (cur.getDay() !== 0) count++;
-                cur.setDate(cur.getDate() + 1);
-            }
-            return count;
-        };
-
         onAuthStateChanged(auth, u => {
             if (u) {
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
@@ -693,7 +679,6 @@
             document.getElementById('empSelect').value = rec.empId;
             document.getElementById('payMonth').value = rec.monthVal;
             document.getElementById('basePay').value = rec.basePay;
-            document.getElementById('calcBase').value = rec.calcBase || '30';
             document.getElementById('hasBonus').checked = (rec.bonusAmount > 0);
             window.toggleBonusInput();
             document.getElementById('bonusAmount').value = rec.bonusAmount || 0;
@@ -725,7 +710,6 @@
                 const empId = document.getElementById('empSelect').value;
                 const monthVal = document.getElementById('payMonth').value; 
                 const basePayStr = document.getElementById('basePay').value;
-                const calcBase = document.getElementById('calcBase').value; 
                 
                 if(!empId || !monthVal || !basePayStr) return;
                 
@@ -742,16 +726,33 @@
                 const [selYear, selMonth] = monthVal.split('-').map(Number);
                 const fullMonthStart = new Date(selYear, selMonth - 1, 1);
                 const fullMonthEnd = new Date(selYear, selMonth, 0); 
-                const totalWorkingDaysInMonth = getMonSatDays(fullMonthStart, fullMonthEnd);
 
                 const dojDate = (emp.doj) ? new Date(emp.doj) : fullMonthStart;
                 let actualMonthStart = new Date(fullMonthStart);
                 if (dojDate > actualMonthStart) actualMonthStart = dojDate; 
                 
-                const monthGoalDays = actualMonthStart > fullMonthEnd ? 0 : getMonSatDays(actualMonthStart, fullMonthEnd);
+                let missedDays = 0;
+                if (actualMonthStart > fullMonthStart) {
+                    let cur = new Date(fullMonthStart); cur.setHours(0,0,0,0);
+                    let endCopy = new Date(actualMonthStart); endCopy.setHours(0,0,0,0);
+                    while (cur < endCopy) {
+                        missedDays++;
+                        cur.setDate(cur.getDate() + 1);
+                    }
+                }
+                
+                const monthGoalDays = Math.max(0, 30 - missedDays);
                 const monthGoalHours = monthGoalDays * 8;
                 
-                if (monthGoalHours === 0) { showToast("Employee joined after this month.", "error"); return; }
+                if (monthGoalHours <= 0) { showToast("Employee joined after this month.", "error"); return; }
+                
+                let sundayHours = 0;
+                let curSun = new Date(actualMonthStart); curSun.setHours(0,0,0,0);
+                let endSun = new Date(fullMonthEnd); endSun.setHours(23,59,59,999);
+                while (curSun <= endSun) {
+                    if (curSun.getDay() === 0) sundayHours += 8;
+                    curSun.setDate(curSun.getDate() + 1);
+                }
                 
                 const userTS = allTimesheets.filter(ts => ts.empId === empId && ts.status === 'Approved');
                 let loggedInMonth = 0, workInMonth = 0, slInMonth = 0, elInMonth = 0, phInMonth = 0, ytdSL = 0, ytdEL = 0, ytdPH = 0;
@@ -778,6 +779,8 @@
                     });
                 });
                 
+                loggedInMonth += sundayHours;
+                
                 const actualShortfallHours = Math.max(0, monthGoalHours - loggedInMonth);
                 const is100Percent = loggedInMonth >= monthGoalHours && monthGoalHours > 0;
                 
@@ -793,7 +796,7 @@
                 }
                 
                 const chargeableShortfall = (bypassShortfall || useFullPay) ? 0 : actualShortfallHours;
-                const baseHours = calcBase === 'actual' ? (totalWorkingDaysInMonth * 8) : 240;
+                const baseHours = 240; 
                 const hourlyRate = basePay / baseHours; 
                 let proRatedBasePay = useFullPay ? basePay : monthGoalHours * hourlyRate;
                 
@@ -811,6 +814,7 @@
                 document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${d(monthGoalHours)} days)`;
                 document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
                 document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
+                document.getElementById('resMonthlySun').textContent = `${sundayHours.toFixed(1)} hrs (${d(sundayHours)} days)`; 
                 document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs (${d(slInMonth)} days)`; 
                 document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs (${d(elInMonth)} days)`; 
                 document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs (${d(phInMonth)} days)`;
@@ -822,7 +826,7 @@
                 document.getElementById('resYtdPhDays').textContent = `(${d(ytdPH)} / ${d(phLimitHrs)} days)`;
                 
                 let basicPayLabel = useFullPay ? (is100Percent ? "Full Basic Pay (100% Goal Met)" : "Full Basic Pay (Admin Override)") : "Pro-rated Basic Pay";
-                const baseDaysText = calcBase === 'actual' ? totalWorkingDaysInMonth : 30;
+                const baseDaysText = 30;
                 
                 const earnList = document.getElementById('earningsList');
                 earnList.innerHTML = `<div class="flex justify-between items-center py-1"><div><span class="block font-medium">${basicPayLabel}</span><span class="text-[10px] text-gray-500">${useFullPay ? "(Full Pay Applied)" : `(${monthGoalDays} working days out of ${baseDaysText})`}</span></div><span class="font-semibold">₹${proRatedBasePay.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`;
@@ -842,8 +846,8 @@
                 document.getElementById('resGrandTotal').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
                 document.getElementById('resNetPay').textContent = `₹${finalPay.toLocaleString('en-IN', {maximumFractionDigits: 0})}`;
                 
-                window.pendingPayloadData = { empId, empName: emp.name, monthVal, basePay, calcBase, proRatedBasePay, useFullPay, is100Percent, bonusAmount, bonusJustification, finalPay, shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount, bypassedShortfall: bypassShortfall, updatedAt: Date.now() };
-                window.currentPayslipData = { emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, calcBase, totalWorkingDaysInMonth, proRatedBasePay, useFullPay, is100Percent, monthGoalDays, bonusAmount, bonusJustification, finalPay, deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL, actualStart: actualMonthStart, actualEnd: fullMonthEnd, monthGoalHours, loggedInMonth, workInMonth, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs };
+                window.pendingPayloadData = { empId, empName: emp.name, monthVal, basePay, proRatedBasePay, useFullPay, is100Percent, bonusAmount, bonusJustification, finalPay, shortfallHours: actualShortfallHours, chargeableSL, chargeableEL, deductionAmount, bypassedShortfall: bypassShortfall, updatedAt: Date.now() };
+                window.currentPayslipData = { emp, monthStr: `${monthNames[selMonth-1]} ${selYear}`, basePay, proRatedBasePay, useFullPay, is100Percent, monthGoalDays, bonusAmount, bonusJustification, finalPay, deductions: deductionAmount, hourlyRate, shortfallHours: chargeableShortfall, chargeableSL, chargeableEL, actualStart: actualMonthStart, actualEnd: fullMonthEnd, monthGoalHours, loggedInMonth, workInMonth, sundayHours, slInMonth, elInMonth, phInMonth, ytdSL, slLimitHrs, ytdEL, elLimitHrs, ytdPH, phLimitHrs };
                 
                 if (isViewingPast) { document.getElementById('confirmBtn').classList.add('hidden'); document.getElementById('pdfBtn').classList.remove('hidden'); document.getElementById('confirmedBadge').classList.remove('hidden'); }
                 else { document.getElementById('confirmBtn').classList.remove('hidden'); document.getElementById('pdfBtn').classList.add('hidden'); document.getElementById('confirmedBadge').classList.add('hidden'); document.getElementById('confirmBtn').disabled = false; }
@@ -881,14 +885,18 @@
             y += 6; doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60); const d = (hrs) => (hrs/8).toFixed(1);
             doc.text(`Target: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y); 
             doc.text(`Logged: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
+            
             doc.text(`Work: ${ps.workInMonth.toFixed(1)} hrs (${d(ps.workInMonth)} days)`, m, y + 10);
-            doc.text(`SL: ${ps.slInMonth.toFixed(1)} hrs (${d(ps.slInMonth)} days)`, m + 45, y + 10);
-            doc.text(`EL: ${ps.elInMonth.toFixed(1)} hrs (${d(ps.elInMonth)} days)`, m, y + 15);
-            doc.text(`PH: ${ps.phInMonth.toFixed(1)} hrs (${d(ps.phInMonth)} days)`, m + 45, y + 15);
+            doc.text(`Sun: ${ps.sundayHours.toFixed(1)} hrs (${d(ps.sundayHours)} days)`, m + 45, y + 10);
+            doc.text(`SL: ${ps.slInMonth.toFixed(1)} hrs (${d(ps.slInMonth)} days)`, m, y + 15);
+            doc.text(`EL: ${ps.elInMonth.toFixed(1)} hrs (${d(ps.elInMonth)} days)`, m + 45, y + 15);
+            doc.text(`PH: ${ps.phInMonth.toFixed(1)} hrs (${d(ps.phInMonth)} days)`, m, y + 20);
+            
             doc.text(`SL: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs (${d(ps.ytdSL)} / ${d(ps.slLimitHrs)} days)`, m + 90, y); 
             doc.text(`EL: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs (${d(ps.ytdEL)} / ${d(ps.elLimitHrs)} days)`, m + 90, y + 5); 
             doc.text(`PH: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs (${d(ps.ytdPH)} / ${d(ps.phLimitHrs)} days)`, m + 90, y + 10);
-            y += 25; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
+            
+            y += 28; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
             doc.setFillColor(245).rect(m, y-5, 170, 8, 'F'); doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
             doc.text("EARNINGS", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
             y += 8; doc.setFont("helvetica", "normal").setTextColor(60);
