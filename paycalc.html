@@ -173,20 +173,16 @@
                             <h4 class="text-xs font-bold text-brand-blue uppercase tracking-widest mb-3 border-b pb-1">Monthly Time Summary</h4>
                             <div class="space-y-2 text-xs">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600 font-bold">Target Total</span>
+                                    <span class="text-gray-600 font-bold">• Target Total</span>
                                     <span class="font-bold text-gray-900" id="resMonthlyTarget">0 hrs (0 days)</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600 font-bold">Logged Total</span>
+                                    <span class="text-gray-600 font-bold">• Logged Total</span>
                                     <span class="font-bold text-brand-blue" id="resMonthlyLogged">0 hrs (0 days)</span>
                                 </div>
                                 <div class="border-t border-gray-200 pt-2 flex justify-between">
-                                    <span class="text-gray-500">Regular Work</span>
+                                    <span class="text-gray-500 ml-4">- Regular Work</span>
                                     <span class="font-semibold text-gray-800" id="resMonthlyWork">0 hrs (0 days)</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-500 ml-4">- Sundays (Auto)</span>
-                                    <span class="font-semibold text-gray-800" id="resMonthlySun">0 hrs (0 days)</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-500 ml-4">- Sick Leave</span>
@@ -200,6 +196,7 @@
                                     <span class="text-gray-500 ml-4">- Public Holiday</span>
                                     <span class="font-semibold text-gray-800" id="resMonthlyPH">0 hrs (0 days)</span>
                                 </div>
+                                <div class="mt-2 text-[10px] text-gray-400 italic border-t border-gray-100 pt-2" id="resMonthlySunNote">* Includes 0 Sunday(s) auto-credited.</div>
                             </div>
                         </div>
 
@@ -208,21 +205,21 @@
                             <h4 class="text-xs font-bold text-brand-blue uppercase tracking-widest mb-3 border-b border-blue-200 pb-1">YTD Leave Summary</h4>
                             <div class="space-y-2 text-xs">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-600 font-medium">Sick Leave (SL)</span>
+                                    <span class="text-gray-600 font-bold">• Sick Leave (SL)</span>
                                     <div class="text-right">
                                         <span class="font-bold text-gray-900" id="resYtdSlHrs">0 / 0 hrs</span><br>
                                         <span class="text-[10px] text-gray-500" id="resYtdSlDays">(0 / 0 days)</span>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-600 font-medium">Earned Leave (EL)</span>
+                                    <span class="text-gray-600 font-bold">• Earned Leave (EL)</span>
                                     <div class="text-right">
                                         <span class="font-bold text-gray-900" id="resYtdElHrs">0 / 0 hrs</span><br>
                                         <span class="text-[10px] text-gray-500" id="resYtdElDays">(0 / 0 days)</span>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-600 font-medium">Public Holiday (PH)</span>
+                                    <span class="text-gray-600 font-bold">• Public Holiday (PH)</span>
                                     <div class="text-right">
                                         <span class="font-bold text-gray-900" id="resYtdPhHrs">0 / 0 hrs</span><br>
                                         <span class="text-[10px] text-gray-500" id="resYtdPhDays">(0 / 0 days)</span>
@@ -814,10 +811,14 @@
                 document.getElementById('resMonthlyTarget').textContent = `${monthGoalHours} hrs (${d(monthGoalHours)} days)`;
                 document.getElementById('resMonthlyLogged').textContent = `${loggedInMonth.toFixed(1)} hrs (${d(loggedInMonth)} days)`;
                 document.getElementById('resMonthlyWork').textContent = `${workInMonth.toFixed(1)} hrs (${d(workInMonth)} days)`;
-                document.getElementById('resMonthlySun').textContent = `${sundayHours.toFixed(1)} hrs (${d(sundayHours)} days)`; 
+                
+                const numSundays = Math.round(sundayHours / 8);
+                document.getElementById('resMonthlySunNote').textContent = `* Includes ${numSundays} Sunday(s) (${sundayHours.toFixed(1)} hrs) auto-credited.`;
+                
                 document.getElementById('resMonthlySL').textContent = `${slInMonth.toFixed(1)} hrs (${d(slInMonth)} days)`; 
                 document.getElementById('resMonthlyEL').textContent = `${elInMonth.toFixed(1)} hrs (${d(elInMonth)} days)`; 
                 document.getElementById('resMonthlyPH').textContent = `${phInMonth.toFixed(1)} hrs (${d(phInMonth)} days)`;
+                
                 document.getElementById('resYtdSlHrs').textContent = `${ytdSL.toFixed(1)} / ${slLimitHrs} hrs`; 
                 document.getElementById('resYtdSlDays').textContent = `(${d(ytdSL)} / ${d(slLimitHrs)} days)`; 
                 document.getElementById('resYtdElHrs').textContent = `${ytdEL.toFixed(1)} / ${elLimitHrs} hrs`; 
@@ -883,20 +884,20 @@
             y += 22; doc.setDrawColor(230).line(m, y, 190, y); y += 10;
             doc.setFontSize(10).setFont("helvetica", "bold").setTextColor(40); doc.text("MONTHLY TIME SUMMARY", m, y); doc.text("YTD LEAVE SUMMARY", m + 90, y);
             y += 6; doc.setFontSize(9).setFont("helvetica", "normal").setTextColor(60); const d = (hrs) => (hrs/8).toFixed(1);
-            doc.text(`Target: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y); 
-            doc.text(`Logged: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
             
-            doc.text(`Work: ${ps.workInMonth.toFixed(1)} hrs (${d(ps.workInMonth)} days)`, m, y + 10);
-            doc.text(`Sun: ${ps.sundayHours.toFixed(1)} hrs (${d(ps.sundayHours)} days)`, m + 45, y + 10);
-            doc.text(`SL: ${ps.slInMonth.toFixed(1)} hrs (${d(ps.slInMonth)} days)`, m, y + 15);
-            doc.text(`EL: ${ps.elInMonth.toFixed(1)} hrs (${d(ps.elInMonth)} days)`, m + 45, y + 15);
-            doc.text(`PH: ${ps.phInMonth.toFixed(1)} hrs (${d(ps.phInMonth)} days)`, m, y + 20);
+            doc.text(`\u2022 Target: ${ps.monthGoalHours} hrs (${d(ps.monthGoalHours)} days)`, m, y); 
+            doc.text(`\u2022 Logged: ${ps.loggedInMonth.toFixed(1)} hrs (${d(ps.loggedInMonth)} days)`, m, y + 5);
             
-            doc.text(`SL: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs (${d(ps.ytdSL)} / ${d(ps.slLimitHrs)} days)`, m + 90, y); 
-            doc.text(`EL: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs (${d(ps.ytdEL)} / ${d(ps.elLimitHrs)} days)`, m + 90, y + 5); 
-            doc.text(`PH: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs (${d(ps.ytdPH)} / ${d(ps.phLimitHrs)} days)`, m + 90, y + 10);
+            doc.text(`- Work: ${ps.workInMonth.toFixed(1)} hrs (${d(ps.workInMonth)} days)`, m + 5, y + 10);
+            doc.text(`- SL: ${ps.slInMonth.toFixed(1)} hrs (${d(ps.slInMonth)} days)`, m + 5, y + 15);
+            doc.text(`- EL: ${ps.elInMonth.toFixed(1)} hrs (${d(ps.elInMonth)} days)`, m + 5, y + 20);
+            doc.text(`- PH: ${ps.phInMonth.toFixed(1)} hrs (${d(ps.phInMonth)} days)`, m + 5, y + 25);
             
-            y += 28; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
+            doc.text(`\u2022 SL: ${ps.ytdSL.toFixed(1)} / ${ps.slLimitHrs} hrs (${d(ps.ytdSL)} / ${d(ps.slLimitHrs)} days)`, m + 90, y); 
+            doc.text(`\u2022 EL: ${ps.ytdEL.toFixed(1)} / ${ps.elLimitHrs} hrs (${d(ps.ytdEL)} / ${d(ps.elLimitHrs)} days)`, m + 90, y + 5); 
+            doc.text(`\u2022 PH: ${ps.ytdPH.toFixed(1)} / ${ps.phLimitHrs} hrs (${d(ps.ytdPH)} / ${d(ps.phLimitHrs)} days)`, m + 90, y + 10);
+            
+            y += 32; doc.setDrawColor(230).line(m, y, 190, y); y += 12;
             doc.setFillColor(245).rect(m, y-5, 170, 8, 'F'); doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(40);
             doc.text("EARNINGS", m + 2, y); doc.text("AMOUNT", rightAlignX - 2, y, {align: 'right'});
             y += 8; doc.setFont("helvetica", "normal").setTextColor(60);
@@ -913,7 +914,12 @@
             y += 8; doc.text("Total Deductions:", m + 2, y); doc.text(`Rs. ${ps.deductions.toLocaleString('en-IN', {maximumFractionDigits:0})}`, rightAlignX - 2, y, {align: 'right'});
             y += 10; doc.setFillColor(235).rect(m, y, 170, 12, 'F'); doc.setFontSize(12); doc.text("NET PAYABLE:", m + 5, y + 8);
             doc.setTextColor(65, 105, 225).text(`Rs. ${ps.finalPay.toLocaleString('en-IN', {maximumFractionDigits:0})}/-`, rightAlignX - 5, y + 8, {align: 'right'});
-            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic"); doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" }); return doc;
+            
+            doc.setFontSize(8).setTextColor(150).setFont("helvetica", "italic"); 
+            const numSundays = Math.round(ps.sundayHours / 8);
+            doc.text(`* Includes ${numSundays} Sunday(s) (${ps.sundayHours.toFixed(1)} hrs) auto-credited to Logged time.`, m, 280);
+            doc.text("This is a computer-generated payslip and does not require a physical signature.", 105, 285, { align: "center" }); 
+            return doc;
         };
 
         window.confirmAndSavePay = async () => {
