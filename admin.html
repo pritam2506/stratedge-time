@@ -219,8 +219,8 @@
                 </select>
                 <input type="month" id="leaveFilterMonth" onchange="renderLeaves()" class="w-full sm:w-48 px-4 py-2.5 border rounded-md text-sm outline-none text-gray-700 bg-white">
                 <select id="leaveFilterStatus" onchange="renderLeaves()" class="w-full sm:w-48 px-4 py-2.5 border rounded-md text-sm outline-none text-gray-700 bg-white">
-                    <option value="">All Statuses</option>
-                    <option value="Pending" selected>Pending</option>
+                    <option value="" selected>All Statuses</option>
+                    <option value="Pending">Pending</option>
                     <option value="Approved">Approved</option>
                     <option value="Rejected">Rejected</option>
                 </select>
@@ -599,6 +599,7 @@
                         : "px-6 py-2 rounded-md font-semibold text-sm transition-colors text-gray-600 hover:text-gray-900";
                 }
             });
+            if (tab === 'timesheets') renderTimesheets();
             if (tab === 'leaves') renderLeaves();
         };
 
@@ -1293,17 +1294,13 @@
                     allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
                     populateTsEmployeeFilter();
                     generateAdminCalendarList();
-                    if(document.getElementById('tab-timesheets') && !document.getElementById('tab-timesheets').classList.contains('hidden')) {
-                        renderTimesheets(); 
-                    }
+                    renderTimesheets(); 
                     updateNotifications();
                 });
 
                 onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'leave_requests'), orderBy('createdAt', 'desc')), s => { 
                     allLeaves = s.docs.map(d=>({id:d.id, ...d.data()})); 
-                    if(document.getElementById('tab-leaves') && !document.getElementById('tab-leaves').classList.contains('hidden')) {
-                        renderLeaves();
-                    }
+                    renderLeaves();
                     updateNotifications();
                 });
             }
