@@ -159,11 +159,15 @@
                 <!-- Calendar Header -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                     <div class="flex-1">
-                        <div class="flex items-center gap-4 mb-1">
+                        <div class="flex flex-wrap items-center gap-3 mb-1">
                             <h2 class="text-xl font-bold text-gray-900">Weekly Timesheet</h2>
                             <button onclick="openLeaveModal()" class="bg-brand-blue/10 text-brand-blue hover:bg-brand-blue hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 border border-brand-blue/20 shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 Apply for Leave
+                            </button>
+                            <button onclick="openLeaveTrackerModal()" class="bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 border border-gray-200 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                Leave Tracker
                             </button>
                         </div>
                         <div class="flex items-center gap-3 text-xs font-semibold text-gray-500 bg-gray-50 py-1.5 px-3 rounded-lg w-fit mt-2">
@@ -296,6 +300,46 @@
         </div>
     </div>
 
+    <!-- Leave Tracker Modal -->
+    <div id="leaveTrackerModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    Leave Application Tracker
+                </h3>
+                <button onclick="closeLeaveTrackerModal()" class="text-gray-400 hover:text-gray-700 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 flex flex-col flex-grow overflow-hidden">
+                <div class="flex justify-end mb-4 flex-shrink-0">
+                    <div class="w-48">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter Month</label>
+                        <input type="month" id="trackerMonthFilter" onchange="renderLeaveTracker()" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                    </div>
+                </div>
+                <div class="overflow-y-auto custom-scroll border border-gray-100 rounded-lg flex-grow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Applied On</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Leave Type</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Duration</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Days</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaveTrackerBody" class="bg-white divide-y divide-gray-100 text-sm">
+                            <!-- JS injected -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="trackerEmptyState" class="hidden py-12 text-center text-gray-500 flex-shrink-0">No leave applications found for this month.</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Payslip Download Modal -->
     <div id="payslipModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col transform transition-all">
@@ -354,9 +398,11 @@
         let fbUser = null;
         let myTimesheets = [];
         let myPayRecords = []; 
+        let myLeaves = [];
         let unsubscribeTimesheets = null;
         let unsubscribePrefs = null;
         let unsubscribePayslips = null; 
+        let unsubscribeLeaves = null;
         let readNotifIds = new Set();
         let currentActiveNotifIds = [];
 
@@ -389,6 +435,7 @@
             if (unsubscribeTimesheets) unsubscribeTimesheets();
             if (unsubscribePrefs) unsubscribePrefs();
             if (unsubscribePayslips) unsubscribePayslips();
+            if (unsubscribeLeaves) unsubscribeLeaves();
             sessionStorage.removeItem('stratedge_active_user');
             window.location.href = 'index.html';
         };
@@ -414,6 +461,50 @@
                 wDrop.classList.add('hidden');
             }
         });
+
+        // --- Leave Application Tracker ---
+        window.openLeaveTrackerModal = () => {
+            const now = new Date();
+            document.getElementById('trackerMonthFilter').value = getISODate(now).substring(0, 7);
+            window.renderLeaveTracker();
+            document.getElementById('leaveTrackerModal').classList.remove('hidden');
+        };
+
+        window.closeLeaveTrackerModal = () => {
+            document.getElementById('leaveTrackerModal').classList.add('hidden');
+        };
+
+        window.renderLeaveTracker = () => {
+            const tbody = document.getElementById('leaveTrackerBody');
+            const monthFilter = document.getElementById('trackerMonthFilter').value;
+            tbody.innerHTML = '';
+            
+            const filtered = myLeaves.filter(l => {
+                if (!monthFilter) return true;
+                return l.startDate.startsWith(monthFilter);
+            });
+            
+            if (filtered.length === 0) {
+                document.getElementById('trackerEmptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('trackerEmptyState').classList.add('hidden');
+                filtered.forEach(l => {
+                    const appliedDate = new Date(l.createdAt).toLocaleDateString('en-GB');
+                    const badgeColor = l.status === 'Approved' ? 'bg-green-100 text-green-700' : (l.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-gray-900">${appliedDate}</td>
+                        <td class="px-4 py-3 font-bold text-brand-blue">${l.leaveType}</td>
+                        <td class="px-4 py-3 text-gray-600">${new Date(l.startDate).toLocaleDateString('en-GB')} to ${new Date(l.endDate).toLocaleDateString('en-GB')}</td>
+                        <td class="px-4 py-3 text-center font-bold text-gray-800">${l.days}</td>
+                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${badgeColor}">${l.status}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        };
 
         // --- Leave Application Functions ---
         window.openLeaveModal = () => {
@@ -633,6 +724,14 @@
             updateNotifications();
             document.getElementById('notifDropdown').classList.add('hidden');
             window.openPayslipModal();
+        };
+
+        window.markReadAndOpenTracker = (notifId) => {
+            readNotifIds.add(notifId);
+            saveReadNotifs(); 
+            updateNotifications();
+            document.getElementById('notifDropdown').classList.add('hidden');
+            window.openLeaveTrackerModal();
         };
 
         // --- Date Utils ---
@@ -898,7 +997,7 @@
                 }
             });
 
-            // 2. Alert on Explicit Admin Actions
+            // 2. Alert on Explicit Admin Actions (Timesheets)
             myTimesheets.forEach(ts => {
                 const needsResubmit = ts.status === 'Rejected' || ts.status === 'Resubmit' || ts.status === 'Returned';
                 if (ts.status === 'Approved' || needsResubmit) {
@@ -918,6 +1017,27 @@
                             <div class="px-4 py-3 ${bg} border-l-4 ${border} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${notifId}', '${ts.week}')">
                                 <p class="text-sm font-bold ${color}">Timesheet ${statusStr}</p>
                                 <p class="text-xs text-gray-700 mt-1">${msg}</p>
+                            </div>
+                        `;
+                    }
+                }
+            });
+
+            // 3. Alert on Leave Request Actions
+            myLeaves.forEach(l => {
+                if (l.status === 'Approved' || l.status === 'Rejected') {
+                    const notifId = `leave_update_${l.id}_${l.status}`;
+                    if (!readNotifIds.has(notifId)) {
+                        currentActiveNotifIds.push(notifId);
+                        notifCount++;
+                        const isAppr = l.status === 'Approved';
+                        const color = isAppr ? 'text-green-600' : 'text-red-600';
+                        const bg = isAppr ? 'bg-green-50' : 'bg-red-50';
+                        const border = isAppr ? 'border-green-500' : 'border-red-500';
+                        notifList.innerHTML += `
+                            <div class="px-4 py-3 ${bg} border-l-4 ${border} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndOpenTracker('${notifId}')">
+                                <p class="text-sm font-bold ${color}">Leave ${l.status}</p>
+                                <p class="text-xs text-gray-700 mt-1">Your leave request for ${l.leaveType} (${l.days} days) has been ${l.status.toLowerCase()}.</p>
                             </div>
                         `;
                     }
@@ -1089,25 +1209,10 @@
             if (!weekStr) return;
             const timesheetForm = document.getElementById('timesheetForm');
             timesheetForm.classList.remove('hidden');
-            const dates = getDatesFromWeek(weekStr);
             const table = document.getElementById('timesheetTable');
             const tbodys = table.querySelectorAll('tbody');
             tbodys.forEach(t => t.remove());
 
-            const currentData = myTimesheets.find(ts => ts.week === weekStr);
-            
-            if (!currentData) {
-                daysOfWeek.forEach((day, index) => {
-                    const rowDate = dates[index];
-                    const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                    const beforeDoj = isBeforeDoj(rowDate);
-                    if (beforeDoj) {
-                        window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
-                    } else {
-                        window.addEntryRow(index, day, formatDate(rowDate), null, false, holidayInfo);
-                    }
-                });
-            } 
             checkSubmissionStatus(weekStr);
             calculateTotals();
         };
@@ -1154,37 +1259,58 @@
                 }
             }
 
-            if (data) {
-                daysOfWeek.forEach((day, index) => {
-                    const rowDate = dates[index];
-                    const holidayInfo = publicHolidays2026.find(h => h.date === getISODate(rowDate));
-                    const beforeDoj = isBeforeDoj(rowDate);
-                    let tbody = document.getElementById(`day-tbody-${index}`);
-                    if (tbody) tbody.innerHTML = ''; 
-                    
-                    const isRowLocked = isLocked || (holidayInfo && !isReopened && !isSaved) || beforeDoj;
+            daysOfWeek.forEach((day, index) => {
+                const rowDate = dates[index];
+                const isoDate = getISODate(rowDate);
+                const holidayInfo = publicHolidays2026.find(h => h.date === isoDate);
+                const beforeDoj = isBeforeDoj(rowDate);
+                let tbody = document.getElementById(`day-tbody-${index}`);
+                if (tbody) tbody.innerHTML = ''; 
+                
+                // Cross-reference with Approved/Rejected Leave Tracker
+                const approvedLeave = myLeaves.find(l => l.status === 'Approved' && l.validDates && l.validDates.includes(isoDate));
+                const rejectedLeave = myLeaves.find(l => l.status === 'Rejected' && l.validDates && l.validDates.includes(isoDate));
 
-                    if (beforeDoj) {
-                        window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
-                    } else if (data.entries && data.entries[day]) {
-                        const entries = Array.isArray(data.entries[day]) ? data.entries[day] : [data.entries[day]];
-                        entries.forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, isLocked, holidayInfo));
-                    } else {
-                        window.addEntryRow(index, day, formatDate(rowDate), null, isLocked, holidayInfo);
-                    }
-                });
+                const isRowLocked = isLocked || (holidayInfo && !isReopened && !isSaved) || beforeDoj || !!approvedLeave;
 
-                const justBlock = document.getElementById('justificationBlock');
-                const justBox = document.getElementById('justification');
-                if (data.justification) {
-                    justBlock.classList.remove('hidden');
-                    justBox.value = data.justification;
+                if (beforeDoj) {
+                    window.addEntryRow(index, day, formatDate(rowDate), {hours: 0, project: 'Prior to Joining', type: 'Regular Work'}, true, null);
+                } else if (approvedLeave) {
+                    window.addEntryRow(index, day, formatDate(rowDate), {hours: 8, project: 'On Leave', type: approvedLeave.leaveType}, true, holidayInfo);
                 } else {
-                    justBlock.classList.add('hidden');
-                    justBox.value = '';
+                    let entriesToRender = [];
+                    if (data && data.entries && data.entries[day]) {
+                        entriesToRender = Array.isArray(data.entries[day]) ? data.entries[day] : [data.entries[day]];
+                    }
+                    
+                    // Auto-cleanup rejected leaves locally
+                    if (rejectedLeave) {
+                        entriesToRender = entriesToRender.map(e => {
+                            if (e && e.type === rejectedLeave.leaveType) {
+                                return { ...e, type: 'Regular Work', project: '' };
+                            }
+                            return e;
+                        });
+                    }
+
+                    if (entriesToRender.length > 0) {
+                        entriesToRender.forEach(entry => window.addEntryRow(index, day, formatDate(rowDate), entry, isRowLocked, holidayInfo));
+                    } else {
+                        window.addEntryRow(index, day, formatDate(rowDate), null, isRowLocked, holidayInfo);
+                    }
                 }
-                justBox.disabled = isLocked;
+            });
+
+            const justBlock = document.getElementById('justificationBlock');
+            const justBox = document.getElementById('justification');
+            if (data && data.justification) {
+                justBlock.classList.remove('hidden');
+                justBox.value = data.justification;
+            } else {
+                justBlock.classList.add('hidden');
+                justBox.value = '';
             }
+            justBox.disabled = isLocked;
         };
 
         const calculateTotals = () => {
@@ -1348,10 +1474,24 @@
                         myPayRecords.sort((a, b) => b.monthVal.localeCompare(a.monthVal));
                         updateNotifications(); 
                     });
+
+                    const leaveRequestsQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'leave_requests'), where('empId', '==', activeUser.empId));
+                    unsubscribeLeaves = onSnapshot(leaveRequestsQuery, (snapshot) => {
+                        myLeaves = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                        myLeaves.sort((a, b) => b.createdAt - a.createdAt);
+                        updateNotifications();
+                        if(!document.getElementById('leaveTrackerModal').classList.contains('hidden')){
+                            window.renderLeaveTracker();
+                        }
+                        const curWeek = document.getElementById('weekSelector').value;
+                        if(curWeek) window.renderTimesheetGrid(curWeek);
+                    });
+
                 } else {
                     if (unsubscribeTimesheets) unsubscribeTimesheets();
                     if (unsubscribePrefs) unsubscribePrefs();
                     if (unsubscribePayslips) unsubscribePayslips();
+                    if (unsubscribeLeaves) unsubscribeLeaves();
                 }
             });
             signInAnonymously(auth).catch(e => console.error("Auth error", e));
