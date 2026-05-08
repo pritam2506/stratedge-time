@@ -880,9 +880,11 @@
             tsSelect.innerHTML = '<option value="">All Employees</option>';
             lvSelect.innerHTML = '<option value="">All Employees</option>';
             
-            const sortedEmps = [...allEmployees].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            const activeSortedEmps = [...allEmployees]
+                .filter(e => e.status !== 'Inactive')
+                .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             
-            sortedEmps.forEach(emp => {
+            activeSortedEmps.forEach(emp => {
                 if (emp.empId && emp.name) {
                     const opt = `<option value="${emp.empId}">${emp.empId} - ${emp.name}</option>`;
                     tsSelect.innerHTML += opt;
@@ -890,8 +892,8 @@
                 }
             });
             
-            if (sortedEmps.some(e => e.empId === curTsVal)) tsSelect.value = curTsVal;
-            if (sortedEmps.some(e => e.empId === curLvVal)) lvSelect.value = curLvVal;
+            if (activeSortedEmps.some(e => e.empId === curTsVal)) tsSelect.value = curTsVal;
+            if (activeSortedEmps.some(e => e.empId === curLvVal)) lvSelect.value = curLvVal;
         };
 
         window.renderTimesheets = () => {
@@ -1294,13 +1296,17 @@
                     allTimesheets = s.docs.map(d=>({id:d.id, ...d.data()})); 
                     populateTsEmployeeFilter();
                     generateAdminCalendarList();
-                    renderTimesheets(); 
+                    if(document.getElementById('tab-timesheets') && !document.getElementById('tab-timesheets').classList.contains('hidden')) {
+                        renderTimesheets(); 
+                    }
                     updateNotifications();
                 });
 
                 onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'leave_requests'), orderBy('createdAt', 'desc')), s => { 
                     allLeaves = s.docs.map(d=>({id:d.id, ...d.data()})); 
-                    renderLeaves();
+                    if(document.getElementById('tab-leaves') && !document.getElementById('tab-leaves').classList.contains('hidden')) {
+                        renderLeaves();
+                    }
                     updateNotifications();
                 });
             }
