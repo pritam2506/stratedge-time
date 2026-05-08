@@ -302,6 +302,7 @@
                             <tr>
                                 <th class="px-6 py-4 text-left font-bold text-gray-500 uppercase tracking-wider">Employee</th>
                                 <th class="px-6 py-4 text-left font-bold text-gray-500 uppercase tracking-wider text-center">Month</th>
+                                <th class="px-6 py-4 text-center font-bold text-gray-500 uppercase tracking-wider">Generated On</th>
                                 <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Base Pay</th>
                                 <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Bonus</th>
                                 <th class="px-6 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Deductions</th>
@@ -616,12 +617,14 @@
             filtered.forEach(rec => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50/50 transition-colors";
+                const generatedDate = rec.updatedAt ? new Date(rec.updatedAt).toLocaleDateString('en-GB') : 'N/A';
                 tr.innerHTML = `
                     <td class="px-6 py-4">
                         <div class="font-bold text-gray-900">${rec.empName}</div>
                         <div class="text-xs text-gray-400 font-mono">${rec.empId}</div>
                     </td>
                     <td class="px-6 py-4 text-center font-semibold text-gray-600">${rec.monthVal}</td>
+                    <td class="px-6 py-4 text-center text-gray-500 text-xs">${generatedDate}</td>
                     <td class="px-6 py-4 text-right text-gray-900">₹${(rec.proRatedBasePay || rec.basePay).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
                     <td class="px-6 py-4 text-right text-brand-blue font-medium">₹${(rec.bonusAmount || 0).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
                     <td class="px-6 py-4 text-right text-red-500 font-medium">- ₹${(rec.deductionAmount || 0).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
