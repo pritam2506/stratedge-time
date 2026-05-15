@@ -606,6 +606,24 @@
                         `;
                     }
                 }
+
+                // Track Task Modifications (excluding self-edits)
+                if (task.history && task.history.length > 1) {
+                    const latestEdit = task.history[task.history.length - 1];
+                    if (latestEdit.by !== activeUser.name) {
+                        const updateNotifId = `updated_${task.id}_${latestEdit.date}`;
+                        if (!readNotifIds.has(updateNotifId)) {
+                            currentActiveNotifIds.push(updateNotifId);
+                            notifCount++;
+                            notifList.innerHTML += `
+                                <div class="px-4 py-3 bg-indigo-50 border-l-4 border-indigo-500 cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${updateNotifId}', '${task.taskId}', '${task.projectId}', '${task.clientId}')">
+                                    <p class="text-sm font-bold text-indigo-700">Task Updated</p>
+                                    <p class="text-xs text-gray-700 mt-1"><b>${task.name}</b>: ${latestEdit.action} (by ${latestEdit.by})</p>
+                                </div>
+                            `;
+                        }
+                    }
+                }
             });
 
             if (notifCount === 0) {
