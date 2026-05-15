@@ -818,7 +818,6 @@
 
         function formatHistoryAction(action) {
             let formatted = action;
-            // Catch any old history items containing the Employee ID and replace with Name
             const regex = /Reassigned to \[([^\]]+)\]/g;
             formatted = formatted.replace(regex, (match, p1) => {
                 const matchedEmp = allEmployees.find(e => e.empId === p1);
@@ -1071,7 +1070,8 @@
             container.innerHTML = '';
             
             const filterC = document.getElementById('filterClient').value;
-            const filterTask = document.getElementById('filterTask').value;
+            const filterP = document.getElementById('filterProject').value;
+            const filterT = document.getElementById('filterTask').value;
             const filterRAG = document.getElementById('filterRAG').value;
             const filterStatus = document.getElementById('filterStatus').value;
             const filterDueDate = document.getElementById('filterDueDate').value;
