@@ -67,58 +67,95 @@
     </header>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
+        <div class="mb-6 border-b pb-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="flex-1">
                 <h2 class="text-3xl font-bold text-gray-900">Case Management Workflow</h2>
                 <p class="text-gray-600 mt-1">Hierarchical view of Clients, Projects, and Tasks.</p>
             </div>
-            <div class="text-right flex flex-col items-end">
-                <div>
-                    <span class="text-xs text-gray-500 uppercase font-bold">Your Access Level</span>
-                    <div id="userAccessBadge" class="text-sm font-black text-brand-blue bg-blue-100 px-3 py-1 rounded-full mt-1 inline-block">Loading...</div>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="flex bg-gray-200 p-1 rounded-lg shadow-inner">
+                    <button id="tab-btn-list" onclick="switchViewTab('list')" class="px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm transition-all">List View</button>
+                    <button id="tab-btn-calendar" onclick="switchViewTab('calendar')" class="px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900 transition-all">Calendar View</button>
                 </div>
-                <button id="recycleBinBtn" onclick="openRecycleBin()" class="hidden text-xs font-bold text-red-600 hover:text-red-800 transition-colors flex items-center gap-1 mt-2 bg-red-50 hover:bg-red-100 border border-red-100 px-2 py-1 rounded">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    Recycle Bin
-                </button>
+                <div class="text-right flex flex-col items-end">
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-bold">Your Access Level</span>
+                        <div id="userAccessBadge" class="text-sm font-black text-brand-blue bg-blue-100 px-3 py-1 rounded-full mt-1 inline-block">Loading...</div>
+                    </div>
+                    <button id="recycleBinBtn" onclick="openRecycleBin()" class="hidden text-xs font-bold text-red-600 hover:text-red-800 transition-colors flex items-center gap-1 mt-2 bg-red-50 hover:bg-red-100 border border-red-100 px-2 py-1 rounded">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Recycle Bin
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Filter Bar -->
-        <div class="flex flex-wrap items-center gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-            <select id="filterClient" onchange="updateFilters('client')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                <option value="">All Clients</option>
-            </select>
-            <select id="filterProject" onchange="updateFilters('project')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                <option value="">All Projects</option>
-            </select>
-            <select id="filterTask" onchange="updateFilters('task')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                <option value="">All Tasks</option>
-            </select>
-            <select id="filterRAG" onchange="updateFilters('rag')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                <option value="">All RAG Statuses</option>
-                <option value="Green">Green</option>
-                <option value="Amber">Amber</option>
-                <option value="Red">Red</option>
-            </select>
-            <select id="filterStatus" onchange="updateFilters('status')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                <option value="">All Statuses</option>
-                <option value="To Do">To Do</option>
-                <option value="In Progress">In Progress</option>
-                <option value="In Review">In Review</option>
-                <option value="Completed">Completed</option>
-            </select>
-            <button onclick="clearFilters()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
-            <div class="flex items-center gap-2 ml-auto pl-4 border-l border-gray-200 h-10 shrink-0">
-                <input type="checkbox" id="filterAssignedToMe" onchange="updateFilters('assignedToMe')" class="w-4 h-4 text-brand-blue bg-gray-50 border-gray-300 rounded focus:ring-brand-blue focus:ring-2 cursor-pointer">
-                <label for="filterAssignedToMe" class="text-sm font-bold text-brand-blue cursor-pointer select-none">Assigned to Me</label>
+        <div id="listViewContainer">
+            <!-- Filter Bar -->
+            <div class="flex flex-wrap items-center gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                <select id="filterClient" onchange="updateFilters('client')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                    <option value="">All Clients</option>
+                </select>
+                <select id="filterProject" onchange="updateFilters('project')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                    <option value="">All Projects</option>
+                </select>
+                <select id="filterTask" onchange="updateFilters('task')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                    <option value="">All Tasks</option>
+                </select>
+                <select id="filterRAG" onchange="updateFilters('rag')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                    <option value="">All RAG Statuses</option>
+                    <option value="Green">Green</option>
+                    <option value="Amber">Amber</option>
+                    <option value="Red">Red</option>
+                </select>
+                <select id="filterStatus" onchange="updateFilters('status')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                    <option value="">All Statuses</option>
+                    <option value="To Do">To Do</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="In Review">In Review</option>
+                    <option value="Completed">Completed</option>
+                </select>
+                <button onclick="clearFilters()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
+                <div class="flex items-center gap-2 ml-auto pl-4 border-l border-gray-200 h-10 shrink-0">
+                    <input type="checkbox" id="filterAssignedToMe" onchange="updateFilters('assignedToMe')" class="w-4 h-4 text-brand-blue bg-gray-50 border-gray-300 rounded focus:ring-brand-blue focus:ring-2 cursor-pointer">
+                    <label for="filterAssignedToMe" class="text-sm font-bold text-brand-blue cursor-pointer select-none">Assigned to Me</label>
+                </div>
+            </div>
+
+            <!-- Hierarchical View Container -->
+            <div id="workflowContainer" class="space-y-4 pb-12">
+                <div class="text-center text-gray-500 py-10 italic">Loading workflow structure...</div>
             </div>
         </div>
 
-        <!-- Hierarchical View Container -->
-        <div id="workflowContainer" class="space-y-4 pb-12">
-            <div class="text-center text-gray-500 py-10 italic">Loading workflow structure...</div>
+        <!-- Calendar View Container -->
+        <div id="calendarViewContainer" class="hidden pb-12">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-900">Task Calendar</h3>
+                    <div class="flex items-center gap-3">
+                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                        <input type="month" id="calMonthPicker" onchange="setMonthFromPicker(this.value)" class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg outline-none font-bold text-gray-800 text-sm focus:ring-2 focus:ring-brand-blue">
+                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    </div>
+                </div>
+                <div class="p-4 sm:p-6">
+                    <div class="grid grid-cols-7 gap-2 sm:gap-4 mb-4">
+                        <div class="text-center font-bold text-xs text-gray-500 uppercase tracking-widest">Sun</div>
+                        <div class="text-center font-bold text-xs text-gray-500 uppercase tracking-widest">Mon</div>
+                        <div class="text-center font-bold text-xs text-gray-500 uppercase tracking-widest">Tue</div>
+                        <div class="text-center font-bold text-xs text-gray-500 uppercase tracking-widest">Wed</div>
+                        <div class="text-center font-bold text-xs text-gray-500 uppercase tracking-widest">Thu</div>
+                        <div class="text-center font-bold text-xs text-gray-500 uppercase tracking-widest">Fri</div>
+                        <div class="text-center font-bold text-xs text-gray-500 uppercase tracking-widest">Sat</div>
+                    </div>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-2 sm:gap-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
         </div>
+
     </main>
 
     <!-- Modal: Project Form -->
@@ -440,6 +477,9 @@
         let currentActiveNotifIds = [];
         let unsubscribePrefs = null;
 
+        let currentCalYear = new Date().getFullYear();
+        let currentCalMonth = new Date().getMonth();
+
         // Authentication & RBAC
         const sessionUser = sessionStorage.getItem('stratedge_active_user');
         if (!sessionUser) window.location.href = 'index.html';
@@ -558,6 +598,7 @@
                     allTasks = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     populateFilters('init');
                     renderWorkflow();
+                    if(!document.getElementById('calendarViewContainer').classList.contains('hidden')) renderCalendar();
                     updateNotifications();
                     cleanupRecycleBin();
                     if(!document.getElementById('recycleBinModal').classList.contains('hidden')){
@@ -591,6 +632,41 @@
             document.getElementById('filterAssignedToMe').checked = false;
             populateFilters('client'); // Trigger cascade reset
             renderWorkflow();
+        };
+
+        window.switchViewTab = (tab) => {
+            const listBtn = document.getElementById('tab-btn-list');
+            const calBtn = document.getElementById('tab-btn-calendar');
+            const listContainer = document.getElementById('listViewContainer');
+            const calContainer = document.getElementById('calendarViewContainer');
+
+            if (tab === 'list') {
+                listBtn.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm transition-all";
+                calBtn.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900 transition-all";
+                listContainer.classList.remove('hidden');
+                calContainer.classList.add('hidden');
+            } else {
+                calBtn.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm transition-all";
+                listBtn.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900 transition-all";
+                calContainer.classList.remove('hidden');
+                listContainer.classList.add('hidden');
+                renderCalendar();
+            }
+        };
+
+        window.changeMonth = (offset) => {
+            currentCalMonth += offset;
+            if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+            else if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+            renderCalendar();
+        };
+
+        window.setMonthFromPicker = (val) => {
+            if(!val) return;
+            const [y, m] = val.split('-');
+            currentCalYear = parseInt(y);
+            currentCalMonth = parseInt(m) - 1;
+            renderCalendar();
         };
 
         window.updateFilters = (level) => {
@@ -838,6 +914,54 @@
             }
 
             return { displayStatus, overdueDays, ragClass };
+        };
+
+        const renderCalendar = () => {
+            const picker = document.getElementById('calMonthPicker');
+            picker.value = `${currentCalYear}-${String(currentCalMonth+1).padStart(2,'0')}`;
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
+            const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+            
+            const activeTasks = allTasks.filter(t => !t.deleted);
+
+            // Padding for first row
+            for(let i=0; i<firstDay; i++) {
+                grid.innerHTML += `<div class="bg-gray-50 border border-gray-100 rounded-lg min-h-[120px] opacity-50 hidden sm:block"></div>`;
+            }
+
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateObj = new Date(currentCalYear, currentCalMonth, d);
+                const isoDate = getISODate(dateObj); 
+                
+                const createdTasks = activeTasks.filter(t => t.createdAt && getISODate(new Date(t.createdAt)) === isoDate);
+                const createdCount = createdTasks.length;
+
+                const dueTasks = activeTasks.filter(t => t.estDate === isoDate);
+                const dueCount = dueTasks.length;
+                const completedCount = dueTasks.filter(t => t.status === 'Completed').length;
+                const pendingCount = dueCount - completedCount;
+
+                const isToday = isoDate === getISODate(new Date());
+
+                let metricsHtml = '';
+                if(createdCount > 0) metricsHtml += `<div class="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded mb-1 font-bold whitespace-nowrap overflow-hidden text-ellipsis">Created: ${createdCount}</div>`;
+                if(dueCount > 0) metricsHtml += `<div class="text-[10px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded mb-1 font-bold whitespace-nowrap overflow-hidden text-ellipsis">Due: ${dueCount}</div>`;
+                if(completedCount > 0) metricsHtml += `<div class="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded mb-1 font-bold whitespace-nowrap overflow-hidden text-ellipsis">Completed: ${completedCount}</div>`;
+                if(pendingCount > 0) metricsHtml += `<div class="text-[10px] bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded mb-1 font-bold whitespace-nowrap overflow-hidden text-ellipsis">Pending: ${pendingCount}</div>`;
+
+                grid.innerHTML += `
+                    <div class="bg-white border border-gray-200 rounded-lg min-h-[120px] p-1.5 sm:p-2 hover:shadow-md transition-shadow flex flex-col ${isToday ? 'ring-2 ring-brand-blue bg-blue-50/10' : ''}">
+                        <div class="font-bold text-gray-400 text-sm mb-1 sm:mb-2 text-right ${isToday ? 'text-brand-blue' : ''}">${d}</div>
+                        <div class="flex-grow flex flex-col justify-end">
+                            ${metricsHtml}
+                        </div>
+                    </div>
+                `;
+            }
         };
 
         // --- Rendering Logic ---
