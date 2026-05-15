@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratedge | Case Management Workflow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#4169E1',
+                        'brand-orange': '#FFA500',
+                        'brand-orange-hover': '#e69500',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-brand-blue text-white shadow-md z-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='admin.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 hidden sm:flex border-r border-white/20 pr-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Admin Dashboard
+                </button>
+                <div class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full hidden sm:block">Workflow Portal</div>
+                <button onclick="logout()" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Case Management Workflow</h2>
+                <p class="text-gray-600 mt-1">Hierarchical view of Clients, Projects, and Tasks.</p>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-gray-500 uppercase font-bold">Your Access Level</span>
+                <div id="userAccessBadge" class="text-sm font-black text-brand-blue bg-blue-100 px-3 py-1 rounded-full mt-1 inline-block">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Hierarchical View Container -->
+        <div id="workflowContainer" class="space-y-4 pb-12">
+            <div class="text-center text-gray-500 py-10 italic">Loading workflow structure...</div>
+        </div>
+    </main>
+
+    <!-- Modal: Project Form -->
+    <div id="projectModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-brand-blue" id="projectModalTitle">Create Project</h3>
+                <button onclick="closeModal('projectModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6">
+                <form id="projectForm" class="space-y-4">
+                    <input type="hidden" id="projDocId">
+                    <input type="hidden" id="projClientId">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Project ID</label>
+                        <input type="text" id="projId" readonly class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-mono text-brand-blue font-bold outline-none cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Project Name</label>
+                        <input type="text" id="projName" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Brief Description</label>
+                        <textarea id="projDesc" rows="3" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue"></textarea>
+                    </div>
+                    <button type="submit" class="w-full mt-2 bg-brand-blue hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-all">Save Project</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Task Form -->
+    <div id="taskModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-brand-orange" id="taskModalTitle">Create Task</h3>
+                <button onclick="closeModal('taskModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 custom-scroll overflow-y-auto max-h-[80vh]">
+                <form id="taskForm" class="space-y-4">
+                    <input type="hidden" id="taskDocId">
+                    <input type="hidden" id="taskClientId">
+                    <input type="hidden" id="taskProjectId">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Task ID</label>
+                            <input type="text" id="taskId" readonly class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-mono text-brand-orange font-bold outline-none cursor-not-allowed">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Assigned To</label>
+                            <select id="taskAssignedTo" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue">
+                                <!-- JS Populated -->
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Task Name</label>
+                            <input type="text" id="taskName" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Task Description</label>
+                            <textarea id="taskDesc" rows="2" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue"></textarea>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
+                            <input type="date" id="taskStartDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Estimated Completion</label>
+                            <input type="date" id="taskEstDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Effort Needed (Hrs)</label>
+                            <input type="number" id="taskEffort" min="0" step="0.5" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Status</label>
+                            <select id="taskStatus" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue font-bold">
+                                <option value="To Do">To Do</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="In Review">In Review</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Add Comment (Optional)</label>
+                            <textarea id="taskComment" rows="2" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue placeholder-gray-400 text-sm" placeholder="Add an update note or comment..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="taskHistoryBlock" class="hidden mt-4 pt-4 border-t border-gray-200">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Edit History & Comments</h4>
+                        <div id="taskHistoryList" class="space-y-2 max-h-32 overflow-y-auto custom-scroll text-xs bg-gray-50 p-2 rounded border"></div>
+                    </div>
+
+                    <button type="submit" class="w-full mt-4 bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all">Save Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
+        <div id="toastMessage" class="text-sm font-semibold"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfcs4sC9tmPeHyFqeZEdz-SvbZNhdB06M",
+            authDomain: "stratedge-time.firebaseapp.com",
+            projectId: "stratedge-time",
+            storageBucket: "stratedge-time.firebasestorage.app",
+            messagingSenderId: "550779977682",
+            appId: "1:550779977682:web:d4b4983b62876655b3d20b"
+        };
+        const appId = 'stratedge-time-recorder';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State variables
+        let activeUser = null;
+        let allClients = [];
+        let allProjects = [];
+        let allTasks = [];
+        let allEmployees = [];
+
+        // Authentication & RBAC
+        const sessionUser = sessionStorage.getItem('stratedge_active_user');
+        if (!sessionUser) window.location.href = 'index.html';
+        activeUser = JSON.parse(sessionUser);
+
+        // RBAC Permissions logic
+        const accessLvl = activeUser.workflowAccess || 'Doer'; 
+        const canManageProjects = ['Workflow Admin', 'Task Admin'].includes(accessLvl);
+        const canManageTasks = ['Workflow Admin', 'Task Admin', 'Doer'].includes(accessLvl);
+        
+        document.getElementById('userAccessBadge').textContent = accessLvl;
+
+        window.logout = () => {
+            sessionStorage.removeItem('stratedge_active_user');
+            window.location.href = 'index.html';
+        };
+
+        const showToast = (msg, type='success') => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.className = `fixed bottom-4 right-4 transform transition-all z-[100] flex items-center p-4 rounded-lg shadow-xl border bg-white ${type === 'error' ? 'border-red-200 text-red-600' : 'border-green-200 text-green-600'}`;
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 3000);
+        };
+
+        window.closeModal = (m) => document.getElementById(m).classList.add('hidden');
+        window.toggleNode = (id) => {
+            const el = document.getElementById(id);
+            const icon = document.getElementById(`icon-${id}`);
+            if(el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if(icon) icon.style.transform = 'rotate(90deg)';
+            } else {
+                el.classList.add('hidden');
+                if(icon) icon.style.transform = 'rotate(0deg)';
+            }
+        };
+
+        // --- Data Fetching ---
+        onAuthStateChanged(auth, u => {
+            if (u) {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), s => { 
+                    allClients = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    renderWorkflow();
+                });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_projects'), s => { 
+                    allProjects = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    renderWorkflow();
+                });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), s => { 
+                    allTasks = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    renderWorkflow();
+                });
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
+                    allEmployees = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    const sel = document.getElementById('taskAssignedTo');
+                    sel.innerHTML = '<option value="" disabled selected>Select Assignee...</option>';
+                    allEmployees.filter(e => e.status !== 'Inactive').sort((a,b)=>a.name.localeCompare(b.name)).forEach(e => {
+                        sel.innerHTML += `<option value="${e.empId}">${e.name} (${e.empId})</option>`;
+                    });
+                });
+            }
+        });
+        signInAnonymously(auth);
+
+        // --- Rendering Logic ---
+        const getStatusBadge = (status) => {
+            const colors = {
+                'To Do': 'bg-gray-100 text-gray-700',
+                'In Progress': 'bg-blue-100 text-blue-700',
+                'In Review': 'bg-orange-100 text-orange-700',
+                'Completed': 'bg-green-100 text-green-700'
+            };
+            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || colors['To Do']} whitespace-nowrap">${status}</span>`;
+        };
+
+        const renderWorkflow = () => {
+            const container = document.getElementById('workflowContainer');
+            if(!allClients.length) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white rounded-lg shadow-sm border">No clients registered. Add clients in the Client Portal first.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            // Level 1: Clients
+            allClients.sort((a,b)=>a.name.localeCompare(b.name)).forEach(client => {
+                const clientProjects = allProjects.filter(p => p.clientId === client.clientCode);
+                const cid = `client-${client.clientCode}`;
+                
+                let projectHtml = '';
+                if(clientProjects.length === 0) {
+                    projectHtml = `<div class="p-4 text-center text-sm text-gray-400 italic bg-gray-50 border-t">No projects created for this client yet.</div>`;
+                } else {
+                    // Level 2: Projects
+                    clientProjects.sort((a,b)=> b.createdAt - a.createdAt).forEach(proj => {
+                        const projTasks = allTasks.filter(t => t.projectId === proj.projId);
+                        const pid = `proj-${proj.projId}`;
+                        
+                        let taskHtml = '';
+                        if(projTasks.length === 0) {
+                            taskHtml = `<tr><td colspan="8" class="px-4 py-6 text-center text-sm text-gray-400 italic bg-white">No tasks assigned to this project yet.</td></tr>`;
+                        } else {
+                            // Level 3: Tasks
+                            projTasks.sort((a,b)=> b.createdAt - a.createdAt).forEach(task => {
+                                const assignee = allEmployees.find(e => e.empId === task.assignedTo);
+                                const assigneeName = assignee ? assignee.name : task.assignedTo;
+                                
+                                taskHtml += `
+                                    <tr class="hover:bg-blue-50/30 transition-colors">
+                                        <td class="px-4 py-3 whitespace-nowrap text-xs font-bold text-gray-900">${task.taskId}</td>
+                                        <td class="px-4 py-3 min-w-[200px]">
+                                            <div class="font-bold text-sm text-brand-blue">${task.name}</div>
+                                            <div class="text-xs text-gray-500 truncate max-w-[250px]" title="${task.desc}">${task.desc}</div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600">${new Date(task.startDate).toLocaleDateString('en-GB')}<br><span class="text-gray-400">to</span> ${new Date(task.estDate).toLocaleDateString('en-GB')}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center text-xs font-bold">${task.effort}h</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-xs">${assigneeName}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center">${getStatusBadge(task.status)}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-right">
+                                            ${canManageTasks ? `
+                                                <button onclick="openTaskModal('${task.id}', '${proj.clientId}', '${proj.projId}')" class="text-brand-orange hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded text-xs font-bold transition-colors mr-1">Edit</button>
+                                                <button onclick="deleteTask('${task.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs font-bold transition-colors">Del</button>
+                                            ` : `<span class="text-gray-300 text-xs italic">View Only</span>`}
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                        }
+
+                        const taskAddBtn = canManageTasks ? `<button onclick="event.stopPropagation(); openTaskModal(null, '${proj.clientId}', '${proj.projId}')" class="bg-white hover:bg-gray-100 text-brand-orange text-xs font-bold py-1 px-3 rounded shadow-sm border border-gray-200 transition-colors">+ Add Task</button>` : '';
+                        const projEditBtn = canManageProjects ? `<button onclick="event.stopPropagation(); openProjectModal('${proj.id}', '${client.clientCode}')" class="text-brand-blue hover:underline text-xs mr-3 font-semibold">Edit</button>` : '';
+                        const projDelBtn = canManageProjects ? `<button onclick="event.stopPropagation(); deleteProject('${proj.id}', '${proj.projId}')" class="text-red-400 hover:underline text-xs mr-4 font-semibold">Delete</button>` : '';
+
+                        projectHtml += `
+                            <div class="border-t border-blue-100">
+                                <div class="p-3 pl-8 flex flex-col sm:flex-row justify-between sm:items-center bg-blue-50/50 cursor-pointer hover:bg-blue-50 transition-colors" onclick="toggleNode('${pid}')">
+                                    <div class="flex items-center gap-2 mb-2 sm:mb-0">
+                                        <svg id="icon-${pid}" class="w-4 h-4 text-brand-blue transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        <div>
+                                            <span class="font-bold text-gray-900">${proj.name}</span> <span class="text-xs font-mono text-gray-500 ml-1 bg-white px-1.5 py-0.5 rounded border">${proj.projId}</span>
+                                            <div class="text-[10px] text-gray-500 mt-0.5">Created on ${new Date(proj.createdAt).toLocaleDateString('en-GB')} by ${proj.createdBy}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center ml-6 sm:ml-0">
+                                        ${projEditBtn}
+                                        ${projDelBtn}
+                                        <span class="text-xs font-bold text-brand-blue bg-blue-100 px-2 py-0.5 rounded-full mr-3">${projTasks.length} Tasks</span>
+                                        ${taskAddBtn}
+                                    </div>
+                                </div>
+                                <div id="${pid}" class="hidden bg-white border-t border-gray-100">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-100">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider w-16">Task ID</th>
+                                                    <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Task Details</th>
+                                                    <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Timeline</th>
+                                                    <th class="px-4 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Effort</th>
+                                                    <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assignee</th>
+                                                    <th class="px-4 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                                                    <th class="px-4 py-2 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-50">
+                                                ${taskHtml}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                const projAddBtn = canManageProjects ? `<button onclick="event.stopPropagation(); openProjectModal(null, '${client.clientCode}')" class="bg-brand-blue hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm transition-colors">+ Add Project</button>` : '';
+
+                const clientBlock = `
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4">
+                        <div class="p-4 flex flex-col sm:flex-row justify-between sm:items-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleNode('${cid}')">
+                            <div class="flex items-center gap-2 mb-3 sm:mb-0">
+                                <svg id="icon-${cid}" class="w-5 h-5 text-gray-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <div>
+                                    <h3 class="font-black text-gray-900 text-lg">${client.name}</h3>
+                                    <div class="text-xs font-mono text-gray-500">${client.clientCode}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center ml-7 sm:ml-0">
+                                <span class="text-xs font-bold text-gray-600 bg-gray-200 px-2.5 py-1 rounded-full mr-4">${clientProjects.length} Projects</span>
+                                ${projAddBtn}
+                            </div>
+                        </div>
+                        <div id="${cid}" class="hidden">
+                            ${projectHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += clientBlock;
+            });
+        };
+
+        // --- Projects Management ---
+        window.openProjectModal = (docId = null, clientId) => {
+            const form = document.getElementById('projectForm');
+            form.reset();
+            document.getElementById('projDocId').value = docId || '';
+            document.getElementById('projClientId').value = clientId;
+
+            if (docId) {
+                document.getElementById('projectModalTitle').textContent = 'Edit Project';
+                const proj = allProjects.find(p => p.id === docId);
+                if(proj) {
+                    document.getElementById('projId').value = proj.projId;
+                    document.getElementById('projName').value = proj.name;
+                    document.getElementById('projDesc').value = proj.desc;
+                }
+            } else {
+                document.getElementById('projectModalTitle').textContent = 'Create Project';
+                // Auto-generate ID: ClientCode-P{count+1}
+                const existing = allProjects.filter(p => p.clientId === clientId);
+                let nextNum = 1;
+                if(existing.length > 0) {
+                    const nums = existing.map(p => {
+                        const parts = p.projId.split('-P');
+                        return parts.length === 2 ? parseInt(parts[1]) : 0;
+                    });
+                    nextNum = Math.max(...nums) + 1;
+                }
+                document.getElementById('projId').value = `${clientId}-P${nextNum}`;
+            }
+            document.getElementById('projectModal').classList.remove('hidden');
+        };
+
+        document.getElementById('projectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const docId = document.getElementById('projDocId').value;
+            
+            const payload = {
+                clientId: document.getElementById('projClientId').value,
+                projId: document.getElementById('projId').value,
+                name: document.getElementById('projName').value,
+                desc: document.getElementById('projDesc').value,
+                updatedAt: Date.now()
+            };
+
+            try {
+                if (docId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', docId), payload);
+                    showToast("Project updated successfully.");
+                } else {
+                    payload.createdAt = Date.now();
+                    payload.createdBy = activeUser.name;
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_projects'), payload);
+                    showToast("Project created successfully.");
+                }
+                closeModal('projectModal');
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to save project.", "error");
+            }
+        });
+
+        window.deleteProject = async (docId, projId) => {
+            const hasTasks = allTasks.some(t => t.projectId === projId);
+            if(hasTasks) {
+                showToast("Cannot delete project. Delete all tasks under it first.", "error");
+                return;
+            }
+            if(confirm(`Are you sure you want to permanently delete project ${projId}?`)) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', docId));
+                showToast("Project deleted.");
+            }
+        };
+
+        // --- Tasks Management ---
+        window.openTaskModal = (docId = null, clientId, projectId) => {
+            const form = document.getElementById('taskForm');
+            form.reset();
+            document.getElementById('taskHistoryBlock').classList.add('hidden');
+            
+            document.getElementById('taskDocId').value = docId || '';
+            document.getElementById('taskClientId').value = clientId;
+            document.getElementById('taskProjectId').value = projectId;
+
+            if (docId) {
+                document.getElementById('taskModalTitle').textContent = 'Edit Task';
+                const task = allTasks.find(t => t.id === docId);
+                if(task) {
+                    document.getElementById('taskId').value = task.taskId;
+                    document.getElementById('taskName').value = task.name;
+                    document.getElementById('taskDesc').value = task.desc;
+                    document.getElementById('taskStartDate').value = task.startDate;
+                    document.getElementById('taskEstDate').value = task.estDate;
+                    document.getElementById('taskEffort').value = task.effort;
+                    document.getElementById('taskAssignedTo').value = task.assignedTo;
+                    document.getElementById('taskStatus').value = task.status;
+                    
+                    // Render History
+                    if(task.history && task.history.length > 0) {
+                        document.getElementById('taskHistoryBlock').classList.remove('hidden');
+                        const hList = document.getElementById('taskHistoryList');
+                        hList.innerHTML = task.history.slice().reverse().map(h => {
+                            const dateStr = new Date(h.date).toLocaleString('en-GB', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+                            return `<div class="border-b last:border-0 pb-1 mb-1"><span class="font-bold text-gray-700">${h.by}</span> <span class="text-gray-400 ml-1">${dateStr}</span><br><span class="text-gray-600">${h.action}</span></div>`;
+                        }).join('');
+                    }
+                }
+            } else {
+                document.getElementById('taskModalTitle').textContent = 'Create Task';
+                document.getElementById('taskStatus').value = 'To Do';
+                
+                // Auto-generate ID: ProjId-T{count+1}
+                const existing = allTasks.filter(t => t.projectId === projectId);
+                let nextNum = 1;
+                if(existing.length > 0) {
+                    const nums = existing.map(t => {
+                        const parts = t.taskId.split('-T');
+                        return parts.length === 2 ? parseInt(parts[1]) : 0;
+                    });
+                    nextNum = Math.max(...nums) + 1;
+                }
+                document.getElementById('taskId').value = `${projectId}-T${nextNum}`;
+            }
+            document.getElementById('taskModal').classList.remove('hidden');
+        };
+
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const docId = document.getElementById('taskDocId').value;
+            const newComment = document.getElementById('taskComment').value.trim();
+            
+            const payload = {
+                clientId: document.getElementById('taskClientId').value,
+                projectId: document.getElementById('taskProjectId').value,
+                taskId: document.getElementById('taskId').value,
+                name: document.getElementById('taskName').value,
+                desc: document.getElementById('taskDesc').value,
+                startDate: document.getElementById('taskStartDate').value,
+                estDate: document.getElementById('taskEstDate').value,
+                effort: parseFloat(document.getElementById('taskEffort').value),
+                assignedTo: document.getElementById('taskAssignedTo').value,
+                status: document.getElementById('taskStatus').value,
+                updatedAt: Date.now()
+            };
+
+            try {
+                if (docId) {
+                    const existingTask = allTasks.find(t => t.id === docId);
+                    let history = existingTask.history || [];
+                    
+                    // Build action string to track changes
+                    let actionStrs = [];
+                    if(existingTask.status !== payload.status) actionStrs.push(`Changed status to [${payload.status}]`);
+                    if(existingTask.assignedTo !== payload.assignedTo) actionStrs.push(`Reassigned to [${payload.assignedTo}]`);
+                    if(newComment) actionStrs.push(`Commented: "${newComment}"`);
+                    if(actionStrs.length === 0 && (existingTask.name !== payload.name || existingTask.effort !== payload.effort)) actionStrs.push(`Updated task details`);
+                    
+                    if(actionStrs.length > 0) {
+                        history.push({
+                            action: actionStrs.join(' | '),
+                            by: activeUser.name,
+                            date: Date.now()
+                        });
+                    }
+                    payload.history = history;
+
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), payload);
+                    showToast("Task updated successfully.");
+                } else {
+                    payload.createdAt = Date.now();
+                    payload.history = [{
+                        action: "Task Created",
+                        by: activeUser.name,
+                        date: Date.now()
+                    }];
+                    if(newComment) {
+                        payload.history.push({
+                            action: `Commented: "${newComment}"`,
+                            by: activeUser.name,
+                            date: Date.now()
+                        });
+                    }
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), payload);
+                    showToast("Task created successfully.");
+                }
+                closeModal('taskModal');
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to save task.", "error");
+            }
+        });
+
+        window.deleteTask = async (docId) => {
+            if(confirm(`Are you sure you want to permanently delete this task?`)) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId));
+                showToast("Task deleted.");
+            }
+        };
+
+    </script>
+</body>
+</html>
