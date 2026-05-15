@@ -1045,8 +1045,8 @@
                     let history = existingProj.history || [];
                     
                     let actionStrs = [];
-                    if(existingProj.name !== payload.name) actionStrs.push(`Name changed to [${payload.name}]`);
-                    if(existingProj.desc !== payload.desc) actionStrs.push(`Description updated`);
+                    if(existingProj.name !== payload.name) actionStrs.push(`Name changed from [${existingProj.name}] to [${payload.name}]`);
+                    if(existingProj.desc !== payload.desc) actionStrs.push(`Description changed from [${existingProj.desc}] to [${payload.desc}]`);
                     
                     if(actionStrs.length > 0) {
                         history.push({
@@ -1156,17 +1156,19 @@
                     
                     // Build action string to track changes
                     let actionStrs = [];
-                    if(existingTask.status !== payload.status) actionStrs.push(`Status set to [${payload.status}]`);
+                    if(existingTask.status !== payload.status) actionStrs.push(`Status changed from [${existingTask.status}] to [${payload.status}]`);
                     if(existingTask.assignedTo !== payload.assignedTo) {
+                        const oldAssignee = allEmployees.find(emp => emp.empId === existingTask.assignedTo);
+                        const oldAssigneeName = oldAssignee ? oldAssignee.name : existingTask.assignedTo;
                         const newAssignee = allEmployees.find(emp => emp.empId === payload.assignedTo);
                         const newAssigneeName = newAssignee ? newAssignee.name : payload.assignedTo;
-                        actionStrs.push(`Reassigned to [${newAssigneeName}]`);
+                        actionStrs.push(`Assignee changed from [${oldAssigneeName}] to [${newAssigneeName}]`);
                     }
-                    if(existingTask.name !== payload.name) actionStrs.push(`Name updated`);
-                    if(existingTask.desc !== payload.desc) actionStrs.push(`Description updated`);
-                    if(existingTask.startDate !== payload.startDate) actionStrs.push(`Start Date updated`);
-                    if(existingTask.estDate !== payload.estDate) actionStrs.push(`Due Date updated`);
-                    if(existingTask.effort !== payload.effort) actionStrs.push(`Effort changed to ${payload.effort}h`);
+                    if(existingTask.name !== payload.name) actionStrs.push(`Name changed from [${existingTask.name}] to [${payload.name}]`);
+                    if(existingTask.desc !== payload.desc) actionStrs.push(`Description changed from [${existingTask.desc}] to [${payload.desc}]`);
+                    if(existingTask.startDate !== payload.startDate) actionStrs.push(`Start Date changed from [${existingTask.startDate}] to [${payload.startDate}]`);
+                    if(existingTask.estDate !== payload.estDate) actionStrs.push(`Due Date changed from [${existingTask.estDate}] to [${payload.estDate}]`);
+                    if(existingTask.effort !== payload.effort) actionStrs.push(`Effort changed from [${existingTask.effort}h] to [${payload.effort}h]`);
                     if(newComment) actionStrs.push(`Comment: "${newComment}"`);
                     
                     if(actionStrs.length > 0) {
@@ -1178,7 +1180,8 @@
                     }
                     payload.history = history;
 
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), payload);
+                    const updatePromises = [];
+                    updatePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), payload));
                     
                     // Project History Tracking
                     if(actionStrs.length > 0) {
@@ -1190,10 +1193,11 @@
                                 by: activeUser.name,
                                 date: Date.now()
                             });
-                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory });
+                            updatePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory }));
                         }
                     }
 
+                    await Promise.all(updatePromises);
                     showToast("Task updated successfully.");
                 } else {
                     payload.createdAt = Date.now();
@@ -1209,7 +1213,9 @@
                             date: Date.now()
                         });
                     }
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), payload);
+                    
+                    const updatePromises = [];
+                    updatePromises.push(addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), payload));
                     
                     // Project History Tracking
                     const proj = allProjects.find(p => p.projId === payload.projectId);
@@ -1222,9 +1228,10 @@
                             by: activeUser.name,
                             date: Date.now()
                         });
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory });
+                        updatePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory }));
                     }
 
+                    await Promise.all(updatePromises);
                     showToast("Task created successfully.");
                 }
                 closeModal('taskModal');
