@@ -195,6 +195,71 @@
         </div>
     </div>
 
+    <!-- Modal: Task Status -->
+    <div id="taskStatusModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-xs overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-900" id="tsModalTitle">Task Status</h3>
+                <button onclick="closeModal('taskStatusModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 text-center">
+                <div id="tsModalRag" class="w-16 h-16 rounded-full mx-auto mb-4 shadow-inner"></div>
+                <div class="text-4xl font-black text-gray-900 mb-1" id="tsModalDays">0</div>
+                <div class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-6">Days Overdue / Left</div>
+                <div class="bg-gray-50 rounded-lg p-3 border">
+                    <div class="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider">Assigned To</div>
+                    <div class="font-bold text-brand-blue text-base" id="tsModalAssignee"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Project Status -->
+    <div id="projStatusModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900" id="psModalTitle">Project Status</h3>
+                <button onclick="closeModal('projStatusModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6 text-center">
+                    <div class="bg-gray-50 p-3 rounded-lg border">
+                        <div class="text-2xl font-black text-brand-blue" id="psTotal">0</div>
+                        <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">Total Tasks</div>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-lg border">
+                        <div class="text-2xl font-black text-red-600" id="psOverdue">0</div>
+                        <div class="text-[10px] font-bold text-red-500 uppercase mt-1">Overdue</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg border">
+                        <div class="text-2xl font-black text-green-600" id="psCompleted">0</div>
+                        <div class="text-[10px] font-bold text-green-500 uppercase mt-1">Completed</div>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg border">
+                        <div class="text-xl font-black text-gray-700" id="psTodo">0</div>
+                        <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">To Do</div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg border">
+                        <div class="text-xl font-black text-blue-700" id="psProg">0</div>
+                        <div class="text-[10px] font-bold text-blue-500 uppercase mt-1">In Progress</div>
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded-lg border">
+                        <div class="text-xl font-black text-orange-700" id="psRev">0</div>
+                        <div class="text-[10px] font-bold text-orange-500 uppercase mt-1">In Review</div>
+                    </div>
+                </div>
+                
+                <h4 class="text-sm font-bold text-gray-900 mb-3 border-b pb-1">Overdue Tasks Breakdown</h4>
+                <div id="psOverdueList" class="space-y-2 max-h-40 overflow-y-auto custom-scroll text-sm">
+                    <!-- JS Populated -->
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+                <button onclick="closeModal('projStatusModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-4 right-4 transform translate-y-full opacity-0 transition-all z-[100] flex items-center p-4 bg-white rounded-lg shadow-xl border">
         <div id="toastMessage" class="text-sm font-semibold"></div>
@@ -271,7 +336,8 @@
             addTask: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>`,
             edit: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`,
             del: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`,
-            history: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            history: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+            status: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>`
         };
 
         // --- Data Fetching & Sync ---
@@ -356,13 +422,53 @@
             }
         };
 
+        // --- Overdue RAG Logic ---
+        const getOverdueDays = (estDate) => {
+            let count = 0;
+            let cur = new Date(estDate); cur.setHours(0,0,0,0);
+            let end = new Date(); end.setHours(0,0,0,0);
+            if (cur < end) {
+                while (cur < end) {
+                    cur.setDate(cur.getDate() + 1);
+                    if (cur.getDay() !== 0) count++;
+                }
+                return count; // positive means past due date
+            } else if (cur > end) {
+                while (cur > end) {
+                    cur.setDate(cur.getDate() - 1);
+                    if (cur.getDay() !== 0) count--;
+                }
+                return count; // negative means yet to hit due date
+            }
+            return 0; // Exactly on due date
+        };
+
+        const analyzeTask = (task) => {
+            const overdueDays = getOverdueDays(task.estDate);
+            let displayStatus = task.status;
+            let ragClass = 'bg-green-500';
+            
+            if (task.status !== 'Completed') {
+                if (overdueDays > 0) {
+                    displayStatus = 'Overdue';
+                    if (overdueDays <= 3) ragClass = 'bg-yellow-400';
+                    else ragClass = 'bg-red-500';
+                }
+            } else {
+                ragClass = 'bg-green-500';
+            }
+
+            return { displayStatus, overdueDays, ragClass };
+        };
+
         // --- Rendering Logic ---
         const getStatusBadge = (status) => {
             const colors = {
                 'To Do': 'bg-gray-100 text-gray-700',
                 'In Progress': 'bg-blue-100 text-blue-700',
                 'In Review': 'bg-orange-100 text-orange-700',
-                'Completed': 'bg-green-100 text-green-700'
+                'Completed': 'bg-green-100 text-green-700',
+                'Overdue': 'bg-red-100 text-red-700'
             };
             return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || colors['To Do']} whitespace-nowrap">${status}</span>`;
         };
@@ -388,8 +494,7 @@
                 let clientProjects = allProjects.filter(p => p.clientId === client.clientCode);
                 if (filterP) clientProjects = clientProjects.filter(p => p.projId === filterP);
                 
-                // If deep filters are applied and this client has no matching projects/tasks, we can optionally hide it.
-                // For a clean look, if Project/Task filter is active and length is 0, skip.
+                // If deep filters are applied and this client has no matching projects/tasks, hide it.
                 if ((filterP || filterT) && clientProjects.length === 0) return;
 
                 const cid = `client-${client.clientCode}`;
@@ -415,6 +520,7 @@
                             projTasks.sort((a,b)=> b.createdAt - a.createdAt).forEach(task => {
                                 const assignee = allEmployees.find(e => e.empId === task.assignedTo);
                                 const assigneeName = assignee ? assignee.name : task.assignedTo;
+                                const analysis = analyzeTask(task);
                                 
                                 taskHtml += `
                                     <tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-0">
@@ -423,14 +529,18 @@
                                             <span class="text-xs font-bold text-gray-900">${task.taskId}</span>
                                         </td>
                                         <td class="px-4 py-3 min-w-[200px] align-top">
-                                            <div class="font-bold text-sm text-brand-blue">${task.name}</div>
-                                            <div class="text-xs text-gray-500 truncate max-w-[250px]" title="${task.desc}">${task.desc}</div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <div class="w-2.5 h-2.5 rounded-full ${analysis.ragClass} shrink-0 shadow-sm" title="RAG Status"></div>
+                                                <div class="font-bold text-sm text-brand-blue">${task.name}</div>
+                                            </div>
+                                            <div class="text-xs text-gray-500 truncate max-w-[250px] pl-4" title="${task.desc}">${task.desc}</div>
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 align-top">${new Date(task.startDate).toLocaleDateString('en-GB')}<br><span class="text-gray-400">to</span> ${new Date(task.estDate).toLocaleDateString('en-GB')}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-center text-xs font-bold align-top">${task.effort}h</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-xs align-top">${assigneeName}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${getStatusBadge(task.status)}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${getStatusBadge(analysis.displayStatus)}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-right align-top">
+                                            <button onclick="viewTaskStatus('${task.taskId}')" title="Task Status" class="text-brand-orange hover:text-orange-700 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.status}</button>
                                             <button onclick="viewHistory('Task', '${task.taskId}')" title="Task History" class="text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.history}</button>
                                             ${canManageTasks ? `
                                                 <button onclick="openTaskModal('${task.id}', '${proj.clientId}', '${proj.projId}')" title="Edit Task" class="text-brand-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.edit}</button>
@@ -444,6 +554,7 @@
 
                         const taskAddBtn = canManageTasks ? `<button onclick="event.stopPropagation(); openTaskModal(null, '${proj.clientId}', '${proj.projId}')" title="Add Task" class="text-brand-orange hover:text-white bg-orange-50 hover:bg-brand-orange p-1.5 rounded border border-orange-200 hover:border-brand-orange transition-all inline-flex ml-3 shadow-sm">${svgs.addTask}</button>` : '';
                         
+                        const projStatusBtn = `<button onclick="event.stopPropagation(); viewProjectStatus('${proj.projId}')" title="Project Status" class="text-brand-orange hover:text-orange-700 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.status}</button>`;
                         const projHistoryBtn = `<button onclick="event.stopPropagation(); viewHistory('Project', '${proj.projId}')" title="Project History" class="text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.history}</button>`;
                         const projEditBtn = canManageProjects ? `<button onclick="event.stopPropagation(); openProjectModal('${proj.id}', '${client.clientCode}')" title="Edit Project" class="text-brand-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.edit}</button>` : '';
                         const projDelBtn = canManageProjects ? `<button onclick="event.stopPropagation(); deleteProject('${proj.id}', '${proj.projId}')" title="Delete Project" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors inline-flex">${svgs.del}</button>` : '';
@@ -463,6 +574,7 @@
                                         </div>
                                     </div>
                                     <div class="flex items-center ml-6 sm:ml-0 flex-shrink-0">
+                                        ${projStatusBtn}
                                         ${projHistoryBtn}
                                         ${projEditBtn}
                                         ${projDelBtn}
@@ -523,6 +635,62 @@
                 `;
                 container.innerHTML += clientBlock;
             });
+        };
+
+        // --- Status Modals ---
+        window.viewTaskStatus = (taskId) => {
+            const task = allTasks.find(t => t.taskId === taskId);
+            if (!task) return;
+            const analysis = analyzeTask(task);
+            const assignee = allEmployees.find(e => e.empId === task.assignedTo);
+            
+            document.getElementById('tsModalTitle').textContent = `Task Status: ${taskId}`;
+            document.getElementById('tsModalRag').className = `w-16 h-16 rounded-full mx-auto mb-4 shadow-inner ${analysis.ragClass}`;
+            document.getElementById('tsModalDays').textContent = analysis.overdueDays;
+            document.getElementById('tsModalAssignee').textContent = assignee ? assignee.name : task.assignedTo;
+            
+            document.getElementById('taskStatusModal').classList.remove('hidden');
+        };
+
+        window.viewProjectStatus = (projId) => {
+            const proj = allProjects.find(p => p.projId === projId);
+            const tasks = allTasks.filter(t => t.projectId === projId);
+            
+            let counts = { 'To Do': 0, 'In Progress': 0, 'In Review': 0, 'Completed': 0, 'Overdue': 0 };
+            let overdueList = [];
+
+            tasks.forEach(t => {
+                const a = analyzeTask(t);
+                counts[a.displayStatus] = (counts[a.displayStatus] || 0) + 1;
+                if (a.displayStatus === 'Overdue') {
+                    overdueList.push({ id: t.taskId, name: t.name, days: a.overdueDays });
+                }
+            });
+
+            document.getElementById('psModalTitle').textContent = `Project Status: ${projId}`;
+            document.getElementById('psTotal').textContent = tasks.length;
+            document.getElementById('psOverdue').textContent = counts['Overdue'] || 0;
+            document.getElementById('psCompleted').textContent = counts['Completed'] || 0;
+            document.getElementById('psTodo').textContent = counts['To Do'] || 0;
+            document.getElementById('psProg').textContent = counts['In Progress'] || 0;
+            document.getElementById('psRev').textContent = counts['In Review'] || 0;
+
+            const listEl = document.getElementById('psOverdueList');
+            if (overdueList.length === 0) {
+                listEl.innerHTML = '<div class="text-gray-500 italic text-sm py-2">No overdue tasks.</div>';
+            } else {
+                listEl.innerHTML = overdueList.sort((a,b)=>b.days-a.days).map(o => `
+                    <div class="flex justify-between items-center bg-red-50 p-2.5 rounded border border-red-100">
+                        <div>
+                            <span class="font-bold text-gray-900 text-xs">${o.id}</span>
+                            <span class="text-gray-600 text-xs ml-2">${o.name}</span>
+                        </div>
+                        <span class="text-red-600 font-bold text-xs">${o.days} days</span>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('projStatusModal').classList.remove('hidden');
         };
 
         // --- History generic Modal ---
