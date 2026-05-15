@@ -480,6 +480,14 @@
         let currentCalYear = new Date().getFullYear();
         let currentCalMonth = new Date().getMonth();
 
+        const getISODate = (dateObj) => {
+            if (!dateObj || isNaN(dateObj)) return '';
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
         // Authentication & RBAC
         const sessionUser = sessionStorage.getItem('stratedge_active_user');
         if (!sessionUser) window.location.href = 'index.html';
