@@ -63,6 +63,20 @@
             </div>
         </div>
 
+        <!-- Filter Bar -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+            <select id="filterClient" onchange="updateFilters('client')" class="flex-1 px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Clients</option>
+            </select>
+            <select id="filterProject" onchange="updateFilters('project')" class="flex-1 px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Projects</option>
+            </select>
+            <select id="filterTask" onchange="updateFilters('task')" class="flex-1 px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Tasks</option>
+            </select>
+            <button onclick="clearFilters()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
+        </div>
+
         <!-- Hierarchical View Container -->
         <div id="workflowContainer" class="space-y-4 pb-12">
             <div class="text-center text-gray-500 py-10 italic">Loading workflow structure...</div>
@@ -156,14 +170,27 @@
                             <textarea id="taskComment" rows="2" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue placeholder-gray-400 text-sm" placeholder="Add an update note or comment..."></textarea>
                         </div>
                     </div>
-                    
-                    <div id="taskHistoryBlock" class="hidden mt-4 pt-4 border-t border-gray-200">
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Edit History & Comments</h4>
-                        <div id="taskHistoryList" class="space-y-2 max-h-32 overflow-y-auto custom-scroll text-xs bg-gray-50 p-2 rounded border"></div>
-                    </div>
 
                     <button type="submit" class="w-full mt-4 bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-2.5 rounded-lg shadow-sm transition-all">Save Task</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Generic Edit History -->
+    <div id="genericHistoryModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900" id="genericHistoryTitle">Edit History</h3>
+                <button onclick="closeModal('genericHistoryModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6">
+                <div id="genericHistoryList" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scroll text-sm">
+                    <!-- JS populated -->
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+                <button onclick="closeModal('genericHistoryModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
             </div>
         </div>
     </div>
@@ -205,7 +232,7 @@
         if (!sessionUser) window.location.href = 'index.html';
         activeUser = JSON.parse(sessionUser);
 
-        // RBAC Permissions logic
+        // RBAC Permissions
         const accessLvl = activeUser.workflowAccess || 'Doer'; 
         const canManageProjects = ['Workflow Admin', 'Task Admin'].includes(accessLvl);
         const canManageTasks = ['Workflow Admin', 'Task Admin', 'Doer'].includes(accessLvl);
@@ -238,19 +265,31 @@
             }
         };
 
-        // --- Data Fetching ---
+        // --- SVGs for Actions ---
+        const svgs = {
+            addProj: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>`,
+            addTask: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>`,
+            edit: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`,
+            del: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`,
+            history: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+        };
+
+        // --- Data Fetching & Sync ---
         onAuthStateChanged(auth, u => {
             if (u) {
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), s => { 
                     allClients = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    populateFilters('init');
                     renderWorkflow();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_projects'), s => { 
                     allProjects = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    populateFilters('init');
                     renderWorkflow();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), s => { 
                     allTasks = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    populateFilters('init');
                     renderWorkflow();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
@@ -264,6 +303,58 @@
             }
         });
         signInAnonymously(auth);
+
+        // --- Filters Logic ---
+        window.clearFilters = () => {
+            document.getElementById('filterClient').value = '';
+            document.getElementById('filterProject').value = '';
+            document.getElementById('filterTask').value = '';
+            populateFilters('client'); // Trigger cascade reset
+            renderWorkflow();
+        };
+
+        window.updateFilters = (level) => {
+            populateFilters(level);
+            renderWorkflow();
+        };
+
+        const populateFilters = (triggerLevel = 'init') => {
+            const fClient = document.getElementById('filterClient');
+            const fProj = document.getElementById('filterProject');
+            const fTask = document.getElementById('filterTask');
+
+            const valC = fClient.value;
+            const valP = fProj.value;
+            const valT = fTask.value;
+
+            if (triggerLevel === 'init' || triggerLevel === 'all') {
+                fClient.innerHTML = '<option value="">All Clients</option>';
+                allClients.sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => {
+                    fClient.innerHTML += `<option value="${c.clientCode}">${c.name} (${c.clientCode})</option>`;
+                });
+                if(valC && allClients.some(c=>c.clientCode===valC)) fClient.value = valC;
+            }
+
+            if (triggerLevel === 'init' || triggerLevel === 'client' || triggerLevel === 'all') {
+                fProj.innerHTML = '<option value="">All Projects</option>';
+                allProjects.filter(p => !fClient.value || p.clientId === fClient.value)
+                    .sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+                    fProj.innerHTML += `<option value="${p.projId}">${p.name} (${p.projId})</option>`;
+                });
+                if(valP && Array.from(fProj.options).some(o=>o.value===valP)) fProj.value = valP;
+                else fProj.value = '';
+            }
+
+            if (triggerLevel === 'init' || triggerLevel === 'client' || triggerLevel === 'project' || triggerLevel === 'all') {
+                fTask.innerHTML = '<option value="">All Tasks</option>';
+                allTasks.filter(t => (!fClient.value || t.clientId === fClient.value) && (!fProj.value || t.projectId === fProj.value))
+                    .sort((a,b)=>a.name.localeCompare(b.name)).forEach(t => {
+                    fTask.innerHTML += `<option value="${t.taskId}">${t.name} (${t.taskId})</option>`;
+                });
+                if(valT && Array.from(fTask.options).some(o=>o.value===valT)) fTask.value = valT;
+                else fTask.value = '';
+            }
+        };
 
         // --- Rendering Logic ---
         const getStatusBadge = (status) => {
@@ -285,9 +376,22 @@
 
             container.innerHTML = '';
             
+            const filterC = document.getElementById('filterClient').value;
+            const filterP = document.getElementById('filterProject').value;
+            const filterT = document.getElementById('filterTask').value;
+
             // Level 1: Clients
-            allClients.sort((a,b)=>a.name.localeCompare(b.name)).forEach(client => {
-                const clientProjects = allProjects.filter(p => p.clientId === client.clientCode);
+            let clientsToRender = allClients.sort((a,b)=>a.name.localeCompare(b.name));
+            if (filterC) clientsToRender = clientsToRender.filter(c => c.clientCode === filterC);
+
+            clientsToRender.forEach(client => {
+                let clientProjects = allProjects.filter(p => p.clientId === client.clientCode);
+                if (filterP) clientProjects = clientProjects.filter(p => p.projId === filterP);
+                
+                // If deep filters are applied and this client has no matching projects/tasks, we can optionally hide it.
+                // For a clean look, if Project/Task filter is active and length is 0, skip.
+                if ((filterP || filterT) && clientProjects.length === 0) return;
+
                 const cid = `client-${client.clientCode}`;
                 
                 let projectHtml = '';
@@ -296,7 +400,11 @@
                 } else {
                     // Level 2: Projects
                     clientProjects.sort((a,b)=> b.createdAt - a.createdAt).forEach(proj => {
-                        const projTasks = allTasks.filter(t => t.projectId === proj.projId);
+                        let projTasks = allTasks.filter(t => t.projectId === proj.projId);
+                        if (filterT) projTasks = projTasks.filter(t => t.taskId === filterT);
+
+                        if (filterT && projTasks.length === 0) return; // Skip non-matching projects if task filtered
+
                         const pid = `proj-${proj.projId}`;
                         
                         let taskHtml = '';
@@ -309,54 +417,66 @@
                                 const assigneeName = assignee ? assignee.name : task.assignedTo;
                                 
                                 taskHtml += `
-                                    <tr class="hover:bg-blue-50/30 transition-colors">
-                                        <td class="px-4 py-3 whitespace-nowrap text-xs font-bold text-gray-900">${task.taskId}</td>
-                                        <td class="px-4 py-3 min-w-[200px]">
+                                    <tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-0">
+                                        <td class="px-4 py-3 whitespace-nowrap align-top">
+                                            <span class="bg-orange-100 text-orange-800 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest block w-max mb-1">Task</span>
+                                            <span class="text-xs font-bold text-gray-900">${task.taskId}</span>
+                                        </td>
+                                        <td class="px-4 py-3 min-w-[200px] align-top">
                                             <div class="font-bold text-sm text-brand-blue">${task.name}</div>
                                             <div class="text-xs text-gray-500 truncate max-w-[250px]" title="${task.desc}">${task.desc}</div>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600">${new Date(task.startDate).toLocaleDateString('en-GB')}<br><span class="text-gray-400">to</span> ${new Date(task.estDate).toLocaleDateString('en-GB')}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center text-xs font-bold">${task.effort}h</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-xs">${assigneeName}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center">${getStatusBadge(task.status)}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-right">
+                                        <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 align-top">${new Date(task.startDate).toLocaleDateString('en-GB')}<br><span class="text-gray-400">to</span> ${new Date(task.estDate).toLocaleDateString('en-GB')}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center text-xs font-bold align-top">${task.effort}h</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-xs align-top">${assigneeName}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${getStatusBadge(task.status)}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-right align-top">
+                                            <button onclick="viewHistory('Task', '${task.taskId}')" title="Task History" class="text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.history}</button>
                                             ${canManageTasks ? `
-                                                <button onclick="openTaskModal('${task.id}', '${proj.clientId}', '${proj.projId}')" class="text-brand-orange hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded text-xs font-bold transition-colors mr-1">Edit</button>
-                                                <button onclick="deleteTask('${task.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs font-bold transition-colors">Del</button>
-                                            ` : `<span class="text-gray-300 text-xs italic">View Only</span>`}
+                                                <button onclick="openTaskModal('${task.id}', '${proj.clientId}', '${proj.projId}')" title="Edit Task" class="text-brand-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.edit}</button>
+                                                <button onclick="deleteTask('${task.id}')" title="Delete Task" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors inline-flex">${svgs.del}</button>
+                                            ` : ``}
                                         </td>
                                     </tr>
                                 `;
                             });
                         }
 
-                        const taskAddBtn = canManageTasks ? `<button onclick="event.stopPropagation(); openTaskModal(null, '${proj.clientId}', '${proj.projId}')" class="bg-white hover:bg-gray-100 text-brand-orange text-xs font-bold py-1 px-3 rounded shadow-sm border border-gray-200 transition-colors">+ Add Task</button>` : '';
-                        const projEditBtn = canManageProjects ? `<button onclick="event.stopPropagation(); openProjectModal('${proj.id}', '${client.clientCode}')" class="text-brand-blue hover:underline text-xs mr-3 font-semibold">Edit</button>` : '';
-                        const projDelBtn = canManageProjects ? `<button onclick="event.stopPropagation(); deleteProject('${proj.id}', '${proj.projId}')" class="text-red-400 hover:underline text-xs mr-4 font-semibold">Delete</button>` : '';
+                        const taskAddBtn = canManageTasks ? `<button onclick="event.stopPropagation(); openTaskModal(null, '${proj.clientId}', '${proj.projId}')" title="Add Task" class="text-brand-orange hover:text-white bg-orange-50 hover:bg-brand-orange p-1.5 rounded border border-orange-200 hover:border-brand-orange transition-all inline-flex ml-3 shadow-sm">${svgs.addTask}</button>` : '';
+                        
+                        const projHistoryBtn = `<button onclick="event.stopPropagation(); viewHistory('Project', '${proj.projId}')" title="Project History" class="text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.history}</button>`;
+                        const projEditBtn = canManageProjects ? `<button onclick="event.stopPropagation(); openProjectModal('${proj.id}', '${client.clientCode}')" title="Edit Project" class="text-brand-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.edit}</button>` : '';
+                        const projDelBtn = canManageProjects ? `<button onclick="event.stopPropagation(); deleteProject('${proj.id}', '${proj.projId}')" title="Delete Project" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors inline-flex">${svgs.del}</button>` : '';
 
                         projectHtml += `
-                            <div class="border-t border-blue-100">
-                                <div class="p-3 pl-8 flex flex-col sm:flex-row justify-between sm:items-center bg-blue-50/50 cursor-pointer hover:bg-blue-50 transition-colors" onclick="toggleNode('${pid}')">
-                                    <div class="flex items-center gap-2 mb-2 sm:mb-0">
-                                        <svg id="icon-${pid}" class="w-4 h-4 text-brand-blue transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            <div class="border-t border-gray-200">
+                                <div class="p-3 pl-4 sm:pl-8 flex flex-col sm:flex-row justify-between sm:items-center bg-blue-50/20 cursor-pointer hover:bg-blue-50/60 transition-colors" onclick="toggleNode('${pid}')">
+                                    <div class="flex items-start gap-2 mb-2 sm:mb-0">
+                                        <svg id="icon-${pid}" class="w-4 h-4 text-brand-blue transition-transform mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                         <div>
-                                            <span class="font-bold text-gray-900">${proj.name}</span> <span class="text-xs font-mono text-gray-500 ml-1 bg-white px-1.5 py-0.5 rounded border">${proj.projId}</span>
-                                            <div class="text-[10px] text-gray-500 mt-0.5">Created on ${new Date(proj.createdAt).toLocaleDateString('en-GB')} by ${proj.createdBy}</div>
+                                            <div class="flex items-center flex-wrap gap-2">
+                                                <span class="bg-teal-100 text-teal-800 text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border border-teal-200">Project</span>
+                                                <span class="font-bold text-gray-900 text-base">${proj.name}</span> 
+                                                <span class="text-xs font-mono text-gray-500 bg-white px-1.5 py-0.5 rounded border shadow-sm">${proj.projId}</span>
+                                            </div>
+                                            <div class="text-[10px] text-gray-500 mt-1.5 font-medium">Created on ${new Date(proj.createdAt).toLocaleDateString('en-GB')} by ${proj.createdBy}</div>
                                         </div>
                                     </div>
-                                    <div class="flex items-center ml-6 sm:ml-0">
+                                    <div class="flex items-center ml-6 sm:ml-0 flex-shrink-0">
+                                        ${projHistoryBtn}
                                         ${projEditBtn}
                                         ${projDelBtn}
-                                        <span class="text-xs font-bold text-brand-blue bg-blue-100 px-2 py-0.5 rounded-full mr-3">${projTasks.length} Tasks</span>
+                                        <div class="h-6 w-px bg-gray-300 mx-2"></div>
+                                        <span class="text-xs font-bold text-brand-blue bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full">${projTasks.length} Tasks</span>
                                         ${taskAddBtn}
                                     </div>
                                 </div>
-                                <div id="${pid}" class="hidden bg-white border-t border-gray-100">
+                                <div id="${pid}" class="hidden bg-white border-t border-gray-200 shadow-inner">
                                     <div class="overflow-x-auto">
-                                        <table class="min-w-full divide-y divide-gray-100">
-                                            <thead class="bg-gray-50">
+                                        <table class="min-w-full">
+                                            <thead class="bg-gray-100/50">
                                                 <tr>
-                                                    <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider w-16">Task ID</th>
+                                                    <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider w-20">Task ID</th>
                                                     <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Task Details</th>
                                                     <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Timeline</th>
                                                     <th class="px-4 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Effort</th>
@@ -365,7 +485,7 @@
                                                     <th class="px-4 py-2 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody class="divide-y divide-gray-50">
+                                            <tbody>
                                                 ${taskHtml}
                                             </tbody>
                                         </table>
@@ -376,20 +496,23 @@
                     });
                 }
 
-                const projAddBtn = canManageProjects ? `<button onclick="event.stopPropagation(); openProjectModal(null, '${client.clientCode}')" class="bg-brand-blue hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow-sm transition-colors">+ Add Project</button>` : '';
+                const projAddBtn = canManageProjects ? `<button onclick="event.stopPropagation(); openProjectModal(null, '${client.clientCode}')" title="Add Project" class="bg-brand-blue hover:bg-blue-800 text-white p-1.5 rounded shadow-sm transition-colors inline-flex ml-4">${svgs.addProj}</button>` : '';
 
                 const clientBlock = `
-                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4">
+                    <div class="bg-white border-2 border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4">
                         <div class="p-4 flex flex-col sm:flex-row justify-between sm:items-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleNode('${cid}')">
-                            <div class="flex items-center gap-2 mb-3 sm:mb-0">
-                                <svg id="icon-${cid}" class="w-5 h-5 text-gray-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            <div class="flex items-start gap-2 mb-3 sm:mb-0">
+                                <svg id="icon-${cid}" class="w-5 h-5 text-gray-400 transition-transform mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                 <div>
-                                    <h3 class="font-black text-gray-900 text-lg">${client.name}</h3>
-                                    <div class="text-xs font-mono text-gray-500">${client.clientCode}</div>
+                                    <div class="flex items-center flex-wrap gap-2">
+                                        <span class="bg-indigo-100 text-indigo-800 text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-widest border border-indigo-200">Client</span>
+                                        <h3 class="font-black text-gray-900 text-lg tracking-tight">${client.name}</h3>
+                                        <div class="text-xs font-mono font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${client.clientCode}</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex items-center ml-7 sm:ml-0">
-                                <span class="text-xs font-bold text-gray-600 bg-gray-200 px-2.5 py-1 rounded-full mr-4">${clientProjects.length} Projects</span>
+                            <div class="flex items-center ml-7 sm:ml-0 flex-shrink-0">
+                                <span class="text-xs font-bold text-gray-700 bg-gray-200 border border-gray-300 px-3 py-1.5 rounded-full">${clientProjects.length} Projects</span>
                                 ${projAddBtn}
                             </div>
                         </div>
@@ -400,6 +523,35 @@
                 `;
                 container.innerHTML += clientBlock;
             });
+        };
+
+        // --- History generic Modal ---
+        window.viewHistory = (type, id) => {
+            const listEl = document.getElementById('genericHistoryList');
+            listEl.innerHTML = '';
+            
+            let item = type === 'Project' ? allProjects.find(p => p.projId === id) : allTasks.find(t => t.taskId === id);
+            if (!item) return;
+
+            document.getElementById('genericHistoryTitle').innerHTML = `${type} History: <span class="text-brand-blue">${item.name}</span> <span class="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded ml-1 border">${id}</span>`;
+
+            if (item.history && item.history.length > 0) {
+                listEl.innerHTML = item.history.slice().reverse().map(h => {
+                    const dateStr = new Date(h.date).toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                    return `
+                        <div class="border-b border-gray-100 last:border-0 pb-3 mb-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-gray-800">${h.by}</span>
+                                <span class="text-gray-400 text-[10px] font-bold tracking-wider">${dateStr}</span>
+                            </div>
+                            <span class="text-gray-600 text-sm leading-relaxed">${h.action}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                listEl.innerHTML = '<div class="text-sm text-gray-500 italic text-center py-4 bg-gray-50 rounded border">No history available for this record.</div>';
+            }
+            document.getElementById('genericHistoryModal').classList.remove('hidden');
         };
 
         // --- Projects Management ---
@@ -441,18 +593,39 @@
             const payload = {
                 clientId: document.getElementById('projClientId').value,
                 projId: document.getElementById('projId').value,
-                name: document.getElementById('projName').value,
-                desc: document.getElementById('projDesc').value,
+                name: document.getElementById('projName').value.trim(),
+                desc: document.getElementById('projDesc').value.trim(),
                 updatedAt: Date.now()
             };
 
             try {
                 if (docId) {
+                    const existingProj = allProjects.find(p => p.id === docId);
+                    let history = existingProj.history || [];
+                    
+                    let actionStrs = [];
+                    if(existingProj.name !== payload.name) actionStrs.push(`Name changed to [${payload.name}]`);
+                    if(existingProj.desc !== payload.desc) actionStrs.push(`Description updated`);
+                    
+                    if(actionStrs.length > 0) {
+                        history.push({
+                            action: actionStrs.join(' | '),
+                            by: activeUser.name,
+                            date: Date.now()
+                        });
+                    }
+                    payload.history = history;
+
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', docId), payload);
                     showToast("Project updated successfully.");
                 } else {
                     payload.createdAt = Date.now();
                     payload.createdBy = activeUser.name;
+                    payload.history = [{
+                        action: "Project Created",
+                        by: activeUser.name,
+                        date: Date.now()
+                    }];
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_projects'), payload);
                     showToast("Project created successfully.");
                 }
@@ -479,7 +652,6 @@
         window.openTaskModal = (docId = null, clientId, projectId) => {
             const form = document.getElementById('taskForm');
             form.reset();
-            document.getElementById('taskHistoryBlock').classList.add('hidden');
             
             document.getElementById('taskDocId').value = docId || '';
             document.getElementById('taskClientId').value = clientId;
@@ -497,16 +669,6 @@
                     document.getElementById('taskEffort').value = task.effort;
                     document.getElementById('taskAssignedTo').value = task.assignedTo;
                     document.getElementById('taskStatus').value = task.status;
-                    
-                    // Render History
-                    if(task.history && task.history.length > 0) {
-                        document.getElementById('taskHistoryBlock').classList.remove('hidden');
-                        const hList = document.getElementById('taskHistoryList');
-                        hList.innerHTML = task.history.slice().reverse().map(h => {
-                            const dateStr = new Date(h.date).toLocaleString('en-GB', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
-                            return `<div class="border-b last:border-0 pb-1 mb-1"><span class="font-bold text-gray-700">${h.by}</span> <span class="text-gray-400 ml-1">${dateStr}</span><br><span class="text-gray-600">${h.action}</span></div>`;
-                        }).join('');
-                    }
                 }
             } else {
                 document.getElementById('taskModalTitle').textContent = 'Create Task';
@@ -536,8 +698,8 @@
                 clientId: document.getElementById('taskClientId').value,
                 projectId: document.getElementById('taskProjectId').value,
                 taskId: document.getElementById('taskId').value,
-                name: document.getElementById('taskName').value,
-                desc: document.getElementById('taskDesc').value,
+                name: document.getElementById('taskName').value.trim(),
+                desc: document.getElementById('taskDesc').value.trim(),
                 startDate: document.getElementById('taskStartDate').value,
                 estDate: document.getElementById('taskEstDate').value,
                 effort: parseFloat(document.getElementById('taskEffort').value),
@@ -553,10 +715,13 @@
                     
                     // Build action string to track changes
                     let actionStrs = [];
-                    if(existingTask.status !== payload.status) actionStrs.push(`Changed status to [${payload.status}]`);
+                    if(existingTask.status !== payload.status) actionStrs.push(`Status set to [${payload.status}]`);
                     if(existingTask.assignedTo !== payload.assignedTo) actionStrs.push(`Reassigned to [${payload.assignedTo}]`);
-                    if(newComment) actionStrs.push(`Commented: "${newComment}"`);
-                    if(actionStrs.length === 0 && (existingTask.name !== payload.name || existingTask.effort !== payload.effort)) actionStrs.push(`Updated task details`);
+                    if(existingTask.name !== payload.name) actionStrs.push(`Name updated`);
+                    if(existingTask.effort !== payload.effort) actionStrs.push(`Effort changed to ${payload.effort}h`);
+                    if(newComment) actionStrs.push(`Comment: "${newComment}"`);
+                    
+                    if(actionStrs.length === 0 && existingTask.desc !== payload.desc) actionStrs.push(`Description updated`);
                     
                     if(actionStrs.length > 0) {
                         history.push({
@@ -578,7 +743,7 @@
                     }];
                     if(newComment) {
                         payload.history.push({
-                            action: `Commented: "${newComment}"`,
+                            action: `Comment: "${newComment}"`,
                             by: activeUser.name,
                             date: Date.now()
                         });
