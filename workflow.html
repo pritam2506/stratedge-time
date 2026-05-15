@@ -563,6 +563,17 @@
             }
         };
 
+        function formatHistoryAction(action) {
+            let formatted = action;
+            // Catch any old history items containing the Employee ID and replace with Name
+            const regex = /Reassigned to \[([^\]]+)\]/g;
+            formatted = formatted.replace(regex, (match, p1) => {
+                const matchedEmp = allEmployees.find(e => e.empId === p1);
+                return matchedEmp ? `Reassigned to [${matchedEmp.name}]` : match;
+            });
+            return formatted;
+        }
+
         const updateNotifications = () => {
             const notifList = document.getElementById('notifList');
             const badge = document.getElementById('notificationBadge');
@@ -618,7 +629,7 @@
                             notifList.innerHTML += `
                                 <div class="px-4 py-3 bg-indigo-50 border-l-4 border-indigo-500 cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${updateNotifId}', '${task.taskId}', '${task.projectId}', '${task.clientId}')">
                                     <p class="text-sm font-bold text-indigo-700">Task Updated</p>
-                                    <p class="text-xs text-gray-700 mt-1"><b>${task.name}</b>: ${latestEdit.action} (by ${latestEdit.by})</p>
+                                    <p class="text-xs text-gray-700 mt-1"><b>${task.name}</b>: ${formatHistoryAction(latestEdit.action)} (by ${latestEdit.by})</p>
                                 </div>
                             `;
                         }
@@ -966,7 +977,7 @@
                                 <span class="font-bold text-gray-800">${h.by}</span>
                                 <span class="text-gray-400 text-[10px] font-bold tracking-wider">${dateStr}</span>
                             </div>
-                            <span class="text-gray-600 text-sm leading-relaxed">${h.action}</span>
+                            <span class="text-gray-600 text-sm leading-relaxed">${formatHistoryAction(h.action)}</span>
                         </div>
                     `;
                 }).join('');
@@ -1138,7 +1149,11 @@
                     // Build action string to track changes
                     let actionStrs = [];
                     if(existingTask.status !== payload.status) actionStrs.push(`Status set to [${payload.status}]`);
-                    if(existingTask.assignedTo !== payload.assignedTo) actionStrs.push(`Reassigned to [${payload.assignedTo}]`);
+                    if(existingTask.assignedTo !== payload.assignedTo) {
+                        const newAssignee = allEmployees.find(emp => emp.empId === payload.assignedTo);
+                        const newAssigneeName = newAssignee ? newAssignee.name : payload.assignedTo;
+                        actionStrs.push(`Reassigned to [${newAssigneeName}]`);
+                    }
                     if(existingTask.name !== payload.name) actionStrs.push(`Name updated`);
                     if(existingTask.effort !== payload.effort) actionStrs.push(`Effort changed to ${payload.effort}h`);
                     if(newComment) actionStrs.push(`Comment: "${newComment}"`);
