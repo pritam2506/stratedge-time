@@ -95,8 +95,12 @@
                 <option value="Amber">Amber</option>
                 <option value="Red">Red</option>
             </select>
-            <select id="filterAssignee" onchange="updateFilters('assignee')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                <option value="">All Assignees</option>
+            <select id="filterStatus" onchange="updateFilters('status')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Statuses</option>
+                <option value="To Do">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="In Review">In Review</option>
+                <option value="Completed">Completed</option>
             </select>
             <button onclick="clearFilters()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
         </div>
@@ -444,7 +448,7 @@
             document.getElementById('filterProject').value = '';
             document.getElementById('filterTask').value = '';
             document.getElementById('filterRAG').value = '';
-            document.getElementById('filterAssignee').value = '';
+            document.getElementById('filterStatus').value = '';
             populateFilters('client'); // Trigger cascade reset
             renderWorkflow();
         };
@@ -462,9 +466,6 @@
             const valC = fClient.value;
             const valP = fProj.value;
             const valT = fTask.value;
-            
-            const fAssignee = document.getElementById('filterAssignee');
-            const valA = fAssignee.value;
 
             if (triggerLevel === 'init' || triggerLevel === 'all') {
                 fClient.innerHTML = '<option value="">All Clients</option>';
@@ -492,15 +493,6 @@
                 });
                 if(valT && Array.from(fTask.options).some(o=>o.value===valT)) fTask.value = valT;
                 else fTask.value = '';
-            }
-
-            if (triggerLevel === 'init' || triggerLevel === 'all') {
-                fAssignee.innerHTML = '<option value="">All Assignees</option>';
-                allEmployees.filter(e => e.status !== 'Inactive').sort((a,b)=>a.name.localeCompare(b.name)).forEach(e => {
-                    fAssignee.innerHTML += `<option value="${e.empId}">${e.name} (${e.empId})</option>`;
-                });
-                if(valA && Array.from(fAssignee.options).some(o=>o.value===valA)) fAssignee.value = valA;
-                else fAssignee.value = '';
             }
         };
 
@@ -648,7 +640,12 @@
             const filterP = document.getElementById('filterProject').value;
             const filterT = document.getElementById('filterTask').value;
             const filterRAG = document.getElementById('filterRAG').value;
-            const filterAssignee = document.getElementById('filterAssignee').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            // Auto-expand hierarchy if any filter is applied
+            const hasFilter = filterC || filterP || filterT || filterRAG || filterStatus;
+            const expandClass = hasFilter ? '' : 'hidden';
+            const iconRotation = hasFilter ? 'rotate(90deg)' : 'rotate(0deg)';
 
             // Level 1: Clients
             let clientsToRender = allClients.sort((a,b)=>a.name.localeCompare(b.name));
@@ -659,11 +656,11 @@
                 if (filterP) clientProjects = clientProjects.filter(p => p.projId === filterP);
                 
                 // If deep filters are applied, hide parent projects without matching tasks
-                if (filterT || filterAssignee || filterRAG) {
+                if (filterT || filterStatus || filterRAG) {
                     clientProjects = clientProjects.filter(proj => {
                         let pTasks = allTasks.filter(t => t.projectId === proj.projId);
                         if (filterT) pTasks = pTasks.filter(t => t.taskId === filterT);
-                        if (filterAssignee) pTasks = pTasks.filter(t => t.assignedTo === filterAssignee);
+                        if (filterStatus) pTasks = pTasks.filter(t => t.status === filterStatus);
                         if (filterRAG) {
                             pTasks = pTasks.filter(t => {
                                 const analysis = analyzeTask(t);
@@ -677,7 +674,7 @@
                     });
                 }
                 
-                if ((filterP || filterT || filterAssignee || filterRAG) && clientProjects.length === 0) return;
+                if ((filterP || filterT || filterStatus || filterRAG) && clientProjects.length === 0) return;
 
                 const cid = `client-${client.clientCode}`;
                 
@@ -689,7 +686,7 @@
                     clientProjects.sort((a,b)=> b.createdAt - a.createdAt).forEach(proj => {
                         let projTasks = allTasks.filter(t => t.projectId === proj.projId);
                         if (filterT) projTasks = projTasks.filter(t => t.taskId === filterT);
-                        if (filterAssignee) projTasks = projTasks.filter(t => t.assignedTo === filterAssignee);
+                        if (filterStatus) projTasks = projTasks.filter(t => t.status === filterStatus);
                         if (filterRAG) {
                             projTasks = projTasks.filter(t => {
                                 const analysis = analyzeTask(t);
@@ -700,7 +697,7 @@
                             });
                         }
 
-                        if ((filterT || filterAssignee || filterRAG) && projTasks.length === 0) return; // Skip non-matching projects
+                        if ((filterT || filterStatus || filterRAG) && projTasks.length === 0) return; // Skip non-matching projects
 
                         const pid = `proj-${proj.projId}`;
                         
@@ -756,7 +753,7 @@
                             <div class="border-t border-gray-200">
                                 <div class="p-3 pl-4 sm:pl-8 flex flex-col sm:flex-row justify-between sm:items-center bg-blue-50/20 cursor-pointer hover:bg-blue-50/60 transition-colors" onclick="toggleNode('${pid}')">
                                     <div class="flex items-start gap-2 mb-2 sm:mb-0">
-                                        <svg id="icon-${pid}" class="w-4 h-4 text-brand-blue transition-transform mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        <svg id="icon-${pid}" class="w-4 h-4 text-brand-blue transition-transform mt-0.5 shrink-0" style="transform: ${iconRotation}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                         <div>
                                             <div class="flex items-center flex-wrap gap-2">
                                                 <span class="bg-teal-100 text-teal-800 text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border border-teal-200">Project</span>
@@ -776,7 +773,7 @@
                                         ${taskAddBtn}
                                     </div>
                                 </div>
-                                <div id="${pid}" class="hidden bg-white border-t border-gray-200 shadow-inner">
+                                <div id="${pid}" class="${expandClass} bg-white border-t border-gray-200 shadow-inner">
                                     <div class="overflow-x-auto">
                                         <table class="min-w-full">
                                             <thead class="bg-gray-100/50">
@@ -809,7 +806,7 @@
                     <div class="bg-white border-2 border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4">
                         <div class="p-4 flex flex-col sm:flex-row justify-between sm:items-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onclick="toggleNode('${cid}')">
                             <div class="flex items-start gap-2 mb-3 sm:mb-0">
-                                <svg id="icon-${cid}" class="w-5 h-5 text-gray-400 transition-transform mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <svg id="icon-${cid}" class="w-5 h-5 text-gray-400 transition-transform mt-0.5 shrink-0" style="transform: ${iconRotation}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                 <div>
                                     <div class="flex items-center flex-wrap gap-2">
                                         <span class="bg-indigo-100 text-indigo-800 text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-widest border border-indigo-200">Client</span>
@@ -823,7 +820,7 @@
                                 ${projAddBtn}
                             </div>
                         </div>
-                        <div id="${cid}" class="hidden">
+                        <div id="${cid}" class="${expandClass}">
                             ${projectHtml}
                         </div>
                     </div>
