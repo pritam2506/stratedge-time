@@ -1163,10 +1163,11 @@
                         actionStrs.push(`Reassigned to [${newAssigneeName}]`);
                     }
                     if(existingTask.name !== payload.name) actionStrs.push(`Name updated`);
+                    if(existingTask.desc !== payload.desc) actionStrs.push(`Description updated`);
+                    if(existingTask.startDate !== payload.startDate) actionStrs.push(`Start Date updated`);
+                    if(existingTask.estDate !== payload.estDate) actionStrs.push(`Due Date updated`);
                     if(existingTask.effort !== payload.effort) actionStrs.push(`Effort changed to ${payload.effort}h`);
                     if(newComment) actionStrs.push(`Comment: "${newComment}"`);
-                    
-                    if(actionStrs.length === 0 && existingTask.desc !== payload.desc) actionStrs.push(`Description updated`);
                     
                     if(actionStrs.length > 0) {
                         history.push({
@@ -1178,6 +1179,21 @@
                     payload.history = history;
 
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), payload);
+                    
+                    // Project History Tracking
+                    if(actionStrs.length > 0) {
+                        const proj = allProjects.find(p => p.projId === payload.projectId);
+                        if (proj) {
+                            let projHistory = proj.history || [];
+                            projHistory.push({
+                                action: `Task ${payload.taskId} updated: ${actionStrs.join(' | ')}`,
+                                by: activeUser.name,
+                                date: Date.now()
+                            });
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory });
+                        }
+                    }
+
                     showToast("Task updated successfully.");
                 } else {
                     payload.createdAt = Date.now();
@@ -1194,6 +1210,21 @@
                         });
                     }
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), payload);
+                    
+                    // Project History Tracking
+                    const proj = allProjects.find(p => p.projId === payload.projectId);
+                    if (proj) {
+                        let projHistory = proj.history || [];
+                        let projAction = `Task ${payload.taskId} created`;
+                        if(newComment) projAction += ` with comment`;
+                        projHistory.push({
+                            action: projAction,
+                            by: activeUser.name,
+                            date: Date.now()
+                        });
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory });
+                    }
+
                     showToast("Task created successfully.");
                 }
                 closeModal('taskModal');
@@ -1205,8 +1236,26 @@
 
         window.deleteTask = async (docId) => {
             if(confirm(`Are you sure you want to permanently delete this task?`)) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId));
-                showToast("Task deleted.");
+                try {
+                    const task = allTasks.find(t => t.id === docId);
+                    if (task) {
+                        const proj = allProjects.find(p => p.projId === task.projectId);
+                        if (proj) {
+                            let projHistory = proj.history || [];
+                            projHistory.push({
+                                action: `Task ${task.taskId} deleted`,
+                                by: activeUser.name,
+                                date: Date.now()
+                            });
+                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory });
+                        }
+                    }
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId));
+                    showToast("Task deleted.");
+                } catch(err) {
+                    console.error(err);
+                    showToast("Failed to delete task.", "error");
+                }
             }
         };
 
