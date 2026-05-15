@@ -38,6 +38,21 @@
                 <h1 class="text-2xl font-bold tracking-wide">Stratedge</h1>
             </div>
             <div class="flex items-center gap-4">
+                <!-- Notification Bell -->
+                <div class="relative cursor-pointer mr-2 flex items-center" id="notifBell" onclick="toggleNotifications()" title="Notifications">
+                    <svg class="w-6 h-6 text-white hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    
+                    <!-- Dropdown Panel -->
+                    <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white shadow-xl rounded-lg border border-gray-200 z-50 overflow-hidden cursor-default" onclick="event.stopPropagation()">
+                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <span class="font-bold text-gray-800 text-sm">Notifications</span>
+                            <button onclick="markAllRead()" class="text-xs text-brand-blue hover:text-blue-700 font-semibold transition-colors">Mark all as read</button>
+                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100"></div>
+                    </div>
+                </div>
+
                 <button onclick="window.location.href='admin.html'" class="text-sm font-medium hover:text-brand-orange transition-colors flex items-center gap-1 hidden sm:flex border-r border-white/20 pr-4">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     Admin Dashboard
@@ -64,15 +79,24 @@
         </div>
 
         <!-- Filter Bar -->
-        <div class="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-            <select id="filterClient" onchange="updateFilters('client')" class="flex-1 px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+        <div class="flex flex-wrap gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+            <select id="filterClient" onchange="updateFilters('client')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
                 <option value="">All Clients</option>
             </select>
-            <select id="filterProject" onchange="updateFilters('project')" class="flex-1 px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+            <select id="filterProject" onchange="updateFilters('project')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
                 <option value="">All Projects</option>
             </select>
-            <select id="filterTask" onchange="updateFilters('task')" class="flex-1 px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+            <select id="filterTask" onchange="updateFilters('task')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
                 <option value="">All Tasks</option>
+            </select>
+            <select id="filterRAG" onchange="updateFilters('rag')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All RAG Statuses</option>
+                <option value="Green">Green</option>
+                <option value="Amber">Amber</option>
+                <option value="Red">Red</option>
+            </select>
+            <select id="filterAssignee" onchange="updateFilters('assignee')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Assignees</option>
             </select>
             <button onclick="clearFilters()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
         </div>
@@ -310,6 +334,9 @@
         let allProjects = [];
         let allTasks = [];
         let allEmployees = [];
+        let readNotifIds = new Set();
+        let currentActiveNotifIds = [];
+        let unsubscribePrefs = null;
 
         // Authentication & RBAC
         const sessionUser = sessionStorage.getItem('stratedge_active_user');
@@ -335,6 +362,16 @@
             toast.classList.remove('translate-y-full', 'opacity-0');
             setTimeout(() => toast.classList.add('translate-y-full', 'opacity-0'), 3000);
         };
+
+        window.toggleNotifications = () => document.getElementById('notifDropdown').classList.toggle('hidden');
+
+        document.addEventListener('click', (e) => {
+            const bell = document.getElementById('notifBell');
+            const nDrop = document.getElementById('notifDropdown');
+            if (bell && nDrop && !bell.contains(e.target) && !nDrop.contains(e.target)) {
+                nDrop.classList.add('hidden');
+            }
+        });
 
         window.closeModal = (m) => document.getElementById(m).classList.add('hidden');
         window.toggleNode = (id) => {
@@ -362,6 +399,14 @@
         // --- Data Fetching & Sync ---
         onAuthStateChanged(auth, u => {
             if (u) {
+                const prefsRef = doc(db, 'artifacts', appId, 'public', 'data', 'employee_prefs', activeUser.empId);
+                unsubscribePrefs = onSnapshot(prefsRef, (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().readNotifs) {
+                        readNotifIds = new Set(docSnap.data().readNotifs);
+                        updateNotifications(); 
+                    }
+                });
+
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), s => { 
                     allClients = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     populateFilters('init');
@@ -384,7 +429,11 @@
                     allEmployees.filter(e => e.status !== 'Inactive').sort((a,b)=>a.name.localeCompare(b.name)).forEach(e => {
                         sel.innerHTML += `<option value="${e.empId}">${e.name} (${e.empId})</option>`;
                     });
+                    populateFilters('init');
+                    renderWorkflow();
                 });
+            } else {
+                if (unsubscribePrefs) unsubscribePrefs();
             }
         });
         signInAnonymously(auth);
@@ -394,6 +443,8 @@
             document.getElementById('filterClient').value = '';
             document.getElementById('filterProject').value = '';
             document.getElementById('filterTask').value = '';
+            document.getElementById('filterRAG').value = '';
+            document.getElementById('filterAssignee').value = '';
             populateFilters('client'); // Trigger cascade reset
             renderWorkflow();
         };
@@ -411,6 +462,9 @@
             const valC = fClient.value;
             const valP = fProj.value;
             const valT = fTask.value;
+            
+            const fAssignee = document.getElementById('filterAssignee');
+            const valA = fAssignee.value;
 
             if (triggerLevel === 'init' || triggerLevel === 'all') {
                 fClient.innerHTML = '<option value="">All Clients</option>';
@@ -438,6 +492,95 @@
                 });
                 if(valT && Array.from(fTask.options).some(o=>o.value===valT)) fTask.value = valT;
                 else fTask.value = '';
+            }
+
+            if (triggerLevel === 'init' || triggerLevel === 'all') {
+                fAssignee.innerHTML = '<option value="">All Assignees</option>';
+                allEmployees.filter(e => e.status !== 'Inactive').sort((a,b)=>a.name.localeCompare(b.name)).forEach(e => {
+                    fAssignee.innerHTML += `<option value="${e.empId}">${e.name} (${e.empId})</option>`;
+                });
+                if(valA && Array.from(fAssignee.options).some(o=>o.value===valA)) fAssignee.value = valA;
+                else fAssignee.value = '';
+            }
+        };
+
+        // --- Notifications Logic ---
+        const saveReadNotifs = async () => {
+            if (!activeUser || !activeUser.empId) return;
+            try {
+                const prefsRef = doc(db, 'artifacts', appId, 'public', 'data', 'employee_prefs', activeUser.empId);
+                await setDoc(prefsRef, { readNotifs: Array.from(readNotifIds) }, { merge: true });
+            } catch (error) {
+                console.error("Error saving read notifications:", error);
+            }
+        };
+
+        window.markAllRead = () => {
+            currentActiveNotifIds.forEach(id => readNotifIds.add(id));
+            saveReadNotifs(); 
+            updateNotifications();
+            document.getElementById('notifDropdown').classList.add('hidden');
+            showToast("All notifications marked as read.", "success");
+        };
+
+        window.markReadAndGo = (notifId) => {
+            readNotifIds.add(notifId);
+            saveReadNotifs(); 
+            updateNotifications();
+            document.getElementById('notifDropdown').classList.add('hidden');
+        };
+
+        const updateNotifications = () => {
+            const notifList = document.getElementById('notifList');
+            const badge = document.getElementById('notificationBadge');
+            notifList.innerHTML = '';
+            let notifCount = 0;
+            currentActiveNotifIds = [];
+
+            const myAssignedTasks = allTasks.filter(t => t.assignedTo === activeUser.empId);
+
+            myAssignedTasks.forEach(task => {
+                if (task.status !== 'Completed') {
+                    const assignNotifId = `assigned_${task.id}`;
+                    if (!readNotifIds.has(assignNotifId)) {
+                        currentActiveNotifIds.push(assignNotifId);
+                        notifCount++;
+                        notifList.innerHTML += `
+                            <div class="px-4 py-3 bg-blue-50 border-l-4 border-brand-blue cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${assignNotifId}')">
+                                <p class="text-sm font-bold text-brand-blue">New Task Assigned</p>
+                                <p class="text-xs text-gray-700 mt-1">You have been assigned to task: <b>${task.name}</b>.</p>
+                            </div>
+                        `;
+                    }
+                }
+
+                const analysis = analyzeTask(task);
+                if (analysis.ragClass === 'bg-yellow-400' || analysis.ragClass === 'bg-red-500') {
+                    const ragLabel = analysis.ragClass === 'bg-yellow-400' ? 'Amber' : 'Red';
+                    const ragNotifId = `rag_${ragLabel}_${task.id}`;
+                    if (!readNotifIds.has(ragNotifId) && task.status !== 'Completed') {
+                        currentActiveNotifIds.push(ragNotifId);
+                        notifCount++;
+                        const colorClass = analysis.ragClass === 'bg-red-500' ? 'text-red-600' : 'text-yellow-600';
+                        const bgClass = analysis.ragClass === 'bg-red-500' ? 'bg-red-50' : 'bg-yellow-50';
+                        const borderClass = analysis.ragClass === 'bg-red-500' ? 'border-red-500' : 'border-yellow-400';
+                        
+                        notifList.innerHTML += `
+                            <div class="px-4 py-3 ${bgClass} border-l-4 ${borderClass} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${ragNotifId}')">
+                                <p class="text-sm font-bold ${colorClass}">Task Deadline Warning</p>
+                                <p class="text-xs text-gray-700 mt-1">Task <b>${task.name}</b> is currently ${ragLabel} (${analysis.displayStatus}).</p>
+                            </div>
+                        `;
+                    }
+                }
+            });
+
+            if (notifCount === 0) {
+                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
+                badge.classList.add('hidden');
+            } else {
+                badge.textContent = notifCount;
+                badge.classList.remove('hidden');
             }
         };
 
@@ -504,6 +647,8 @@
             const filterC = document.getElementById('filterClient').value;
             const filterP = document.getElementById('filterProject').value;
             const filterT = document.getElementById('filterTask').value;
+            const filterRAG = document.getElementById('filterRAG').value;
+            const filterAssignee = document.getElementById('filterAssignee').value;
 
             // Level 1: Clients
             let clientsToRender = allClients.sort((a,b)=>a.name.localeCompare(b.name));
@@ -513,8 +658,26 @@
                 let clientProjects = allProjects.filter(p => p.clientId === client.clientCode);
                 if (filterP) clientProjects = clientProjects.filter(p => p.projId === filterP);
                 
-                // If deep filters are applied and this client has no matching projects/tasks, hide it.
-                if ((filterP || filterT) && clientProjects.length === 0) return;
+                // If deep filters are applied, hide parent projects without matching tasks
+                if (filterT || filterAssignee || filterRAG) {
+                    clientProjects = clientProjects.filter(proj => {
+                        let pTasks = allTasks.filter(t => t.projectId === proj.projId);
+                        if (filterT) pTasks = pTasks.filter(t => t.taskId === filterT);
+                        if (filterAssignee) pTasks = pTasks.filter(t => t.assignedTo === filterAssignee);
+                        if (filterRAG) {
+                            pTasks = pTasks.filter(t => {
+                                const analysis = analyzeTask(t);
+                                if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
+                                if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
+                                if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
+                                return true;
+                            });
+                        }
+                        return pTasks.length > 0;
+                    });
+                }
+                
+                if ((filterP || filterT || filterAssignee || filterRAG) && clientProjects.length === 0) return;
 
                 const cid = `client-${client.clientCode}`;
                 
@@ -526,8 +689,18 @@
                     clientProjects.sort((a,b)=> b.createdAt - a.createdAt).forEach(proj => {
                         let projTasks = allTasks.filter(t => t.projectId === proj.projId);
                         if (filterT) projTasks = projTasks.filter(t => t.taskId === filterT);
+                        if (filterAssignee) projTasks = projTasks.filter(t => t.assignedTo === filterAssignee);
+                        if (filterRAG) {
+                            projTasks = projTasks.filter(t => {
+                                const analysis = analyzeTask(t);
+                                if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
+                                if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
+                                if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
+                                return true;
+                            });
+                        }
 
-                        if (filterT && projTasks.length === 0) return; // Skip non-matching projects if task filtered
+                        if ((filterT || filterAssignee || filterRAG) && projTasks.length === 0) return; // Skip non-matching projects
 
                         const pid = `proj-${proj.projId}`;
                         
