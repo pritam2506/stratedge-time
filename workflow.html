@@ -519,11 +519,48 @@
             showToast("All notifications marked as read.", "success");
         };
 
-        window.markReadAndGo = (notifId) => {
+        window.markReadAndGo = (notifId, taskId, projectId, clientId) => {
             readNotifIds.add(notifId);
             saveReadNotifs(); 
             updateNotifications();
             document.getElementById('notifDropdown').classList.add('hidden');
+            
+            if (taskId && projectId && clientId) {
+                // Clear filters to ensure the task is visible
+                document.getElementById('filterClient').value = '';
+                document.getElementById('filterProject').value = '';
+                document.getElementById('filterTask').value = '';
+                document.getElementById('filterRAG').value = '';
+                document.getElementById('filterStatus').value = '';
+                populateFilters('client');
+                renderWorkflow();
+
+                // Uncollapse Client
+                const cNode = document.getElementById(`client-${clientId}`);
+                const cIcon = document.getElementById(`icon-client-${clientId}`);
+                if (cNode && cNode.classList.contains('hidden')) {
+                    cNode.classList.remove('hidden');
+                    if (cIcon) cIcon.style.transform = 'rotate(90deg)';
+                }
+
+                // Uncollapse Project
+                const pNode = document.getElementById(`proj-${projectId}`);
+                const pIcon = document.getElementById(`icon-proj-${projectId}`);
+                if (pNode && pNode.classList.contains('hidden')) {
+                    pNode.classList.remove('hidden');
+                    if (pIcon) pIcon.style.transform = 'rotate(90deg)';
+                }
+
+                // Smooth scroll & highlight
+                setTimeout(() => {
+                    const row = document.getElementById(`row-${taskId}`);
+                    if (row) {
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        row.classList.add('bg-brand-orange/20', 'transition-all', 'duration-500');
+                        setTimeout(() => row.classList.remove('bg-brand-orange/20'), 2500);
+                    }
+                }, 100);
+            }
         };
 
         const updateNotifications = () => {
@@ -542,7 +579,7 @@
                         currentActiveNotifIds.push(assignNotifId);
                         notifCount++;
                         notifList.innerHTML += `
-                            <div class="px-4 py-3 bg-blue-50 border-l-4 border-brand-blue cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${assignNotifId}')">
+                            <div class="px-4 py-3 bg-blue-50 border-l-4 border-brand-blue cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${assignNotifId}', '${task.taskId}', '${task.projectId}', '${task.clientId}')">
                                 <p class="text-sm font-bold text-brand-blue">New Task Assigned</p>
                                 <p class="text-xs text-gray-700 mt-1">You have been assigned to task: <b>${task.name}</b>.</p>
                             </div>
@@ -562,7 +599,7 @@
                         const borderClass = analysis.ragClass === 'bg-red-500' ? 'border-red-500' : 'border-yellow-400';
                         
                         notifList.innerHTML += `
-                            <div class="px-4 py-3 ${bgClass} border-l-4 ${borderClass} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${ragNotifId}')">
+                            <div class="px-4 py-3 ${bgClass} border-l-4 ${borderClass} cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${ragNotifId}', '${task.taskId}', '${task.projectId}', '${task.clientId}')">
                                 <p class="text-sm font-bold ${colorClass}">Task Deadline Warning</p>
                                 <p class="text-xs text-gray-700 mt-1">Task <b>${task.name}</b> is currently ${ragLabel} (${analysis.displayStatus}).</p>
                             </div>
@@ -716,7 +753,7 @@
                                 const analysis = analyzeTask(task);
                                 
                                 taskHtml += `
-                                    <tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-0">
+                                    <tr id="row-${task.taskId}" class="hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-0">
                                         <td class="px-4 py-3 whitespace-nowrap align-top">
                                             <span class="bg-orange-100 text-orange-800 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest block w-max mb-1">Task</span>
                                             <span class="text-xs font-bold text-gray-900">${task.taskId}</span>
