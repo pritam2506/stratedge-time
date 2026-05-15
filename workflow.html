@@ -79,7 +79,7 @@
         </div>
 
         <!-- Filter Bar -->
-        <div class="flex flex-wrap gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+        <div class="flex flex-wrap items-center gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
             <select id="filterClient" onchange="updateFilters('client')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
                 <option value="">All Clients</option>
             </select>
@@ -103,6 +103,10 @@
                 <option value="Completed">Completed</option>
             </select>
             <button onclick="clearFilters()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
+            <div class="flex items-center gap-2 ml-auto pl-4 border-l border-gray-200 h-10 shrink-0">
+                <input type="checkbox" id="filterAssignedToMe" onchange="updateFilters('assignedToMe')" class="w-4 h-4 text-brand-blue bg-gray-50 border-gray-300 rounded focus:ring-brand-blue focus:ring-2 cursor-pointer">
+                <label for="filterAssignedToMe" class="text-sm font-bold text-brand-blue cursor-pointer select-none">Assigned to Me</label>
+            </div>
         </div>
 
         <!-- Hierarchical View Container -->
@@ -453,6 +457,7 @@
             document.getElementById('filterTask').value = '';
             document.getElementById('filterRAG').value = '';
             document.getElementById('filterStatus').value = '';
+            document.getElementById('filterAssignedToMe').checked = false;
             populateFilters('client'); // Trigger cascade reset
             renderWorkflow();
         };
@@ -711,9 +716,10 @@
             const filterT = document.getElementById('filterTask').value;
             const filterRAG = document.getElementById('filterRAG').value;
             const filterStatus = document.getElementById('filterStatus').value;
+            const filterAssignedToMe = document.getElementById('filterAssignedToMe').checked;
 
             // Auto-expand hierarchy if any filter is applied
-            const hasFilter = filterC || filterP || filterT || filterRAG || filterStatus;
+            const hasFilter = filterC || filterP || filterT || filterRAG || filterStatus || filterAssignedToMe;
             const expandClass = hasFilter ? '' : 'hidden';
             const iconRotation = hasFilter ? 'rotate(90deg)' : 'rotate(0deg)';
 
@@ -726,11 +732,12 @@
                 if (filterP) clientProjects = clientProjects.filter(p => p.projId === filterP);
                 
                 // If deep filters are applied, hide parent projects without matching tasks
-                if (filterT || filterStatus || filterRAG) {
+                if (filterT || filterStatus || filterRAG || filterAssignedToMe) {
                     clientProjects = clientProjects.filter(proj => {
                         let pTasks = allTasks.filter(t => t.projectId === proj.projId);
                         if (filterT) pTasks = pTasks.filter(t => t.taskId === filterT);
                         if (filterStatus) pTasks = pTasks.filter(t => t.status === filterStatus);
+                        if (filterAssignedToMe) pTasks = pTasks.filter(t => t.assignedTo === activeUser.empId);
                         if (filterRAG) {
                             pTasks = pTasks.filter(t => {
                                 const analysis = analyzeTask(t);
@@ -744,7 +751,7 @@
                     });
                 }
                 
-                if ((filterP || filterT || filterStatus || filterRAG) && clientProjects.length === 0) return;
+                if ((filterP || filterT || filterStatus || filterRAG || filterAssignedToMe) && clientProjects.length === 0) return;
 
                 const cid = `client-${client.clientCode}`;
                 
@@ -757,6 +764,7 @@
                         let projTasks = allTasks.filter(t => t.projectId === proj.projId);
                         if (filterT) projTasks = projTasks.filter(t => t.taskId === filterT);
                         if (filterStatus) projTasks = projTasks.filter(t => t.status === filterStatus);
+                        if (filterAssignedToMe) projTasks = projTasks.filter(t => t.assignedTo === activeUser.empId);
                         if (filterRAG) {
                             projTasks = projTasks.filter(t => {
                                 const analysis = analyzeTask(t);
@@ -767,7 +775,7 @@
                             });
                         }
 
-                        if ((filterT || filterStatus || filterRAG) && projTasks.length === 0) return; // Skip non-matching projects
+                        if ((filterT || filterStatus || filterRAG || filterAssignedToMe) && projTasks.length === 0) return; // Skip non-matching projects
 
                         const pid = `proj-${proj.projId}`;
                         
