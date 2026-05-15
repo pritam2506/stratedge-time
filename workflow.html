@@ -415,16 +415,19 @@
                     allClients = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     populateFilters('init');
                     renderWorkflow();
+                    updateNotifications();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_projects'), s => { 
                     allProjects = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     populateFilters('init');
                     renderWorkflow();
+                    updateNotifications();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), s => { 
                     allTasks = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     populateFilters('init');
                     renderWorkflow();
+                    updateNotifications();
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
                     allEmployees = s.docs.map(d => ({ id: d.id, ...d.data() })); 
@@ -435,6 +438,7 @@
                     });
                     populateFilters('init');
                     renderWorkflow();
+                    updateNotifications();
                 });
             } else {
                 if (unsubscribePrefs) unsubscribePrefs();
