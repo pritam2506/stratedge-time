@@ -19,9 +19,10 @@
         }
     </script>
     <style>
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
@@ -447,7 +448,7 @@
                 <button onclick="closeModal('projStatusModal')" class="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6 text-center">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 text-center flex-wrap justify-center">
                     <div class="bg-gray-50 p-3 rounded-lg border">
                         <div class="text-2xl font-black text-brand-blue" id="psTotal">0</div>
                         <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">Total Tasks</div>
@@ -459,10 +460,6 @@
                     <div class="bg-green-50 p-3 rounded-lg border">
                         <div class="text-2xl font-black text-green-600" id="psCompleted">0</div>
                         <div class="text-[10px] font-bold text-green-500 uppercase mt-1">Completed</div>
-                    </div>
-                    <div class="bg-gray-100 p-3 rounded-lg border">
-                        <div class="text-xl font-black text-gray-700" id="psTodo">0</div>
-                        <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">To Do</div>
                     </div>
                     <div class="bg-blue-50 p-3 rounded-lg border">
                         <div class="text-xl font-black text-blue-700" id="psProg">0</div>
@@ -583,6 +580,60 @@
             }
         };
 
+        // --- Overdue JS Helpers ---
+        const getOverdueDays = (estDate) => {
+            let count = 0;
+            let cur = new Date(estDate); cur.setHours(0,0,0,0);
+            let end = new Date(); end.setHours(0,0,0,0);
+            if (cur < end) {
+                while (cur < end) {
+                    cur.setDate(cur.getDate() + 1);
+                    if (cur.getDay() !== 0) count++;
+                }
+                return count; 
+            } else if (cur > end) {
+                while (cur > end) {
+                    cur.setDate(cur.getDate() - 1);
+                    if (cur.getDay() !== 0) count--;
+                }
+                return count; 
+            }
+            return 0; 
+        };
+
+        const analyzeTask = (task) => {
+            const overdueDays = getOverdueDays(task.estDate);
+            let displayStatus = task.status;
+            let ragClass = 'bg-green-500';
+            
+            if (task.status !== 'Completed') {
+                if (overdueDays > 0) {
+                    displayStatus = 'Overdue';
+                    if (overdueDays <= 3) ragClass = 'bg-yellow-400';
+                    else ragClass = 'bg-red-500';
+                }
+            } else {
+                ragClass = 'bg-green-500';
+            }
+
+            return { displayStatus, overdueDays, ragClass };
+        };
+
+        const getStatusBadge = (status, completedAt = null) => {
+            const colors = {
+                'In Progress': 'bg-blue-100 text-blue-700',
+                'In Review': 'bg-orange-100 text-orange-700',
+                'Overdue': 'bg-red-100 text-red-700',
+                'Completed': 'bg-green-100 text-green-700'
+            };
+            let html = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || 'bg-gray-100 text-gray-700'} whitespace-nowrap">${status}</span>`;
+            if (status === 'Completed' && completedAt) {
+                const dateStr = new Date(completedAt).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'});
+                html += `<div class="text-[9px] text-gray-500 font-bold mt-1 tracking-wider uppercase whitespace-nowrap">Done: ${dateStr}</div>`;
+            }
+            return html;
+        };
+
         // --- Auto Cleanup Logic ---
         const cleanupRecycleBin = () => {
             if (accessLvl !== 'Workflow Admin') return;
@@ -647,6 +698,26 @@
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), s => { 
                     allTasks = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    
+                    // Auto-Overdue Check
+                    allTasks.forEach(t => {
+                        if (!t.deleted && t.status !== 'Completed' && t.status !== 'Overdue' && !t.overdueHistoryLogged) {
+                            if (getOverdueDays(t.estDate) > 0) {
+                                let history = t.history || [];
+                                history.push({
+                                    action: "Task automatically marked as Overdue",
+                                    by: "System",
+                                    date: Date.now()
+                                });
+                                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', t.id), {
+                                    status: 'Overdue',
+                                    history: history,
+                                    overdueHistoryLogged: true
+                                }).catch(e => console.error("Auto overdue log failed", e));
+                            }
+                        }
+                    });
+
                     populateFilters('init');
                     renderWorkflow();
                     if(!document.getElementById('calendarViewContainer').classList.contains('hidden')) renderCalendar();
@@ -682,7 +753,7 @@
             document.getElementById('filterStatus').value = '';
             document.getElementById('filterDueDate').value = '';
             document.getElementById('filterAssignedToMe').checked = false;
-            populateFilters('client'); // Trigger cascade reset
+            populateFilters('client'); 
             renderWorkflow();
         };
 
@@ -793,7 +864,6 @@
             document.getElementById('notifDropdown').classList.add('hidden');
             
             if (taskId && projectId && clientId) {
-                // Clear filters to ensure the task is visible
                 document.getElementById('filterClient').value = '';
                 document.getElementById('filterProject').value = '';
                 document.getElementById('filterTask').value = '';
@@ -804,7 +874,6 @@
                 populateFilters('client');
                 renderWorkflow();
 
-                // Uncollapse Client
                 const cNode = document.getElementById(`client-${clientId}`);
                 const cIcon = document.getElementById(`icon-client-${clientId}`);
                 if (cNode && cNode.classList.contains('hidden')) {
@@ -812,7 +881,6 @@
                     if (cIcon) cIcon.style.transform = 'rotate(90deg)';
                 }
 
-                // Uncollapse Project
                 const pNode = document.getElementById(`proj-${projectId}`);
                 const pIcon = document.getElementById(`icon-proj-${projectId}`);
                 if (pNode && pNode.classList.contains('hidden')) {
@@ -820,7 +888,6 @@
                     if (pIcon) pIcon.style.transform = 'rotate(90deg)';
                 }
 
-                // Smooth scroll & highlight
                 setTimeout(() => {
                     const row = document.getElementById(`row-${taskId}`);
                     if (row) {
@@ -886,7 +953,6 @@
                     }
                 }
 
-                // Check for direct nudges
                 if (task.nudges && task.nudges.length > 0) {
                     task.nudges.forEach(nudge => {
                         if (!readNotifIds.has(nudge.id)) {
@@ -902,7 +968,6 @@
                     });
                 }
 
-                // Track Task Modifications (excluding self-edits)
                 if (task.history && task.history.length > 1) {
                     const latestEdit = task.history[task.history.length - 1];
                     if (latestEdit.by !== activeUser.name) {
@@ -918,22 +983,16 @@
                             `;
                         }
                     }
-        window.analyzeTask = (task) => {
-            const overdueDays = window.getOverdueDays(task.estDate);
-            let displayStatus = task.status;
-            let ragClass = 'bg-green-500';
-            
-            if (task.status !== 'Completed') {
-                if (overdueDays > 0) {
-                    displayStatus = 'Overdue';
-                    if (overdueDays <= 3) ragClass = 'bg-yellow-400';
-                    else ragClass = 'bg-red-500';
                 }
-            } else {
-                ragClass = 'bg-green-500';
-            }
+            });
 
-            return { displayStatus, overdueDays, ragClass };
+            if (notifCount === 0) {
+                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
+                badge.classList.add('hidden');
+            } else {
+                badge.textContent = notifCount;
+                badge.classList.remove('hidden');
+            }
         };
 
         const renderCalendar = () => {
@@ -948,7 +1007,6 @@
             
             const activeTasks = allTasks.filter(t => !t.deleted);
 
-            // Padding for first row
             for(let i=0; i<firstDay; i++) {
                 grid.innerHTML += `<div class="bg-gray-50 border border-gray-100 rounded-lg min-h-[120px] opacity-50 hidden sm:block"></div>`;
             }
@@ -973,7 +1031,7 @@
 
                 let greenCount = 0, amberCount = 0, redCount = 0;
                 cumulativeTasks.forEach(t => {
-                    const analysis = window.analyzeTask(t);
+                    const analysis = analyzeTask(t);
                     if (analysis.ragClass === 'bg-green-500') greenCount++;
                     else if (analysis.ragClass === 'bg-yellow-400') amberCount++;
                     else if (analysis.ragClass === 'bg-red-500') redCount++;
@@ -1047,7 +1105,7 @@
                                 <div class="text-sm text-gray-900 font-bold">${t.name}</div>
                             </div>
                             <div class="text-right flex flex-col items-end">
-                                ${getStatusBadge(t.status)}
+                                ${getStatusBadge(t.status, t.completedAt)}
                                 <div class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-wider">${assigneeName}</div>
                             </div>
                         </div>
@@ -1065,17 +1123,6 @@
         };
 
         // --- Rendering Logic ---
-        const getStatusBadge = (status) => {
-            const colors = {
-                'To Do': 'bg-gray-100 text-gray-700',
-                'In Progress': 'bg-blue-100 text-blue-700',
-                'In Review': 'bg-orange-100 text-orange-700',
-                'Overdue': 'bg-red-100 text-red-700',
-                'Completed': 'bg-green-100 text-green-700'
-            };
-            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || colors['To Do']} whitespace-nowrap">${status}</span>`;
-        };
-
         const renderWorkflow = () => {
             const container = document.getElementById('workflowContainer');
             if(!allClients.length) {
@@ -1095,12 +1142,10 @@
 
             const activeTasks = allTasks.filter(t => !t.deleted);
 
-            // Auto-expand hierarchy if any filter is applied
             const hasFilter = filterC || filterP || filterT || filterRAG || filterStatus || filterDueDate || filterAssignedToMe;
             const expandClass = hasFilter ? '' : 'hidden';
             const iconRotation = hasFilter ? 'rotate(90deg)' : 'rotate(0deg)';
 
-            // Level 1: Clients
             let clientsToRender = allClients.sort((a,b)=>a.name.localeCompare(b.name));
             if (filterC) clientsToRender = clientsToRender.filter(c => c.clientCode === filterC);
 
@@ -1108,7 +1153,6 @@
                 let clientProjects = allProjects.filter(p => p.clientId === client.clientCode);
                 if (filterP) clientProjects = clientProjects.filter(p => p.projId === filterP);
                 
-                // If deep filters are applied, hide parent projects without matching tasks
                 if (filterT || filterStatus || filterRAG || filterDueDate || filterAssignedToMe) {
                     clientProjects = clientProjects.filter(proj => {
                         let pTasks = activeTasks.filter(t => t.projectId === proj.projId);
@@ -1137,7 +1181,6 @@
                 if(clientProjects.length === 0) {
                     projectHtml = `<div class="p-4 text-center text-sm text-gray-400 italic bg-gray-50 border-t">No projects created for this client yet.</div>`;
                 } else {
-                    // Level 2: Projects
                     clientProjects.sort((a,b)=> b.createdAt - a.createdAt).forEach(proj => {
                         let projTasks = activeTasks.filter(t => t.projectId === proj.projId);
                         if (filterT) projTasks = projTasks.filter(t => t.taskId === filterT);
@@ -1154,20 +1197,30 @@
                             });
                         }
 
-                        if ((filterT || filterStatus || filterRAG || filterDueDate || filterAssignedToMe) && projTasks.length === 0) return; // Skip non-matching projects
+                        if ((filterT || filterStatus || filterRAG || filterDueDate || filterAssignedToMe) && projTasks.length === 0) return; 
 
                         const pid = `proj-${proj.projId}`;
                         
                         let taskHtml = '';
                         if(projTasks.length === 0) {
-                            taskHtml = `<tr><td colspan="9" class="px-4 py-6 text-center text-sm text-gray-400 italic bg-white">No tasks assigned to this project yet.</td></tr>`;
+                            taskHtml = `<tr><td colspan="10" class="px-4 py-6 text-center text-sm text-gray-400 italic bg-white">No tasks assigned to this project yet.</td></tr>`;
                         } else {
-                            // Level 3: Tasks
                             projTasks.sort((a,b)=> b.createdAt - a.createdAt).forEach(task => {
                                 const assignee = allEmployees.find(e => e.empId === task.assignedTo);
                                 const assigneeName = assignee ? assignee.name : task.assignedTo;
                                 const analysis = analyzeTask(task);
                                 
+                                let daysText = '-';
+                                if (task.status !== 'Completed') {
+                                    if (analysis.overdueDays > 0) {
+                                        daysText = `<span class="text-red-600 font-bold">${analysis.overdueDays} Overdue</span>`;
+                                    } else if (analysis.overdueDays < 0) {
+                                        daysText = `<span class="text-gray-600">${Math.abs(analysis.overdueDays)} Left</span>`;
+                                    } else {
+                                        daysText = `<span class="text-brand-orange font-bold">Due Today</span>`;
+                                    }
+                                }
+
                                 const nudgeBtn = (task.assignedTo !== activeUser.empId) ? `<button onclick="nudgeTask('${task.id}')" title="Send Reminder" class="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.nudge}</button>` : '';
 
                                 taskHtml += `
@@ -1187,7 +1240,8 @@
                                         <td class="px-4 py-3 whitespace-nowrap text-center align-top">
                                             <div class="w-3 h-3 rounded-full ${analysis.ragClass} mx-auto shadow-sm" title="RAG Status"></div>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${getStatusBadge(analysis.displayStatus)}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top text-[11px]">${daysText}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${getStatusBadge(analysis.displayStatus, task.completedAt)}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-right align-top">
                                             ${nudgeBtn}
                                             <button onclick="viewTaskStatus('${task.taskId}')" title="Task Status" class="text-brand-orange hover:text-orange-700 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.status}</button>
@@ -1245,6 +1299,7 @@
                                                     <th class="px-4 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Effort</th>
                                                     <th class="px-4 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assignee</th>
                                                     <th class="px-4 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">RAG</th>
+                                                    <th class="px-4 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Days Left</th>
                                                     <th class="px-4 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
                                                     <th class="px-4 py-2 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
                                                 </tr>
@@ -1303,7 +1358,7 @@
             document.getElementById('tsModalAssignee').textContent = assignee ? assignee.name : task.assignedTo;
             document.getElementById('tsModalStart').textContent = new Date(task.startDate).toLocaleDateString('en-GB');
             document.getElementById('tsModalEnd').textContent = new Date(task.estDate).toLocaleDateString('en-GB');
-            document.getElementById('tsModalStatusBadge').innerHTML = getStatusBadge(task.status);
+            document.getElementById('tsModalStatusBadge').innerHTML = getStatusBadge(task.status, task.completedAt);
             
             document.getElementById('taskStatusModal').classList.remove('hidden');
         };
@@ -1312,7 +1367,7 @@
             const proj = allProjects.find(p => p.projId === projId);
             const tasks = allTasks.filter(t => !t.deleted && t.projectId === projId);
             
-            let counts = { 'To Do': 0, 'In Progress': 0, 'In Review': 0, 'Completed': 0, 'Overdue': 0 };
+            let counts = { 'In Progress': 0, 'In Review': 0, 'Completed': 0, 'Overdue': 0 };
             let overdueList = [];
 
             tasks.forEach(t => {
@@ -1327,7 +1382,6 @@
             document.getElementById('psTotal').textContent = tasks.length;
             document.getElementById('psOverdue').textContent = counts['Overdue'] || 0;
             document.getElementById('psCompleted').textContent = counts['Completed'] || 0;
-            document.getElementById('psTodo').textContent = counts['To Do'] || 0;
             document.getElementById('psProg').textContent = counts['In Progress'] || 0;
             document.getElementById('psRev').textContent = counts['In Review'] || 0;
 
@@ -1396,7 +1450,6 @@
                 }
             } else {
                 document.getElementById('projectModalTitle').textContent = 'Create Project';
-                // Auto-generate ID: ClientCode-P{count+1}
                 const existing = allProjects.filter(p => p.clientId === clientId);
                 let nextNum = 1;
                 if(existing.length > 0) {
@@ -1521,7 +1574,6 @@
                 statusSelect.value = 'In Progress';
                 statusSelect.dataset.originalStatus = 'In Progress';
                 
-                // Auto-generate ID: ProjId-T{count+1}
                 const existing = allTasks.filter(t => t.projectId === projectId);
                 let nextNum = 1;
                 if(existing.length > 0) {
@@ -1582,7 +1634,13 @@
                     by: activeUser.name,
                     time: Date.now()
                 });
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), { nudges });
+                let history = task.history || [];
+                history.push({
+                    action: `Reminder sent to assignee`,
+                    by: activeUser.name,
+                    date: Date.now()
+                });
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), { nudges, history });
                 showToast("Reminder sent to assignee.");
             } catch (err) {
                 console.error(err);
@@ -1596,9 +1654,10 @@
             const newComment = document.getElementById('taskComment').value.trim();
             const estDateVal = document.getElementById('taskEstDate').value;
             const statVal = document.getElementById('taskStatus').value;
+            const origStat = document.getElementById('taskStatus').dataset.originalStatus || 'In Progress';
             
             if (getOverdueDays(estDateVal) > 0 && statVal !== 'Completed' && statVal !== 'Overdue') {
-                document.getElementById('taskStatus').value = 'Overdue';
+                document.getElementById('taskStatus').value = (origStat === 'Completed' || origStat === 'Overdue') ? origStat : 'Overdue';
                 document.getElementById('overdueBlockModal').classList.remove('hidden');
                 return;
             }
@@ -1622,7 +1681,6 @@
                     const existingTask = allTasks.find(t => t.id === docId);
                     let history = existingTask.history || [];
                     
-                    // Build action string to track changes
                     let actionStrs = [];
                     if(existingTask.status !== payload.status) actionStrs.push(`Status changed from [${existingTask.status}] to [${payload.status}]`);
                     if(existingTask.assignedTo !== payload.assignedTo) {
@@ -1647,11 +1705,16 @@
                         });
                     }
                     payload.history = history;
+                    
+                    if (payload.status === 'Completed') {
+                        payload.completedAt = existingTask.status === 'Completed' ? existingTask.completedAt : Date.now();
+                    } else {
+                        payload.completedAt = null;
+                    }
 
                     const updatePromises = [];
                     updatePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), payload));
                     
-                    // Project History Tracking
                     if(actionStrs.length > 0) {
                         const proj = allProjects.find(p => p.projId === payload.projectId);
                         if (proj) {
@@ -1682,10 +1745,13 @@
                         });
                     }
                     
+                    if (payload.status === 'Completed') {
+                        payload.completedAt = Date.now();
+                    }
+                    
                     const updatePromises = [];
                     updatePromises.push(addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), payload));
                     
-                    // Project History Tracking
                     const proj = allProjects.find(p => p.projId === payload.projectId);
                     if (proj) {
                         let projHistory = proj.history || [];
@@ -1754,7 +1820,7 @@
             document.getElementById('vdtStart').textContent = new Date(t.startDate).toLocaleDateString('en-GB');
             document.getElementById('vdtEnd').textContent = new Date(t.estDate).toLocaleDateString('en-GB');
             document.getElementById('vdtEffort').textContent = `${t.effort}h`;
-            document.getElementById('vdtStatus').innerHTML = getStatusBadge(t.status);
+            document.getElementById('vdtStatus').innerHTML = getStatusBadge(t.status, t.completedAt);
             
             const delDate = new Date(t.deletedAt).toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
             document.getElementById('vdtDelInfo').textContent = `Deleted by ${t.deletedBy} on ${delDate}`;
