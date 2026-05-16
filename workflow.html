@@ -1037,7 +1037,9 @@
                     else if (analysis.ragClass === 'bg-red-500') redCount++;
                 });
 
-                const isToday = isoDate === getISODate(new Date());
+                const todayIso = getISODate(new Date());
+                const isToday = isoDate === todayIso;
+                const isPastOrToday = isoDate <= todayIso;
 
                 let metricsHtml = '';
                 if(createdCount > 0) {
@@ -1051,7 +1053,7 @@
                     </div>`;
                 }
 
-                if (greenCount > 0 || amberCount > 0 || redCount > 0) {
+                if (isPastOrToday && (greenCount > 0 || amberCount > 0 || redCount > 0)) {
                     metricsHtml += `
                         <div class="text-[10px] bg-gray-50 border border-gray-200 text-gray-600 px-1.5 py-1 rounded mt-1 font-bold">
                             <div class="text-[8px] uppercase tracking-wider text-gray-400 mb-1 border-b border-gray-200 pb-0.5">Cumul. Active RAG</div>
