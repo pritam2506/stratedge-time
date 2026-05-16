@@ -353,7 +353,7 @@
                         <div id="vdpDesc" class="text-gray-700 bg-gray-50 p-3 rounded border border-gray-100 whitespace-pre-wrap"></div>
                     </div>
                     <div class="bg-gray-50 p-3 rounded border border-gray-100">
-                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Client ID</span>
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Client</span>
                         <div id="vdpClientId" class="font-medium text-gray-800"></div>
                     </div>
                     <div class="bg-gray-50 p-3 rounded border border-gray-100">
@@ -391,6 +391,14 @@
                     <div>
                         <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Assigned To</span>
                         <div id="vdtAssignee" class="font-bold text-gray-800"></div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Client</span>
+                        <div id="vdtClient" class="font-medium text-gray-800"></div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Project</span>
+                        <div id="vdtProject" class="font-medium text-gray-800"></div>
                     </div>
                     <div class="col-span-2">
                         <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Description</span>
@@ -2036,6 +2044,16 @@
                     const typeBadge = item._type === 'Task' ? 'bg-orange-100 text-orange-800' : 'bg-teal-100 text-teal-800';
                     const itemId = item._type === 'Task' ? item.taskId : item.projId;
                     
+                    let contextInfo = '';
+                    if (item._type === 'Task') {
+                        const proj = allProjects.find(p => p.projId === item.projectId) || {name: 'Unknown Project'};
+                        const client = allClients.find(c => c.clientCode === item.clientId) || {name: 'Unknown Client'};
+                        contextInfo = `<div class="text-[10px] text-gray-500 mt-0.5">Project: ${proj.name} | Client: ${client.name}</div>`;
+                    } else {
+                        const client = allClients.find(c => c.clientCode === item.clientId) || {name: 'Unknown Client'};
+                        contextInfo = `<div class="text-[10px] text-gray-500 mt-0.5">Client: ${client.name}</div>`;
+                    }
+                    
                     const viewAction = item._type === 'Task' ? `viewDeletedTask('${item.id}')` : `viewDeletedProject('${item.id}')`;
                     const recoverAction = item._type === 'Task' ? `recoverTask('${item.id}')` : `recoverProject('${item.id}')`;
                     const permDelAction = item._type === 'Task' ? `permanentDeleteTask('${item.id}')` : `permanentDeleteProject('${item.id}')`;
@@ -2044,7 +2062,7 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3"><span class="${typeBadge} text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">${item._type}</span></td>
                             <td class="px-4 py-3 font-bold text-gray-900">${itemId}</td>
-                            <td class="px-4 py-3 text-brand-blue font-medium">${item.name}</td>
+                            <td class="px-4 py-3 text-brand-blue font-medium">${item.name}${contextInfo}</td>
                             <td class="px-4 py-3 text-gray-600">${item.deletedBy}</td>
                             <td class="px-4 py-3 text-gray-500 text-xs">${dateStr}</td>
                             <td class="px-4 py-3 text-right flex justify-end gap-1.5 items-center">
@@ -2062,11 +2080,12 @@
         window.viewDeletedProject = (docId) => {
             const p = allProjects.find(x => x.id === docId);
             if(!p) return;
+            const client = allClients.find(c => c.clientCode === p.clientId) || {name: 'Unknown Client'};
             
             document.getElementById('vdpName').textContent = p.name;
             document.getElementById('vdpId').textContent = p.projId;
             document.getElementById('vdpDesc').textContent = p.desc;
-            document.getElementById('vdpClientId').textContent = p.clientId;
+            document.getElementById('vdpClientId').textContent = `${client.name} (${p.clientId})`;
             document.getElementById('vdpCreatedBy').textContent = p.createdBy || 'Unknown';
             
             const delDate = new Date(p.deletedAt).toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
@@ -2106,9 +2125,13 @@
             if(!t) return;
             const assignee = allEmployees.find(e => e.empId === t.assignedTo);
             const assigneeName = assignee ? assignee.name : t.assignedTo;
+            const proj = allProjects.find(p => p.projId === t.projectId) || {name: 'Unknown Project'};
+            const client = allClients.find(c => c.clientCode === t.clientId) || {name: 'Unknown Client'};
             
             document.getElementById('vdtName').textContent = t.name;
             document.getElementById('vdtAssignee').textContent = assigneeName;
+            document.getElementById('vdtClient').textContent = `${client.name} (${t.clientId})`;
+            document.getElementById('vdtProject').textContent = `${proj.name} (${t.projectId})`;
             document.getElementById('vdtDesc').textContent = t.desc;
             document.getElementById('vdtStart').textContent = new Date(t.startDate).toLocaleDateString('en-GB');
             document.getElementById('vdtEnd').textContent = new Date(t.estDate).toLocaleDateString('en-GB');
@@ -2126,15 +2149,17 @@
                 const task = allTasks.find(t => t.id === docId);
                 if (task) {
                     const proj = allProjects.find(p => p.projId === task.projectId);
-                    if (proj) {
-                        let projHistory = proj.history || [];
-                        projHistory.push({
-                            action: `Task ${task.taskId} recovered from recycle bin`,
-                            by: activeUser.name,
-                            date: Date.now()
-                        });
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory });
+                    if (!proj || proj.deleted) {
+                        showToast("Cannot recover task: Parent project is missing or in recycle bin. Please recover the project first.", "error");
+                        return;
                     }
+                    let projHistory = proj.history || [];
+                    projHistory.push({
+                        action: `Task ${task.taskId} recovered from recycle bin`,
+                        by: activeUser.name,
+                        date: Date.now()
+                    });
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_projects', proj.id), { history: projHistory });
                 }
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), { 
                     deleted: false, 
