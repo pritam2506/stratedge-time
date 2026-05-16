@@ -418,6 +418,7 @@
         let fbUser = null;
         let allClients = [];
         let allInvoices = [];
+        let allEmployees = [];
 
         // Global storage for the two-step preview to save workflow
         window.pendingInvoiceData = null;
@@ -613,6 +614,8 @@
                 filtered.forEach(client => {
                     const tr = document.createElement('tr');
                     const addedDate = client.createdAt ? new Date(client.createdAt).toLocaleString() : 'N/A';
+                    const emp = allEmployees.find(e => e.empId === client.addedBy);
+                    const addedByName = emp ? emp.name : (client.addedBy || 'N/A');
                     tr.innerHTML = `
                         <td class="px-4 py-3 font-mono font-bold text-brand-blue">${client.clientCode}</td>
                         <td class="px-4 py-3">
@@ -627,7 +630,7 @@
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${client.status === 'inactive' ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'}">${client.status || 'Active'}</span>
                         </td>
                         <td class="px-4 py-3 text-[10px]">
-                            <div class="font-bold text-gray-400 uppercase">By: ${client.addedBy || 'N/A'}</div>
+                            <div class="font-bold text-gray-400 uppercase">By: ${addedByName}</div>
                             <div class="text-gray-400">${addedDate}</div>
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
@@ -1141,6 +1144,7 @@
 
         onAuthStateChanged(auth, u => {
             if (u) {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { allEmployees = s.docs.map(d => ({ id: d.id, ...d.data() })); renderClients(); });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clients'), s => { allClients = s.docs.map(d => ({ id: d.id, ...d.data() })); renderClients(); });
                 onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'invoices'), orderBy('createdAt', 'desc')), s => { allInvoices = s.docs.map(d => ({ id: d.id, ...d.data() })); renderInvoices(); });
             }
