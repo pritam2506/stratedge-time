@@ -228,7 +228,7 @@
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Estimated Completion</label>
-                            <input type="date" id="taskEstDate" onchange="updateTaskStatusOptions()" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                            <input type="date" id="taskEstDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Effort Needed (Hrs)</label>
@@ -236,7 +236,7 @@
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Status</label>
-                            <select id="taskStatus" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue font-bold">
+                            <select id="taskStatus" onchange="checkOverdueStatusChange(this)" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue font-bold">
                                 <option value="In Progress">In Progress</option>
                                 <option value="In Review">In Review</option>
                                 <option value="Completed">Completed</option>
@@ -268,6 +268,22 @@
             </div>
             <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
                 <button onclick="closeModal('genericHistoryModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Overdue Action Blocked -->
+    <div id="overdueBlockModal" class="fixed inset-0 bg-gray-900/60 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col transform transition-all">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Action Blocked</h3>
+                <p class="text-sm text-gray-600 mb-6">This task is currently overdue. You can only mark it as <b>Completed</b>. To change it to another status, please update the Estimated Completion Date first.</p>
+                <button onclick="closeModal('overdueBlockModal')" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-all">
+                    Understood
+                </button>
             </div>
         </div>
     </div>
@@ -1518,17 +1534,17 @@
                     let currentStatus = task.status;
                     if (currentStatus === 'To Do') currentStatus = 'In Progress'; // Migrate legacy statuses
 
-                    if (window.getOverdueDays && window.getOverdueDays(task.estDate) > 0 && currentStatus !== 'Completed') {
-                        statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option><option value="Completed">Completed</option>`;
-                    } else if (!['In Progress', 'In Review', 'Completed'].includes(currentStatus)) {
+                    if (!['In Progress', 'In Review', 'Completed'].includes(currentStatus)) {
                         statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option>` + statusSelect.innerHTML;
                     }
                     
                     statusSelect.value = currentStatus;
+                    statusSelect.dataset.originalStatus = currentStatus;
                 }
             } else {
                 document.getElementById('taskModalTitle').textContent = 'Create Task';
                 statusSelect.value = 'In Progress';
+                statusSelect.dataset.originalStatus = 'In Progress';
                 
                 // Auto-generate ID: ProjId-T{count+1}
                 const existing = allTasks.filter(t => t.projectId === projectId);
@@ -1545,24 +1561,15 @@
             document.getElementById('taskModal').classList.remove('hidden');
         };
 
-        window.updateTaskStatusOptions = () => {
-            const dateVal = document.getElementById('taskEstDate').value;
-            const statusSelect = document.getElementById('taskStatus');
-            const currentStatus = statusSelect.value;
+        window.checkOverdueStatusChange = (selectEl) => {
+            const estDate = document.getElementById('taskEstDate').value;
+            const newStatus = selectEl.value;
+            const origStatus = selectEl.dataset.originalStatus || 'In Progress';
             
-            if (dateVal && window.getOverdueDays && window.getOverdueDays(dateVal) > 0 && currentStatus !== 'Completed') {
-                statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option><option value="Completed">Completed</option>`;
-                statusSelect.value = currentStatus;
-            } else {
-                statusSelect.innerHTML = `
-                    <option value="In Progress">In Progress</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Completed">Completed</option>
-                `;
-                if (['In Progress', 'In Review', 'Completed'].includes(currentStatus)) {
-                    statusSelect.value = currentStatus;
-                } else {
-                    statusSelect.value = 'In Progress';
+            if (estDate && window.getOverdueDays && window.getOverdueDays(estDate) > 0) {
+                if (newStatus !== 'Completed' && newStatus !== origStatus) {
+                    selectEl.value = origStatus;
+                    document.getElementById('overdueBlockModal').classList.remove('hidden');
                 }
             }
         };
@@ -1595,6 +1602,15 @@
             e.preventDefault();
             const docId = document.getElementById('taskDocId').value;
             const newComment = document.getElementById('taskComment').value.trim();
+            const estDateVal = document.getElementById('taskEstDate').value;
+            const statVal = document.getElementById('taskStatus').value;
+            const origStat = document.getElementById('taskStatus').dataset.originalStatus || 'In Progress';
+
+            if (window.getOverdueDays(estDateVal) > 0 && statVal !== 'Completed' && statVal !== origStat) {
+                document.getElementById('taskStatus').value = origStat;
+                document.getElementById('overdueBlockModal').classList.remove('hidden');
+                return;
+            }
             
             const payload = {
                 clientId: document.getElementById('taskClientId').value,
