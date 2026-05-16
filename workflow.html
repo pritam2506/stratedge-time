@@ -126,8 +126,8 @@
             </div>
         </div>
 
+        <!-- List View Container -->
         <div id="listViewContainer">
-            <!-- Hierarchical View Container -->
             <div id="workflowContainer" class="space-y-4 pb-12">
                 <div class="text-center text-gray-500 py-10 italic">Loading workflow structure...</div>
             </div>
@@ -520,20 +520,11 @@
         let currentCalYear = new Date().getFullYear();
         let currentCalMonth = new Date().getMonth();
 
-        const getISODate = (dateObj) => {
-            if (!dateObj || isNaN(dateObj)) return '';
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const d = String(dateObj.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        };
-
         // Authentication & RBAC
         const sessionUser = sessionStorage.getItem('stratedge_active_user');
         if (!sessionUser) window.location.href = 'index.html';
         activeUser = JSON.parse(sessionUser);
 
-        // RBAC Permissions
         const accessLvl = activeUser.workflowAccess || 'Doer'; 
         const canManageProjects = ['Workflow Admin', 'Task Admin'].includes(accessLvl);
         const canManageTasks = ['Workflow Admin', 'Task Admin', 'Doer'].includes(accessLvl);
@@ -544,6 +535,69 @@
             document.getElementById('recycleBinBtn').classList.remove('hidden');
         }
 
+        // --- GLOBAL HELPERS (NO WINDOW PREFIX FOR LOCAL LOGIC) ---
+        const getISODate = (dateObj) => {
+            if (!dateObj || isNaN(dateObj)) return '';
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
+        const getOverdueDays = (estDate) => {
+            if (!estDate) return 0;
+            let count = 0;
+            let cur = new Date(estDate); cur.setHours(0,0,0,0);
+            let end = new Date(); end.setHours(0,0,0,0);
+            if (cur < end) {
+                while (cur < end) {
+                    cur.setDate(cur.getDate() + 1);
+                    if (cur.getDay() !== 0) count++;
+                }
+                return count; 
+            } else if (cur > end) {
+                while (cur > end) {
+                    cur.setDate(cur.getDate() - 1);
+                    if (cur.getDay() !== 0) count--;
+                }
+                return count; 
+            }
+            return 0; 
+        };
+
+        const analyzeTask = (task) => {
+            const overdueDays = getOverdueDays(task.estDate);
+            let displayStatus = task.status;
+            let ragClass = 'bg-green-500';
+            
+            if (task.status !== 'Completed') {
+                if (overdueDays > 0) {
+                    displayStatus = 'Overdue';
+                    if (overdueDays <= 3) ragClass = 'bg-yellow-400';
+                    else ragClass = 'bg-red-500';
+                }
+            } else {
+                ragClass = 'bg-green-500';
+            }
+            return { displayStatus, overdueDays, ragClass };
+        };
+
+        const getStatusBadge = (status, completedAt = null) => {
+            const colors = {
+                'In Progress': 'bg-blue-100 text-blue-700',
+                'In Review': 'bg-orange-100 text-orange-700',
+                'Overdue': 'bg-red-100 text-red-700',
+                'Completed': 'bg-green-100 text-green-700'
+            };
+            let html = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || 'bg-gray-100 text-gray-700'} whitespace-nowrap">${status}</span>`;
+            if (status === 'Completed' && completedAt) {
+                const dateStr = new Date(completedAt).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'});
+                html += `<div class="text-[9px] text-gray-500 font-bold mt-1 tracking-wider uppercase whitespace-nowrap">Done: ${dateStr}</div>`;
+            }
+            return html;
+        };
+
+        // --- EXPORT GLOBALLY (ATTACH TO WINDOW FOR HTML ONCLICK) ---
         window.logout = () => {
             sessionStorage.removeItem('stratedge_active_user');
             window.location.href = 'index.html';
@@ -578,60 +632,6 @@
                 el.classList.add('hidden');
                 if(icon) icon.style.transform = 'rotate(0deg)';
             }
-        };
-
-        // --- Overdue JS Helpers ---
-        const getOverdueDays = (estDate) => {
-            let count = 0;
-            let cur = new Date(estDate); cur.setHours(0,0,0,0);
-            let end = new Date(); end.setHours(0,0,0,0);
-            if (cur < end) {
-                while (cur < end) {
-                    cur.setDate(cur.getDate() + 1);
-                    if (cur.getDay() !== 0) count++;
-                }
-                return count; 
-            } else if (cur > end) {
-                while (cur > end) {
-                    cur.setDate(cur.getDate() - 1);
-                    if (cur.getDay() !== 0) count--;
-                }
-                return count; 
-            }
-            return 0; 
-        };
-
-        const analyzeTask = (task) => {
-            const overdueDays = getOverdueDays(task.estDate);
-            let displayStatus = task.status;
-            let ragClass = 'bg-green-500';
-            
-            if (task.status !== 'Completed') {
-                if (overdueDays > 0) {
-                    displayStatus = 'Overdue';
-                    if (overdueDays <= 3) ragClass = 'bg-yellow-400';
-                    else ragClass = 'bg-red-500';
-                }
-            } else {
-                ragClass = 'bg-green-500';
-            }
-
-            return { displayStatus, overdueDays, ragClass };
-        };
-
-        const getStatusBadge = (status, completedAt = null) => {
-            const colors = {
-                'In Progress': 'bg-blue-100 text-blue-700',
-                'In Review': 'bg-orange-100 text-orange-700',
-                'Overdue': 'bg-red-100 text-red-700',
-                'Completed': 'bg-green-100 text-green-700'
-            };
-            let html = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || 'bg-gray-100 text-gray-700'} whitespace-nowrap">${status}</span>`;
-            if (status === 'Completed' && completedAt) {
-                const dateStr = new Date(completedAt).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'});
-                html += `<div class="text-[9px] text-gray-500 font-bold mt-1 tracking-wider uppercase whitespace-nowrap">Done: ${dateStr}</div>`;
-            }
-            return html;
         };
 
         // --- Auto Cleanup Logic ---
@@ -730,10 +730,12 @@
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), s => { 
                     allEmployees = s.docs.map(d => ({ id: d.id, ...d.data() })); 
                     const sel = document.getElementById('taskAssignedTo');
-                    sel.innerHTML = '<option value="" disabled selected>Select Assignee...</option>';
-                    allEmployees.filter(e => e.status !== 'Inactive').sort((a,b)=>a.name.localeCompare(b.name)).forEach(e => {
-                        sel.innerHTML += `<option value="${e.empId}">${e.name} (${e.empId})</option>`;
-                    });
+                    if (sel) {
+                        sel.innerHTML = '<option value="" disabled selected>Select Assignee...</option>';
+                        allEmployees.filter(e => e.status !== 'Inactive').sort((a,b)=>a.name.localeCompare(b.name)).forEach(e => {
+                            sel.innerHTML += `<option value="${e.empId}">${e.name} (${e.empId})</option>`;
+                        });
+                    }
                     populateFilters('init');
                     renderWorkflow();
                     updateNotifications();
@@ -769,6 +771,7 @@
                 calBtn.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900 transition-all";
                 listContainer.classList.remove('hidden');
                 calContainer.classList.add('hidden');
+                renderWorkflow();
             } else {
                 calBtn.className = "px-6 py-2 rounded-md font-semibold text-sm bg-white text-brand-blue shadow-sm transition-all";
                 listBtn.className = "px-6 py-2 rounded-md font-semibold text-sm text-gray-600 hover:text-gray-900 transition-all";
@@ -803,6 +806,8 @@
             const fClient = document.getElementById('filterClient');
             const fProj = document.getElementById('filterProject');
             const fTask = document.getElementById('filterTask');
+
+            if (!fClient || !fProj || !fTask) return;
 
             const valC = fClient.value;
             const valP = fProj.value;
@@ -874,7 +879,9 @@
                 document.getElementById('filterDueDate').value = '';
                 document.getElementById('filterAssignedToMe').checked = false;
                 populateFilters('client');
-                renderWorkflow();
+                
+                // Ensure list view is open
+                switchViewTab('list');
 
                 const cNode = document.getElementById(`client-${clientId}`);
                 const cIcon = document.getElementById(`icon-client-${clientId}`);
@@ -914,6 +921,7 @@
         const updateNotifications = () => {
             const notifList = document.getElementById('notifList');
             const badge = document.getElementById('notificationBadge');
+            if(!notifList || !badge) return;
             notifList.innerHTML = '';
             let notifCount = 0;
             currentActiveNotifIds = [];
@@ -969,7 +977,32 @@
                         }
                     });
                 }
-            return { displayStatus, overdueDays, ragClass };
+
+                if (task.history && task.history.length > 1) {
+                    const latestEdit = task.history[task.history.length - 1];
+                    if (latestEdit.by !== activeUser.name) {
+                        const updateNotifId = `updated_${task.id}_${latestEdit.date}`;
+                        if (!readNotifIds.has(updateNotifId)) {
+                            currentActiveNotifIds.push(updateNotifId);
+                            notifCount++;
+                            notifList.innerHTML += `
+                                <div class="px-4 py-3 bg-indigo-50 border-l-4 border-indigo-500 cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${updateNotifId}', '${task.taskId}', '${task.projectId}', '${task.clientId}')">
+                                    <p class="text-sm font-bold text-indigo-700">Task Updated</p>
+                                    <p class="text-xs text-gray-700 mt-1"><b>${task.name}</b>: ${formatHistoryAction(latestEdit.action)} (by ${latestEdit.by})</p>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+            });
+
+            if (notifCount === 0) {
+                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
+                badge.classList.add('hidden');
+            } else {
+                badge.textContent = notifCount;
+                badge.classList.remove('hidden');
+            }
         };
 
         const renderCalendar = () => {
@@ -1025,11 +1058,15 @@
                 const completedCount = dueTasks.filter(t => t.status === 'Completed').length;
                 const pendingCount = dueCount - completedCount;
 
-                const cumulativeTasks = activeTasks.filter(t => {
+                const todayIso = getISODate(new Date());
+                const isToday = isoDate === todayIso;
+                const isPastOrToday = isoDate <= todayIso;
+
+                const cumulativeTasks = isPastOrToday ? activeTasks.filter(t => {
                     if (t.status === 'Completed') return false;
                     const refDate = t.createdAt ? getISODate(new Date(t.createdAt)) : t.estDate;
                     return refDate <= isoDate;
-                });
+                }) : [];
 
                 let greenCount = 0, amberCount = 0, redCount = 0;
                 cumulativeTasks.forEach(t => {
@@ -1038,10 +1075,6 @@
                     else if (analysis.ragClass === 'bg-yellow-400') amberCount++;
                     else if (analysis.ragClass === 'bg-red-500') redCount++;
                 });
-
-                const todayIso = getISODate(new Date());
-                const isToday = isoDate === todayIso;
-                const isPastOrToday = isoDate <= todayIso;
 
                 let metricsHtml = '';
                 if(createdCount > 0) {
@@ -1233,7 +1266,6 @@
             switchViewTab('list');
         };
 
-        // --- Rendering Logic ---
         const renderWorkflow = () => {
             const container = document.getElementById('workflowContainer');
             if(!allClients.length) {
