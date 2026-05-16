@@ -91,42 +91,42 @@
             </div>
         </div>
 
-        <div id="listViewContainer">
-            <!-- Filter Bar -->
-            <div class="flex overflow-x-auto custom-scroll items-center gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                <select id="filterClient" onchange="updateFilters('client')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                    <option value="">All Clients</option>
-                </select>
-                <select id="filterProject" onchange="updateFilters('project')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                    <option value="">All Projects</option>
-                </select>
-                <select id="filterTask" onchange="updateFilters('task')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                    <option value="">All Tasks</option>
-                </select>
-                <select id="filterRAG" onchange="updateFilters('rag')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                    <option value="">All RAG Statuses</option>
-                    <option value="Green">Green</option>
-                    <option value="Amber">Amber</option>
-                    <option value="Red">Red</option>
-                </select>
-                <select id="filterStatus" onchange="updateFilters('status')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
-                    <option value="">All Statuses</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Overdue">Overdue</option>
-                    <option value="Completed">Completed</option>
-                </select>
-                <div class="flex-1 shrink-0 min-w-[130px] relative">
-                    <span class="absolute -top-2 left-2 bg-white px-1 text-[9px] font-bold text-gray-500 uppercase tracking-widest z-10">Due Date Filter</span>
-                    <input type="date" id="filterDueDate" onchange="updateFilters('dueDate')" class="w-full px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors relative z-0">
-                </div>
-                <button onclick="clearFilters()" class="shrink-0 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
-                <div class="flex items-center gap-2 ml-auto pl-4 border-l border-gray-200 h-10 shrink-0">
-                    <input type="checkbox" id="filterAssignedToMe" onchange="updateFilters('assignedToMe')" class="w-4 h-4 text-brand-blue bg-gray-50 border-gray-300 rounded focus:ring-brand-blue focus:ring-2 cursor-pointer">
-                    <label for="filterAssignedToMe" class="text-sm font-bold text-brand-blue cursor-pointer select-none whitespace-nowrap">Assigned to Me</label>
-                </div>
+        <!-- Global Filter Bar -->
+        <div class="flex overflow-x-auto custom-scroll items-center gap-3 mb-6 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+            <select id="filterClient" onchange="updateFilters('client')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Clients</option>
+            </select>
+            <select id="filterProject" onchange="updateFilters('project')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Projects</option>
+            </select>
+            <select id="filterTask" onchange="updateFilters('task')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Tasks</option>
+            </select>
+            <select id="filterRAG" onchange="updateFilters('rag')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All RAG Statuses</option>
+                <option value="Green">Green</option>
+                <option value="Amber">Amber</option>
+                <option value="Red">Red</option>
+            </select>
+            <select id="filterStatus" onchange="updateFilters('status')" class="flex-1 shrink-0 min-w-[130px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
+                <option value="">All Statuses</option>
+                <option value="In Progress">In Progress</option>
+                <option value="In Review">In Review</option>
+                <option value="Overdue">Overdue</option>
+                <option value="Completed">Completed</option>
+            </select>
+            <div class="flex-1 shrink-0 min-w-[130px] relative">
+                <span class="absolute -top-2 left-2 bg-white px-1 text-[9px] font-bold text-gray-500 uppercase tracking-widest z-10">Due Date Filter</span>
+                <input type="date" id="filterDueDate" onchange="updateFilters('dueDate')" class="w-full px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors relative z-0">
             </div>
+            <button onclick="clearFilters()" class="shrink-0 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm font-bold transition-colors">Clear</button>
+            <div class="flex items-center gap-2 ml-auto pl-4 border-l border-gray-200 h-10 shrink-0">
+                <input type="checkbox" id="filterAssignedToMe" onchange="updateFilters('assignedToMe')" class="w-4 h-4 text-brand-blue bg-gray-50 border-gray-300 rounded focus:ring-brand-blue focus:ring-2 cursor-pointer">
+                <label for="filterAssignedToMe" class="text-sm font-bold text-brand-blue cursor-pointer select-none whitespace-nowrap">Assigned to Me</label>
+            </div>
+        </div>
 
+        <div id="listViewContainer">
             <!-- Hierarchical View Container -->
             <div id="workflowContainer" class="space-y-4 pb-12">
                 <div class="text-center text-gray-500 py-10 italic">Loading workflow structure...</div>
@@ -755,6 +755,7 @@
             document.getElementById('filterAssignedToMe').checked = false;
             populateFilters('client'); 
             renderWorkflow();
+            if(!document.getElementById('calendarViewContainer').classList.contains('hidden')) renderCalendar();
         };
 
         window.switchViewTab = (tab) => {
@@ -795,6 +796,7 @@
         window.updateFilters = (level) => {
             populateFilters(level);
             renderWorkflow();
+            if(!document.getElementById('calendarViewContainer').classList.contains('hidden')) renderCalendar();
         };
 
         const populateFilters = (triggerLevel = 'init') => {
@@ -967,32 +969,7 @@
                         }
                     });
                 }
-
-                if (task.history && task.history.length > 1) {
-                    const latestEdit = task.history[task.history.length - 1];
-                    if (latestEdit.by !== activeUser.name) {
-                        const updateNotifId = `updated_${task.id}_${latestEdit.date}`;
-                        if (!readNotifIds.has(updateNotifId)) {
-                            currentActiveNotifIds.push(updateNotifId);
-                            notifCount++;
-                            notifList.innerHTML += `
-                                <div class="px-4 py-3 bg-indigo-50 border-l-4 border-indigo-500 cursor-pointer hover:bg-opacity-75 transition-colors" onclick="markReadAndGo('${updateNotifId}', '${task.taskId}', '${task.projectId}', '${task.clientId}')">
-                                    <p class="text-sm font-bold text-indigo-700">Task Updated</p>
-                                    <p class="text-xs text-gray-700 mt-1"><b>${task.name}</b>: ${formatHistoryAction(latestEdit.action)} (by ${latestEdit.by})</p>
-                                </div>
-                            `;
-                        }
-                    }
-                }
-            });
-
-            if (notifCount === 0) {
-                notifList.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">You are all caught up!</div>';
-                badge.classList.add('hidden');
-            } else {
-                badge.textContent = notifCount;
-                badge.classList.remove('hidden');
-            }
+            return { displayStatus, overdueDays, ragClass };
         };
 
         const renderCalendar = () => {
@@ -1005,7 +982,32 @@
             const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
             const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
             
-            const activeTasks = allTasks.filter(t => !t.deleted);
+            let activeTasks = allTasks.filter(t => !t.deleted);
+
+            // Apply Global Filters
+            const filterC = document.getElementById('filterClient').value;
+            const filterP = document.getElementById('filterProject').value;
+            const filterT = document.getElementById('filterTask').value;
+            const filterRAG = document.getElementById('filterRAG').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterDueDate = document.getElementById('filterDueDate').value;
+            const filterAssignedToMe = document.getElementById('filterAssignedToMe').checked;
+
+            if (filterC) activeTasks = activeTasks.filter(t => t.clientId === filterC);
+            if (filterP) activeTasks = activeTasks.filter(t => t.projectId === filterP);
+            if (filterT) activeTasks = activeTasks.filter(t => t.taskId === filterT);
+            if (filterStatus) activeTasks = activeTasks.filter(t => t.status === filterStatus);
+            if (filterDueDate) activeTasks = activeTasks.filter(t => t.estDate === filterDueDate);
+            if (filterAssignedToMe) activeTasks = activeTasks.filter(t => t.assignedTo === activeUser.empId);
+            if (filterRAG) {
+                activeTasks = activeTasks.filter(t => {
+                    const analysis = analyzeTask(t);
+                    if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
+                    if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
+                    if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
+                    return true;
+                });
+            }
 
             for(let i=0; i<firstDay; i++) {
                 grid.innerHTML += `<div class="bg-gray-50 border border-gray-100 rounded-lg min-h-[120px] opacity-50 hidden sm:block"></div>`;
@@ -1078,16 +1080,66 @@
         };
 
         window.openCalendarDateModal = (isoDate) => {
-            const dateTasks = allTasks.filter(t => !t.deleted && t.estDate === isoDate);
+            let activeTasks = allTasks.filter(t => !t.deleted);
+
+            // Apply Global Filters
+            const filterC = document.getElementById('filterClient').value;
+            const filterP = document.getElementById('filterProject').value;
+            const filterT = document.getElementById('filterTask').value;
+            const filterRAG = document.getElementById('filterRAG').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterDueDate = document.getElementById('filterDueDate').value;
+            const filterAssignedToMe = document.getElementById('filterAssignedToMe').checked;
+
+            if (filterC) activeTasks = activeTasks.filter(t => t.clientId === filterC);
+            if (filterP) activeTasks = activeTasks.filter(t => t.projectId === filterP);
+            if (filterT) activeTasks = activeTasks.filter(t => t.taskId === filterT);
+            if (filterStatus) activeTasks = activeTasks.filter(t => t.status === filterStatus);
+            if (filterDueDate) activeTasks = activeTasks.filter(t => t.estDate === filterDueDate);
+            if (filterAssignedToMe) activeTasks = activeTasks.filter(t => t.assignedTo === activeUser.empId);
+            if (filterRAG) {
+                activeTasks = activeTasks.filter(t => {
+                    const analysis = analyzeTask(t);
+                    if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
+                    if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
+                    if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
+                    return true;
+                });
+            }
+
+            const dateTasks = activeTasks.filter(t => t.estDate === isoDate);
+            
+            const todayIso = getISODate(new Date());
+            const isPastOrToday = isoDate <= todayIso;
+
+            const cumulativeTasks = isPastOrToday ? activeTasks.filter(t => {
+                if (t.status === 'Completed') return false;
+                const refDate = t.createdAt ? getISODate(new Date(t.createdAt)) : t.estDate;
+                return refDate <= isoDate;
+            }) : [];
+
+            // Combine and Deduplicate cleanly
+            const modalTasksMap = new Map();
+            dateTasks.forEach(t => modalTasksMap.set(t.id, { ...t, _category: 'Due on Date' }));
+            cumulativeTasks.forEach(t => {
+                if (modalTasksMap.has(t.id)) {
+                    modalTasksMap.get(t.id)._category = 'Due & Active RAG';
+                } else {
+                    modalTasksMap.set(t.id, { ...t, _category: 'Active RAG' });
+                }
+            });
+
+            const combinedTasks = Array.from(modalTasksMap.values());
+
             const listEl = document.getElementById('calDateTasksList');
             const emptyMsg = document.getElementById('calDateEmptyMsg');
             const viewBtn = document.getElementById('calDateModalViewBtn');
             
             const dateStr = new Date(isoDate).toLocaleDateString('en-GB');
-            document.getElementById('calDateModalTitle').textContent = `Tasks Due on ${dateStr}`;
+            document.getElementById('calDateModalTitle').textContent = `Tasks for ${dateStr}`;
             
             listEl.innerHTML = '';
-            if (dateTasks.length === 0) {
+            if (combinedTasks.length === 0) {
                 listEl.classList.add('hidden');
                 emptyMsg.classList.remove('hidden');
                 viewBtn.classList.add('hidden');
@@ -1099,13 +1151,16 @@
                 
                 // Sort by RAG status (Green -> Amber -> Red)
                 const ragWeight = { 'bg-green-500': 1, 'bg-yellow-400': 2, 'bg-red-500': 3 };
-                dateTasks.sort((a, b) => {
+                combinedTasks.sort((a, b) => {
                     const ragA = analyzeTask(a).ragClass;
                     const ragB = analyzeTask(b).ragClass;
                     return (ragWeight[ragA] || 4) - (ragWeight[ragB] || 4);
                 });
                 
-                listEl.innerHTML = dateTasks.map(t => {
+                let dueHtml = '';
+                let cumHtml = '';
+
+                combinedTasks.forEach(t => {
                     const assignee = allEmployees.find(e => e.empId === t.assignedTo);
                     const assigneeName = assignee ? assignee.name : t.assignedTo;
                     const client = allClients.find(c => c.clientCode === t.clientId);
@@ -1121,11 +1176,20 @@
                     if (analysis.ragClass === 'bg-yellow-400') borderClass = 'border-yellow-400';
                     if (analysis.ragClass === 'bg-red-500') borderClass = 'border-red-500';
 
-                    return `
-                        <div class="bg-white border border-gray-200 border-l-4 ${borderClass} p-4 rounded-lg shadow-sm">
+                    let badgeHtml = '';
+                    if (t._category === 'Due on Date' || t._category === 'Due & Active RAG') {
+                        badgeHtml += '<span class="bg-purple-100 text-purple-700 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ml-2 border border-purple-200">Due</span>';
+                    }
+                    if (t._category === 'Active RAG' || t._category === 'Due & Active RAG') {
+                        badgeHtml += '<span class="bg-gray-100 text-gray-600 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ml-1 border border-gray-200">Cumul. RAG</span>';
+                    }
+
+                    const card = `
+                        <div class="bg-white border border-gray-200 border-l-4 ${borderClass} p-4 rounded-lg shadow-sm mb-3 last:mb-0">
                             <div class="flex justify-between items-start mb-2 gap-2">
-                                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-tight">
-                                    ${clientName} <span class="mx-1 text-gray-300">•</span> ${projName}
+                                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-tight flex items-center flex-wrap gap-y-1">
+                                    ${clientName} <span class="mx-1 text-gray-300 hidden sm:inline">•</span> ${projName}
+                                    ${badgeHtml}
                                 </div>
                                 <div class="shrink-0 flex items-center gap-1.5">
                                     <div class="w-2.5 h-2.5 rounded-full shadow-sm ${analysis.ragClass}" title="RAG Indicator"></div>
@@ -1150,7 +1214,14 @@
                             </div>
                         </div>
                     `;
-                }).join('');
+                    
+                    if (t._category.includes('Due')) dueHtml += card;
+                    else cumHtml += card;
+                });
+                
+                listEl.innerHTML = '';
+                if (dueHtml) listEl.innerHTML += `<h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 border-b pb-1 mt-2">Tasks Due on ${dateStr}</h4>` + dueHtml;
+                if (cumHtml) listEl.innerHTML += `<h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 mt-5 border-b pb-1">Cumulative Active RAG Tasks</h4>` + cumHtml;
             }
             document.getElementById('calendarDateModal').classList.remove('hidden');
         };
