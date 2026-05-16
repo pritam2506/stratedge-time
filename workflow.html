@@ -1097,18 +1097,56 @@
                 viewBtn.classList.remove('hidden');
                 viewBtn.setAttribute('onclick', `viewTasksInList('${isoDate}')`);
                 
+                // Sort by RAG status (Green -> Amber -> Red)
+                const ragWeight = { 'bg-green-500': 1, 'bg-yellow-400': 2, 'bg-red-500': 3 };
+                dateTasks.sort((a, b) => {
+                    const ragA = window.analyzeTask(a).ragClass;
+                    const ragB = window.analyzeTask(b).ragClass;
+                    return (ragWeight[ragA] || 4) - (ragWeight[ragB] || 4);
+                });
+                
                 listEl.innerHTML = dateTasks.map(t => {
                     const assignee = allEmployees.find(e => e.empId === t.assignedTo);
                     const assigneeName = assignee ? assignee.name : t.assignedTo;
+                    const client = allClients.find(c => c.clientCode === t.clientId);
+                    const proj = allProjects.find(p => p.projId === t.projectId);
+                    const clientName = client ? client.name : t.clientId;
+                    const projName = proj ? proj.name : t.projectId;
+                    
+                    const createdDateStr = t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : '-';
+                    const dueDateStr = new Date(t.estDate).toLocaleDateString('en-GB');
+                    const analysis = window.analyzeTask(t);
+                    
+                    let borderClass = 'border-green-500';
+                    if (analysis.ragClass === 'bg-yellow-400') borderClass = 'border-yellow-400';
+                    if (analysis.ragClass === 'bg-red-500') borderClass = 'border-red-500';
+
                     return `
-                        <div class="bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center mb-2 last:mb-0">
-                            <div>
-                                <div class="font-bold text-brand-blue text-xs mb-0.5">${t.taskId}</div>
-                                <div class="text-sm text-gray-900 font-bold">${t.name}</div>
+                        <div class="bg-white border border-gray-200 border-l-4 ${borderClass} p-4 rounded-lg shadow-sm">
+                            <div class="flex justify-between items-start mb-2 gap-2">
+                                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-tight">
+                                    ${clientName} <span class="mx-1 text-gray-300">•</span> ${projName}
+                                </div>
+                                <div class="shrink-0 flex items-center gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full shadow-sm ${analysis.ragClass}" title="RAG Indicator"></div>
+                                    ${window.getStatusBadge(t.status, t.completedAt)}
+                                </div>
                             </div>
-                            <div class="text-right flex flex-col items-end">
-                                ${getStatusBadge(t.status, t.completedAt)}
-                                <div class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-wider">${assigneeName}</div>
+                            <div class="font-bold text-brand-blue text-sm mb-3">${t.taskId}: <span class="text-gray-900">${t.name}</span></div>
+                            
+                            <div class="grid grid-cols-3 gap-2 bg-gray-50 p-2.5 rounded border border-gray-100 text-xs">
+                                <div>
+                                    <span class="block text-[9px] text-gray-400 uppercase font-bold mb-0.5">Created</span>
+                                    <span class="font-semibold text-gray-700">${createdDateStr}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[9px] text-gray-400 uppercase font-bold mb-0.5">Due Date</span>
+                                    <span class="font-semibold text-gray-700">${dueDateStr}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block text-[9px] text-gray-400 uppercase font-bold mb-0.5">Assignee</span>
+                                    <span class="font-bold text-gray-900 truncate block" title="${assigneeName}">${assigneeName}</span>
+                                </div>
                             </div>
                         </div>
                     `;
