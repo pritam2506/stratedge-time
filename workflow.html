@@ -110,6 +110,7 @@
                 </select>
                 <select id="filterStatus" onchange="updateFilters('status')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
                     <option value="">All Statuses</option>
+                    <option value="To Do">To Do</option>
                     <option value="In Progress">In Progress</option>
                     <option value="In Review">In Review</option>
                     <option value="Completed">Completed</option>
@@ -228,7 +229,7 @@
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Estimated Completion</label>
-                            <input type="date" id="taskEstDate" onchange="updateTaskStatusOptions()" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                            <input type="date" id="taskEstDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Effort Needed (Hrs)</label>
@@ -237,6 +238,7 @@
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Status</label>
                             <select id="taskStatus" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue font-bold">
+                                <option value="To Do">To Do</option>
                                 <option value="In Progress">In Progress</option>
                                 <option value="In Review">In Review</option>
                                 <option value="Completed">Completed</option>
@@ -262,7 +264,151 @@
                 <button onclick="closeModal('genericHistoryModal')" class="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 text-center flex-wrap justify-center">
+                <div id="genericHistoryList" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scroll text-sm">
+                    <!-- JS populated -->
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+                <button onclick="closeModal('genericHistoryModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Recycle Bin -->
+    <div id="recycleBinModal" class="fixed inset-0 bg-gray-900/60 hidden z-[50] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col transform transition-all max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-red-600 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Recycle Bin
+                </h3>
+                <button onclick="closeModal('recycleBinModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll flex-grow">
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Task ID</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Task Name</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Deleted By</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Deleted On</th>
+                                <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recycleBinList" class="divide-y divide-gray-100 text-sm bg-white">
+                            <!-- JS injected -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="recycleBinEmpty" class="hidden py-12 text-center text-gray-400 text-sm italic">Recycle bin is empty.</div>
+                <div class="mt-4 text-center text-[10px] text-gray-400 italic">* Tasks in the recycle bin are automatically deleted after 30 days.</div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+                <button onclick="closeModal('recycleBinModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: View Deleted Task -->
+    <div id="viewDeletedTaskModal" class="fixed inset-0 bg-gray-900/60 hidden z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7z"></path></svg>
+                    Deleted Task Details
+                </h3>
+                <button onclick="closeModal('viewDeletedTaskModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[70vh] text-sm">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Task Name</span>
+                        <div id="vdtName" class="font-bold text-brand-blue text-base"></div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Assigned To</span>
+                        <div id="vdtAssignee" class="font-bold text-gray-800"></div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Description</span>
+                        <div id="vdtDesc" class="text-gray-700 bg-gray-50 p-3 rounded border border-gray-100 whitespace-pre-wrap"></div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Start Date</span>
+                        <div id="vdtStart" class="font-medium text-gray-800"></div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Due Date</span>
+                        <div id="vdtEnd" class="font-medium text-gray-800"></div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Effort</span>
+                        <div id="vdtEffort" class="font-bold text-gray-800"></div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Last Status</span>
+                        <div id="vdtStatus"></div>
+                    </div>
+                    <div class="col-span-2 border-t pt-4 mt-2">
+                        <span class="block text-[10px] font-bold text-red-500 uppercase tracking-wider mb-1">Deletion Information</span>
+                        <div id="vdtDelInfo" class="text-red-700 font-medium text-xs bg-red-50 border border-red-100 p-2.5 rounded"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end">
+                <button onclick="closeModal('viewDeletedTaskModal')" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg text-sm hover:bg-gray-300 transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Task Status -->
+    <div id="taskStatusModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-xs overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-900" id="tsModalTitle">Task Status</h3>
+                <button onclick="closeModal('taskStatusModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 text-center">
+                <div class="flex items-center justify-center gap-2 mb-4">
+                    <div id="tsModalRag" class="w-6 h-6 rounded-full shadow-inner shrink-0"></div>
+                    <span class="text-sm font-bold text-gray-500 uppercase tracking-widest">RAG Status</span>
+                </div>
+                <div class="text-4xl font-black text-gray-900 mb-1" id="tsModalDays">0</div>
+                <div class="text-xs text-gray-500 font-bold uppercase tracking-widest mb-6">Days Overdue / Left</div>
+                
+                <div class="grid grid-cols-2 gap-2 mb-4 text-left">
+                    <div class="bg-gray-50 rounded-lg p-2 border">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider">Start Date</div>
+                        <div class="font-bold text-gray-800 text-xs" id="tsModalStart"></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-2 border">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider">Due Date</div>
+                        <div class="font-bold text-gray-800 text-xs" id="tsModalEnd"></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-2 border col-span-2 flex justify-between items-center">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Current Status</div>
+                        <div id="tsModalStatusBadge"></div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-lg p-3 border border-blue-100 text-left">
+                    <div class="text-[10px] text-blue-500 uppercase font-bold mb-1 tracking-wider">Assigned To</div>
+                    <div class="font-bold text-brand-blue text-sm" id="tsModalAssignee"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Project Status -->
+    <div id="projStatusModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900" id="psModalTitle">Project Status</h3>
+                <button onclick="closeModal('projStatusModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6 text-center">
                     <div class="bg-gray-50 p-3 rounded-lg border">
                         <div class="text-2xl font-black text-brand-blue" id="psTotal">0</div>
                         <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">Total Tasks</div>
@@ -274,6 +420,10 @@
                     <div class="bg-green-50 p-3 rounded-lg border">
                         <div class="text-2xl font-black text-green-600" id="psCompleted">0</div>
                         <div class="text-[10px] font-bold text-green-500 uppercase mt-1">Completed</div>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg border">
+                        <div class="text-xl font-black text-gray-700" id="psTodo">0</div>
+                        <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">To Do</div>
                     </div>
                     <div class="bg-blue-50 p-3 rounded-lg border">
                         <div class="text-xl font-black text-blue-700" id="psProg">0</div>
@@ -458,25 +608,6 @@
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), s => { 
                     allTasks = s.docs.map(d => ({ id: d.id, ...d.data() })); 
-                    
-                    // Auto-Overdue Check
-                    allTasks.forEach(t => {
-                        if (!t.deleted && t.status !== 'Completed' && !t.overdueHistoryLogged) {
-                            if (window.getOverdueDays && window.getOverdueDays(t.estDate) > 0) {
-                                let history = t.history || [];
-                                history.push({
-                                    action: "Task automatically marked as Overdue",
-                                    by: "System",
-                                    date: Date.now()
-                                });
-                                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', t.id), {
-                                    history: history,
-                                    overdueHistoryLogged: true
-                                }).catch(e => console.error("Auto overdue log failed", e));
-                            }
-                        }
-                    });
-
                     populateFilters('init');
                     renderWorkflow();
                     if(!document.getElementById('calendarViewContainer').classList.contains('hidden')) renderCalendar();
@@ -761,7 +892,7 @@
         };
 
         // --- Overdue RAG Logic ---
-        window.getOverdueDays = (estDate) => {
+        const getOverdueDays = (estDate) => {
             let count = 0;
             let cur = new Date(estDate); cur.setHours(0,0,0,0);
             let end = new Date(); end.setHours(0,0,0,0);
@@ -781,8 +912,8 @@
             return 0; // Exactly on due date
         };
 
-        window.analyzeTask = (task) => {
-            const overdueDays = window.getOverdueDays(task.estDate);
+        const analyzeTask = (task) => {
+            const overdueDays = getOverdueDays(task.estDate);
             let displayStatus = task.status;
             let ragClass = 'bg-green-500';
             
@@ -877,7 +1008,7 @@
                                 <div class="text-sm text-gray-900 font-bold">${t.name}</div>
                             </div>
                             <div class="text-right flex flex-col items-end">
-                                ${window.getStatusBadge(t.status, t.completedAt)}
+                                ${getStatusBadge(t.status)}
                                 <div class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-wider">${assigneeName}</div>
                             </div>
                         </div>
@@ -895,19 +1026,15 @@
         };
 
         // --- Rendering Logic ---
-        window.getStatusBadge = (status, completedAt = null) => {
+        const getStatusBadge = (status) => {
             const colors = {
+                'To Do': 'bg-gray-100 text-gray-700',
                 'In Progress': 'bg-blue-100 text-blue-700',
                 'In Review': 'bg-orange-100 text-orange-700',
                 'Completed': 'bg-green-100 text-green-700',
                 'Overdue': 'bg-red-100 text-red-700'
             };
-            let html = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || 'bg-gray-100 text-gray-700'} whitespace-nowrap">${status}</span>`;
-            if (status === 'Completed' && completedAt) {
-                const dateStr = new Date(completedAt).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'});
-                html += `<div class="text-[9px] text-gray-500 font-bold mt-1 tracking-wider uppercase whitespace-nowrap">Done: ${dateStr}</div>`;
-            }
-            return html;
+            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || colors['To Do']} whitespace-nowrap">${status}</span>`;
         };
 
         const renderWorkflow = () => {
@@ -952,7 +1079,7 @@
                         if (filterAssignedToMe) pTasks = pTasks.filter(t => t.assignedTo === activeUser.empId);
                         if (filterRAG) {
                             pTasks = pTasks.filter(t => {
-                                const analysis = window.analyzeTask(t);
+                                const analysis = analyzeTask(t);
                                 if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
                                 if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
                                 if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
@@ -980,7 +1107,7 @@
                         if (filterAssignedToMe) projTasks = projTasks.filter(t => t.assignedTo === activeUser.empId);
                         if (filterRAG) {
                             projTasks = projTasks.filter(t => {
-                                const analysis = window.analyzeTask(t);
+                                const analysis = analyzeTask(t);
                                 if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
                                 if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
                                 if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
@@ -1000,7 +1127,7 @@
                             projTasks.sort((a,b)=> b.createdAt - a.createdAt).forEach(task => {
                                 const assignee = allEmployees.find(e => e.empId === task.assignedTo);
                                 const assigneeName = assignee ? assignee.name : task.assignedTo;
-                                const analysis = window.analyzeTask(task);
+                                const analysis = analyzeTask(task);
                                 
                                 const nudgeBtn = (task.assignedTo !== activeUser.empId) ? `<button onclick="nudgeTask('${task.id}')" title="Send Reminder" class="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.nudge}</button>` : '';
 
@@ -1021,7 +1148,7 @@
                                         <td class="px-4 py-3 whitespace-nowrap text-center align-top">
                                             <div class="w-3 h-3 rounded-full ${analysis.ragClass} mx-auto shadow-sm" title="RAG Status"></div>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${window.getStatusBadge(analysis.displayStatus, task.completedAt)}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${getStatusBadge(analysis.displayStatus)}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-right align-top">
                                             ${nudgeBtn}
                                             <button onclick="viewTaskStatus('${task.taskId}')" title="Task Status" class="text-brand-orange hover:text-orange-700 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.status}</button>
@@ -1128,7 +1255,7 @@
             const activeTasks = allTasks.filter(t => !t.deleted);
             const task = activeTasks.find(t => t.taskId === taskId);
             if (!task) return;
-            const analysis = window.analyzeTask(task);
+            const analysis = analyzeTask(task);
             const assignee = allEmployees.find(e => e.empId === task.assignedTo);
             
             document.getElementById('tsModalTitle').textContent = `Task Status: ${taskId}`;
@@ -1137,7 +1264,7 @@
             document.getElementById('tsModalAssignee').textContent = assignee ? assignee.name : task.assignedTo;
             document.getElementById('tsModalStart').textContent = new Date(task.startDate).toLocaleDateString('en-GB');
             document.getElementById('tsModalEnd').textContent = new Date(task.estDate).toLocaleDateString('en-GB');
-            document.getElementById('tsModalStatusBadge').innerHTML = window.getStatusBadge(task.status, task.completedAt);
+            document.getElementById('tsModalStatusBadge').innerHTML = getStatusBadge(task.status);
             
             document.getElementById('taskStatusModal').classList.remove('hidden');
         };
@@ -1146,11 +1273,11 @@
             const proj = allProjects.find(p => p.projId === projId);
             const tasks = allTasks.filter(t => !t.deleted && t.projectId === projId);
             
-            let counts = { 'In Progress': 0, 'In Review': 0, 'Completed': 0, 'Overdue': 0 };
+            let counts = { 'To Do': 0, 'In Progress': 0, 'In Review': 0, 'Completed': 0, 'Overdue': 0 };
             let overdueList = [];
 
             tasks.forEach(t => {
-                const a = window.analyzeTask(t);
+                const a = analyzeTask(t);
                 counts[a.displayStatus] = (counts[a.displayStatus] || 0) + 1;
                 if (a.displayStatus === 'Overdue') {
                     overdueList.push({ id: t.taskId, name: t.name, days: a.overdueDays });
@@ -1161,6 +1288,7 @@
             document.getElementById('psTotal').textContent = tasks.length;
             document.getElementById('psOverdue').textContent = counts['Overdue'] || 0;
             document.getElementById('psCompleted').textContent = counts['Completed'] || 0;
+            document.getElementById('psTodo').textContent = counts['To Do'] || 0;
             document.getElementById('psProg').textContent = counts['In Progress'] || 0;
             document.getElementById('psRev').textContent = counts['In Review'] || 0;
 
@@ -1316,13 +1444,6 @@
             document.getElementById('taskClientId').value = clientId;
             document.getElementById('taskProjectId').value = projectId;
 
-            const statusSelect = document.getElementById('taskStatus');
-            statusSelect.innerHTML = `
-                <option value="In Progress">In Progress</option>
-                <option value="In Review">In Review</option>
-                <option value="Completed">Completed</option>
-            `;
-
             if (docId) {
                 document.getElementById('taskModalTitle').textContent = 'Edit Task';
                 const task = allTasks.find(t => t.id === docId);
@@ -1334,21 +1455,11 @@
                     document.getElementById('taskEstDate').value = task.estDate;
                     document.getElementById('taskEffort').value = task.effort;
                     document.getElementById('taskAssignedTo').value = task.assignedTo;
-                    
-                    let currentStatus = task.status;
-                    if (currentStatus === 'To Do') currentStatus = 'In Progress'; // Migrate legacy statuses
-
-                    if (window.getOverdueDays(task.estDate) > 0 && currentStatus !== 'Completed') {
-                        statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option><option value="Completed">Completed</option>`;
-                    } else if (!['In Progress', 'In Review', 'Completed'].includes(currentStatus)) {
-                        statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option>` + statusSelect.innerHTML;
-                    }
-                    
-                    statusSelect.value = currentStatus;
+                    document.getElementById('taskStatus').value = task.status;
                 }
             } else {
                 document.getElementById('taskModalTitle').textContent = 'Create Task';
-                document.getElementById('taskStatus').value = 'In Progress';
+                document.getElementById('taskStatus').value = 'To Do';
                 
                 // Auto-generate ID: ProjId-T{count+1}
                 const existing = allTasks.filter(t => t.projectId === projectId);
@@ -1365,28 +1476,6 @@
             document.getElementById('taskModal').classList.remove('hidden');
         };
 
-        window.updateTaskStatusOptions = () => {
-            const dateVal = document.getElementById('taskEstDate').value;
-            const statusSelect = document.getElementById('taskStatus');
-            const currentStatus = statusSelect.value;
-            
-            if (dateVal && window.getOverdueDays && window.getOverdueDays(dateVal) > 0 && currentStatus !== 'Completed') {
-                statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option><option value="Completed">Completed</option>`;
-                statusSelect.value = currentStatus;
-            } else {
-                statusSelect.innerHTML = `
-                    <option value="In Progress">In Progress</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Completed">Completed</option>
-                `;
-                if (['In Progress', 'In Review', 'Completed'].includes(currentStatus)) {
-                    statusSelect.value = currentStatus;
-                } else {
-                    statusSelect.value = 'In Progress';
-                }
-            }
-        };
-
         window.nudgeTask = async (docId) => {
             try {
                 const task = allTasks.find(t => t.id === docId);
@@ -1397,13 +1486,7 @@
                     by: activeUser.name,
                     time: Date.now()
                 });
-                let history = task.history || [];
-                history.push({
-                    action: `Reminder sent to assignee`,
-                    by: activeUser.name,
-                    date: Date.now()
-                });
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), { nudges, history });
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), { nudges });
                 showToast("Reminder sent to assignee.");
             } catch (err) {
                 console.error(err);
@@ -1460,12 +1543,6 @@
                         });
                     }
                     payload.history = history;
-                    
-                    if (payload.status === 'Completed') {
-                        payload.completedAt = existingTask.status === 'Completed' ? existingTask.completedAt : Date.now();
-                    } else {
-                        payload.completedAt = null;
-                    }
 
                     const updatePromises = [];
                     updatePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), payload));
@@ -1499,10 +1576,6 @@
                             by: activeUser.name,
                             date: Date.now()
                         });
-                    }
-                    
-                    if (payload.status === 'Completed') {
-                        payload.completedAt = Date.now();
                     }
                     
                     const updatePromises = [];
@@ -1577,7 +1650,7 @@
             document.getElementById('vdtStart').textContent = new Date(t.startDate).toLocaleDateString('en-GB');
             document.getElementById('vdtEnd').textContent = new Date(t.estDate).toLocaleDateString('en-GB');
             document.getElementById('vdtEffort').textContent = `${t.effort}h`;
-            document.getElementById('vdtStatus').innerHTML = window.getStatusBadge(t.status, t.completedAt);
+            document.getElementById('vdtStatus').innerHTML = getStatusBadge(t.status);
             
             const delDate = new Date(t.deletedAt).toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
             document.getElementById('vdtDelInfo').textContent = `Deleted by ${t.deletedBy} on ${delDate}`;
