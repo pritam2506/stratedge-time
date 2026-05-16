@@ -110,7 +110,6 @@
                 </select>
                 <select id="filterStatus" onchange="updateFilters('status')" class="flex-1 min-w-[150px] px-3 py-2.5 border rounded-md text-sm outline-none bg-gray-50 focus:bg-white transition-colors">
                     <option value="">All Statuses</option>
-                    <option value="To Do">To Do</option>
                     <option value="In Progress">In Progress</option>
                     <option value="In Review">In Review</option>
                     <option value="Completed">Completed</option>
@@ -229,7 +228,7 @@
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Estimated Completion</label>
-                            <input type="date" id="taskEstDate" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                            <input type="date" id="taskEstDate" onchange="updateTaskStatusOptions()" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue text-sm">
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Effort Needed (Hrs)</label>
@@ -238,7 +237,6 @@
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Status</label>
                             <select id="taskStatus" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-blue font-bold">
-                                <option value="To Do">To Do</option>
                                 <option value="In Progress">In Progress</option>
                                 <option value="In Review">In Review</option>
                                 <option value="Completed">Completed</option>
@@ -400,6 +398,29 @@
         </div>
     </div>
 
+    <!-- Modal: Calendar Date Details -->
+    <div id="calendarDateModal" class="fixed inset-0 bg-gray-900/60 hidden z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-900" id="calDateModalTitle">Tasks Due</h3>
+                <button onclick="closeModal('calendarDateModal')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[60vh] custom-scroll">
+                <div id="calDateTasksList" class="space-y-3">
+                    <!-- JS populated -->
+                </div>
+                <div id="calDateEmptyMsg" class="hidden text-center text-sm text-gray-500 py-4">No tasks due on this date.</div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button onclick="closeModal('calendarDateModal')" class="px-4 py-2 border border-gray-300 bg-white text-gray-700 font-bold rounded-lg text-sm hover:bg-gray-50 transition-colors">Close</button>
+                <button id="calDateModalViewBtn" class="px-4 py-2 bg-brand-blue text-white font-bold rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-sm">
+                    View in List
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Project Status -->
     <div id="projStatusModal" class="fixed inset-0 bg-gray-900/60 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all">
@@ -408,7 +429,7 @@
                 <button onclick="closeModal('projStatusModal')" class="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6 text-center">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 text-center flex-wrap justify-center">
                     <div class="bg-gray-50 p-3 rounded-lg border">
                         <div class="text-2xl font-black text-brand-blue" id="psTotal">0</div>
                         <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">Total Tasks</div>
@@ -420,10 +441,6 @@
                     <div class="bg-green-50 p-3 rounded-lg border">
                         <div class="text-2xl font-black text-green-600" id="psCompleted">0</div>
                         <div class="text-[10px] font-bold text-green-500 uppercase mt-1">Completed</div>
-                    </div>
-                    <div class="bg-gray-100 p-3 rounded-lg border">
-                        <div class="text-xl font-black text-gray-700" id="psTodo">0</div>
-                        <div class="text-[10px] font-bold text-gray-500 uppercase mt-1">To Do</div>
                     </div>
                     <div class="bg-blue-50 p-3 rounded-lg border">
                         <div class="text-xl font-black text-blue-700" id="psProg">0</div>
@@ -608,6 +625,25 @@
                 });
                 onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks'), s => { 
                     allTasks = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+                    
+                    // Auto-Overdue Check
+                    allTasks.forEach(t => {
+                        if (!t.deleted && t.status !== 'Completed' && !t.overdueHistoryLogged) {
+                            if (window.getOverdueDays && window.getOverdueDays(t.estDate) > 0) {
+                                let history = t.history || [];
+                                history.push({
+                                    action: "Task automatically marked as Overdue",
+                                    by: "System",
+                                    date: Date.now()
+                                });
+                                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', t.id), {
+                                    history: history,
+                                    overdueHistoryLogged: true
+                                }).catch(e => console.error("Auto overdue log failed", e));
+                            }
+                        }
+                    });
+
                     populateFilters('init');
                     renderWorkflow();
                     if(!document.getElementById('calendarViewContainer').classList.contains('hidden')) renderCalendar();
@@ -827,7 +863,7 @@
                     }
                 }
 
-                const analysis = analyzeTask(task);
+                const analysis = window.analyzeTask(task);
                 if (analysis.ragClass === 'bg-yellow-400' || analysis.ragClass === 'bg-red-500') {
                     const ragLabel = analysis.ragClass === 'bg-yellow-400' ? 'Amber' : 'Red';
                     const ragNotifId = `rag_${ragLabel}_${task.id}`;
@@ -892,7 +928,7 @@
         };
 
         // --- Overdue RAG Logic ---
-        const getOverdueDays = (estDate) => {
+        window.getOverdueDays = (estDate) => {
             let count = 0;
             let cur = new Date(estDate); cur.setHours(0,0,0,0);
             let end = new Date(); end.setHours(0,0,0,0);
@@ -912,8 +948,8 @@
             return 0; // Exactly on due date
         };
 
-        const analyzeTask = (task) => {
-            const overdueDays = getOverdueDays(task.estDate);
+        window.analyzeTask = (task) => {
+            const overdueDays = window.getOverdueDays(task.estDate);
             let displayStatus = task.status;
             let ragClass = 'bg-green-500';
             
@@ -1008,7 +1044,7 @@
                                 <div class="text-sm text-gray-900 font-bold">${t.name}</div>
                             </div>
                             <div class="text-right flex flex-col items-end">
-                                ${getStatusBadge(t.status)}
+                                ${window.getStatusBadge(t.status, t.completedAt)}
                                 <div class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-wider">${assigneeName}</div>
                             </div>
                         </div>
@@ -1026,15 +1062,19 @@
         };
 
         // --- Rendering Logic ---
-        const getStatusBadge = (status) => {
+        window.getStatusBadge = (status, completedAt = null) => {
             const colors = {
-                'To Do': 'bg-gray-100 text-gray-700',
                 'In Progress': 'bg-blue-100 text-blue-700',
                 'In Review': 'bg-orange-100 text-orange-700',
                 'Completed': 'bg-green-100 text-green-700',
                 'Overdue': 'bg-red-100 text-red-700'
             };
-            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || colors['To Do']} whitespace-nowrap">${status}</span>`;
+            let html = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colors[status] || 'bg-gray-100 text-gray-700'} whitespace-nowrap">${status}</span>`;
+            if (status === 'Completed' && completedAt) {
+                const dateStr = new Date(completedAt).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'});
+                html += `<div class="text-[9px] text-gray-500 font-bold mt-1 tracking-wider uppercase whitespace-nowrap">Done: ${dateStr}</div>`;
+            }
+            return html;
         };
 
         const renderWorkflow = () => {
@@ -1079,7 +1119,7 @@
                         if (filterAssignedToMe) pTasks = pTasks.filter(t => t.assignedTo === activeUser.empId);
                         if (filterRAG) {
                             pTasks = pTasks.filter(t => {
-                                const analysis = analyzeTask(t);
+                                const analysis = window.analyzeTask(t);
                                 if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
                                 if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
                                 if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
@@ -1107,7 +1147,7 @@
                         if (filterAssignedToMe) projTasks = projTasks.filter(t => t.assignedTo === activeUser.empId);
                         if (filterRAG) {
                             projTasks = projTasks.filter(t => {
-                                const analysis = analyzeTask(t);
+                                const analysis = window.analyzeTask(t);
                                 if (filterRAG === 'Green') return analysis.ragClass === 'bg-green-500';
                                 if (filterRAG === 'Amber') return analysis.ragClass === 'bg-yellow-400';
                                 if (filterRAG === 'Red') return analysis.ragClass === 'bg-red-500';
@@ -1127,7 +1167,7 @@
                             projTasks.sort((a,b)=> b.createdAt - a.createdAt).forEach(task => {
                                 const assignee = allEmployees.find(e => e.empId === task.assignedTo);
                                 const assigneeName = assignee ? assignee.name : task.assignedTo;
-                                const analysis = analyzeTask(task);
+                                const analysis = window.analyzeTask(task);
                                 
                                 const nudgeBtn = (task.assignedTo !== activeUser.empId) ? `<button onclick="nudgeTask('${task.id}')" title="Send Reminder" class="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.nudge}</button>` : '';
 
@@ -1148,7 +1188,7 @@
                                         <td class="px-4 py-3 whitespace-nowrap text-center align-top">
                                             <div class="w-3 h-3 rounded-full ${analysis.ragClass} mx-auto shadow-sm" title="RAG Status"></div>
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${getStatusBadge(analysis.displayStatus)}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center align-top">${window.getStatusBadge(analysis.displayStatus, task.completedAt)}</td>
                                         <td class="px-4 py-3 whitespace-nowrap text-right align-top">
                                             ${nudgeBtn}
                                             <button onclick="viewTaskStatus('${task.taskId}')" title="Task Status" class="text-brand-orange hover:text-orange-700 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors inline-flex mr-1">${svgs.status}</button>
@@ -1255,7 +1295,7 @@
             const activeTasks = allTasks.filter(t => !t.deleted);
             const task = activeTasks.find(t => t.taskId === taskId);
             if (!task) return;
-            const analysis = analyzeTask(task);
+            const analysis = window.analyzeTask(task);
             const assignee = allEmployees.find(e => e.empId === task.assignedTo);
             
             document.getElementById('tsModalTitle').textContent = `Task Status: ${taskId}`;
@@ -1264,7 +1304,7 @@
             document.getElementById('tsModalAssignee').textContent = assignee ? assignee.name : task.assignedTo;
             document.getElementById('tsModalStart').textContent = new Date(task.startDate).toLocaleDateString('en-GB');
             document.getElementById('tsModalEnd').textContent = new Date(task.estDate).toLocaleDateString('en-GB');
-            document.getElementById('tsModalStatusBadge').innerHTML = getStatusBadge(task.status);
+            document.getElementById('tsModalStatusBadge').innerHTML = window.getStatusBadge(task.status, task.completedAt);
             
             document.getElementById('taskStatusModal').classList.remove('hidden');
         };
@@ -1273,11 +1313,11 @@
             const proj = allProjects.find(p => p.projId === projId);
             const tasks = allTasks.filter(t => !t.deleted && t.projectId === projId);
             
-            let counts = { 'To Do': 0, 'In Progress': 0, 'In Review': 0, 'Completed': 0, 'Overdue': 0 };
+            let counts = { 'In Progress': 0, 'In Review': 0, 'Completed': 0, 'Overdue': 0 };
             let overdueList = [];
 
             tasks.forEach(t => {
-                const a = analyzeTask(t);
+                const a = window.analyzeTask(t);
                 counts[a.displayStatus] = (counts[a.displayStatus] || 0) + 1;
                 if (a.displayStatus === 'Overdue') {
                     overdueList.push({ id: t.taskId, name: t.name, days: a.overdueDays });
@@ -1288,7 +1328,6 @@
             document.getElementById('psTotal').textContent = tasks.length;
             document.getElementById('psOverdue').textContent = counts['Overdue'] || 0;
             document.getElementById('psCompleted').textContent = counts['Completed'] || 0;
-            document.getElementById('psTodo').textContent = counts['To Do'] || 0;
             document.getElementById('psProg').textContent = counts['In Progress'] || 0;
             document.getElementById('psRev').textContent = counts['In Review'] || 0;
 
@@ -1444,6 +1483,13 @@
             document.getElementById('taskClientId').value = clientId;
             document.getElementById('taskProjectId').value = projectId;
 
+            const statusSelect = document.getElementById('taskStatus');
+            statusSelect.innerHTML = `
+                <option value="In Progress">In Progress</option>
+                <option value="In Review">In Review</option>
+                <option value="Completed">Completed</option>
+            `;
+
             if (docId) {
                 document.getElementById('taskModalTitle').textContent = 'Edit Task';
                 const task = allTasks.find(t => t.id === docId);
@@ -1455,11 +1501,21 @@
                     document.getElementById('taskEstDate').value = task.estDate;
                     document.getElementById('taskEffort').value = task.effort;
                     document.getElementById('taskAssignedTo').value = task.assignedTo;
-                    document.getElementById('taskStatus').value = task.status;
+                    
+                    let currentStatus = task.status;
+                    if (currentStatus === 'To Do') currentStatus = 'In Progress'; // Migrate legacy statuses
+
+                    if (window.getOverdueDays && window.getOverdueDays(task.estDate) > 0 && currentStatus !== 'Completed') {
+                        statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option><option value="Completed">Completed</option>`;
+                    } else if (!['In Progress', 'In Review', 'Completed'].includes(currentStatus)) {
+                        statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option>` + statusSelect.innerHTML;
+                    }
+                    
+                    statusSelect.value = currentStatus;
                 }
             } else {
                 document.getElementById('taskModalTitle').textContent = 'Create Task';
-                document.getElementById('taskStatus').value = 'To Do';
+                statusSelect.value = 'In Progress';
                 
                 // Auto-generate ID: ProjId-T{count+1}
                 const existing = allTasks.filter(t => t.projectId === projectId);
@@ -1476,6 +1532,28 @@
             document.getElementById('taskModal').classList.remove('hidden');
         };
 
+        window.updateTaskStatusOptions = () => {
+            const dateVal = document.getElementById('taskEstDate').value;
+            const statusSelect = document.getElementById('taskStatus');
+            const currentStatus = statusSelect.value;
+            
+            if (dateVal && window.getOverdueDays && window.getOverdueDays(dateVal) > 0 && currentStatus !== 'Completed') {
+                statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus}</option><option value="Completed">Completed</option>`;
+                statusSelect.value = currentStatus;
+            } else {
+                statusSelect.innerHTML = `
+                    <option value="In Progress">In Progress</option>
+                    <option value="In Review">In Review</option>
+                    <option value="Completed">Completed</option>
+                `;
+                if (['In Progress', 'In Review', 'Completed'].includes(currentStatus)) {
+                    statusSelect.value = currentStatus;
+                } else {
+                    statusSelect.value = 'In Progress';
+                }
+            }
+        };
+
         window.nudgeTask = async (docId) => {
             try {
                 const task = allTasks.find(t => t.id === docId);
@@ -1486,7 +1564,13 @@
                     by: activeUser.name,
                     time: Date.now()
                 });
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), { nudges });
+                let history = task.history || [];
+                history.push({
+                    action: `Reminder sent to assignee`,
+                    by: activeUser.name,
+                    date: Date.now()
+                });
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), { nudges, history });
                 showToast("Reminder sent to assignee.");
             } catch (err) {
                 console.error(err);
@@ -1543,6 +1627,12 @@
                         });
                     }
                     payload.history = history;
+                    
+                    if (payload.status === 'Completed') {
+                        payload.completedAt = existingTask.status === 'Completed' ? existingTask.completedAt : Date.now();
+                    } else {
+                        payload.completedAt = null;
+                    }
 
                     const updatePromises = [];
                     updatePromises.push(updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'workflow_tasks', docId), payload));
@@ -1576,6 +1666,10 @@
                             by: activeUser.name,
                             date: Date.now()
                         });
+                    }
+                    
+                    if (payload.status === 'Completed') {
+                        payload.completedAt = Date.now();
                     }
                     
                     const updatePromises = [];
@@ -1650,7 +1744,7 @@
             document.getElementById('vdtStart').textContent = new Date(t.startDate).toLocaleDateString('en-GB');
             document.getElementById('vdtEnd').textContent = new Date(t.estDate).toLocaleDateString('en-GB');
             document.getElementById('vdtEffort').textContent = `${t.effort}h`;
-            document.getElementById('vdtStatus').innerHTML = getStatusBadge(t.status);
+            document.getElementById('vdtStatus').innerHTML = window.getStatusBadge(t.status, t.completedAt);
             
             const delDate = new Date(t.deletedAt).toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
             document.getElementById('vdtDelInfo').textContent = `Deleted by ${t.deletedBy} on ${delDate}`;
