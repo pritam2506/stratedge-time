@@ -1134,6 +1134,7 @@
 
             const tr = document.createElement('tr');
             tr.className = "hover:bg-blue-50/50 transition-colors";
+            tr.dataset.timestamp = data && data.timestamp ? data.timestamp : '';
             
             const defaultOpt = `<option value="" disabled ${!data || !data.type ? 'selected' : ''}>Select Category...</option>`;
             const catOptions = categories.map(cat => 
@@ -1171,8 +1172,7 @@
             tbody.appendChild(tr);
             updateDayLabels(tbody);
             
-            tr.querySelector('.hours-input').addEventListener('input', calculateTotals);
-
+            const hrsInput = tr.querySelector('.hours-input');
             const typeSelect = tr.querySelector('.type-input');
             const projInput = tr.querySelector('.project-input');
             
@@ -1189,7 +1189,15 @@
                     }
                 }
             };
-            typeSelect.addEventListener('change', applyLeaveLogic);
+            
+            if (!isSubmitted) {
+                hrsInput.addEventListener('input', () => { tr.dataset.timestamp = ''; calculateTotals(); });
+                projInput.addEventListener('input', () => { tr.dataset.timestamp = ''; });
+                typeSelect.addEventListener('change', () => { tr.dataset.timestamp = ''; applyLeaveLogic(); });
+            } else {
+                hrsInput.addEventListener('input', calculateTotals);
+            }
+            
             applyLeaveLogic();
             calculateTotals();
         };
@@ -1347,7 +1355,7 @@
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-blue-500 bg-blue-100 rounded-lg';
             } else {
-                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
             }
             toast.classList.remove('translate-y-full', 'opacity-0');
@@ -1364,7 +1372,13 @@
                 rows.forEach(row => {
                     const hrs = parseFloat(row.querySelector('.hours-input').value) || 0;
                     totalHours += hrs;
-                    dayEntries.push({ project: row.querySelector('.project-input').value.trim(), hours: hrs, type: row.querySelector('.type-input').value });
+                    const ts = row.dataset.timestamp ? parseInt(row.dataset.timestamp) : Date.now();
+                    dayEntries.push({ 
+                        project: row.querySelector('.project-input').value.trim(), 
+                        hours: hrs, 
+                        type: row.querySelector('.type-input').value,
+                        timestamp: ts
+                    });
                 });
                 entriesData[day] = dayEntries;
             });
@@ -1378,6 +1392,7 @@
             const rows = tbody.querySelectorAll('tr');
             const dayEntries = [];
             let valid = true;
+            const now = Date.now();
             
             rows.forEach(row => {
                 const hrs = parseFloat(row.querySelector('.hours-input').value) || 0;
@@ -1385,10 +1400,12 @@
                 const type = row.querySelector('.type-input').value;
                 if (!type && (hrs > 0 || proj)) valid = false;
                 
+                row.dataset.timestamp = now;
+                
                 if (!type && hrs === 0 && !proj) {
-                    dayEntries.push({ project: '', hours: 0, type: '' });
+                    dayEntries.push({ project: '', hours: 0, type: '', timestamp: now });
                 } else {
-                    dayEntries.push({ project: proj, hours: hrs, type: type });
+                    dayEntries.push({ project: proj, hours: hrs, type: type, timestamp: now });
                 }
             });
 
@@ -1466,7 +1483,7 @@
             };
             try {
                 const docId = `${activeUser.empId}_${weekStr}`;
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId), payload);
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId), payload, { merge: true });
                 showToast("Timesheet submitted successfully!", "success");
             } catch (error) {
                 console.error("Submission Error", error);
