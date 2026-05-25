@@ -243,10 +243,7 @@
                         </div>
 
                         <div class="flex justify-end gap-3" id="formButtons">
-                            <button type="button" id="saveBtn" onclick="saveTimesheetProgress()" class="border-2 border-brand-orange text-brand-orange hover:bg-orange-50 font-bold py-3 px-8 rounded-lg transition-all focus:ring-4 focus:ring-orange-100 flex items-center justify-center min-w-[200px]">
-                                <span>Save Progress</span>
-                            </button>
-                            <button type="submit" id="submitBtn" class="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all focus:ring-4 focus:ring-orange-300 flex items-center justify-center min-w-[250px]">
+                            <button type="submit" id="submitBtn" class="bg-brand-orange hover:bg-brand-orange-hover text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all focus:ring-4 focus:ring-orange-300 flex items-center justify-center min-w-[250px] w-full sm:w-auto">
                                 <span>Submit Weekly Timesheet</span>
                             </button>
                         </div>
@@ -1099,12 +1096,18 @@
         // --- Row Building Logic ---
         const updateDayLabels = (tbody) => {
             const rows = tbody.querySelectorAll('tr');
+            const dayIndex = tbody.id.split('-').pop();
+            const dayName = tbody.dataset.dayName;
+            const dateStr = tbody.dataset.dateStr;
+            const isLocked = tbody.dataset.isLocked === 'true';
+
             rows.forEach((row, index) => {
                 const dayCell = row.querySelector('td:first-child');
                 if (index === 0) {
                     dayCell.innerHTML = `
-                        <div class="font-bold text-gray-900">${tbody.dataset.dayName}</div>
-                        <div class="text-xs text-gray-500">${tbody.dataset.dateStr}</div>
+                        <div class="font-bold text-gray-900">${dayName}</div>
+                        <div class="text-xs text-gray-500 mb-2">${dateStr}</div>
+                        ${!isLocked ? `<button type="button" id="save-btn-${dayIndex}" onclick="saveDayProgress(${dayIndex}, '${dayName}')" class="text-[10px] bg-blue-50 text-brand-blue hover:bg-blue-100 px-2 py-1.5 rounded font-bold uppercase tracking-wider transition-colors border border-blue-200 shadow-sm w-full">Save Day</button>` : ''}
                     `;
                 } else {
                     dayCell.innerHTML = `<div class="text-xs text-gray-400 italic">↳ Additional entry</div>`;
@@ -1119,6 +1122,7 @@
                 tbody.id = `day-tbody-${dayIndex}`;
                 tbody.dataset.dayName = dayName;
                 tbody.dataset.dateStr = dateStr;
+                tbody.dataset.isLocked = isSubmitted;
                 tbody.className = "bg-white divide-y divide-gray-100 border-b border-gray-200 group";
                 document.getElementById('timesheetTable').appendChild(tbody);
             }
@@ -1131,11 +1135,12 @@
             const tr = document.createElement('tr');
             tr.className = "hover:bg-blue-50/50 transition-colors";
             
+            const defaultOpt = `<option value="" disabled ${!data || !data.type ? 'selected' : ''}>Select Category...</option>`;
             const catOptions = categories.map(cat => 
                 `<option value="${cat}" ${data && data.type === cat ? 'selected' : ''}>${cat}</option>`
             ).join('');
 
-            const hrsValue = data ? data.hours : '8';
+            const hrsValue = data ? data.hours : '0';
             const projValue = data && data.project ? data.project : '';
 
             tr.innerHTML = `
@@ -1151,6 +1156,7 @@
                 </td>
                 <td class="px-6 py-3 align-top">
                     <select required class="type-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md focus:bg-white focus:ring-2 focus:ring-brand-blue outline-none transition-colors text-sm" ${isSubmitted ? 'disabled' : ''}>
+                        ${defaultOpt}
                         ${catOptions}
                     </select>
                 </td>
@@ -1171,7 +1177,7 @@
             const projInput = tr.querySelector('.project-input');
             
             const applyLeaveLogic = () => {
-                if (typeSelect.value !== 'Regular Work') {
+                if (typeSelect.value && typeSelect.value !== 'Regular Work') {
                     if(!holidayInfo && (projInput.value === '' || projInput.value === 'On Leave')) projInput.value = 'On Leave';
                     projInput.readOnly = true;
                     projInput.classList.add('bg-gray-100', 'text-gray-500');
@@ -1221,7 +1227,6 @@
 
         const checkSubmissionStatus = (weekStr) => {
             const submitBtn = document.getElementById('submitBtn');
-            const saveBtn = document.getElementById('saveBtn');
             const banner = document.getElementById('submittedBanner');
             const savedBanner = document.getElementById('savedBanner');
             const dates = getDatesFromWeek(weekStr);
@@ -1244,12 +1249,10 @@
                     banner.innerHTML = `<svg class="mx-auto h-8 w-8 text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3 class="text-lg font-bold text-orange-800">Timesheet Pending Approval</h3><p class="text-sm text-green-600 mt-1">Your hours are locked while awaiting Admin review.</p>`;
                 }
                 submitBtn.classList.add('hidden');
-                saveBtn.classList.add('hidden');
                 document.getElementById('declaration').disabled = true;
                 document.getElementById('declaration').checked = true;
             } else {
                 submitBtn.classList.remove('hidden');
-                saveBtn.classList.remove('hidden');
                 document.getElementById('declaration').disabled = false;
                 document.getElementById('declaration').checked = false;
                 
@@ -1344,7 +1347,7 @@
                 iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-blue-500 bg-blue-100 rounded-lg';
             } else {
-                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
+                iconEl.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`;
                 iconEl.className = 'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg';
             }
             toast.classList.remove('translate-y-full', 'opacity-0');
@@ -1368,18 +1371,60 @@
             return { entries: entriesData, totalHours: totalHours };
         };
 
-        window.saveTimesheetProgress = async () => {
+        window.saveDayProgress = async (dayIndex, dayName) => {
             if (!fbUser) return;
             const weekStr = document.getElementById('weekSelector').value;
-            const data = collectFormData();
+            const tbody = document.getElementById(`day-tbody-${dayIndex}`);
+            const rows = tbody.querySelectorAll('tr');
+            const dayEntries = [];
+            let valid = true;
+            
+            rows.forEach(row => {
+                const hrs = parseFloat(row.querySelector('.hours-input').value) || 0;
+                const proj = row.querySelector('.project-input').value.trim();
+                const type = row.querySelector('.type-input').value;
+                if (!type && (hrs > 0 || proj)) valid = false;
+                
+                if (!type && hrs === 0 && !proj) {
+                    dayEntries.push({ project: '', hours: 0, type: '' });
+                } else {
+                    dayEntries.push({ project: proj, hours: hrs, type: type });
+                }
+            });
+
+            if (!valid) {
+                showToast("Please select a category for the entered rows.", "error");
+                return;
+            }
+
+            const docId = `${activeUser.empId}_${weekStr}`;
+            const existingTs = myTimesheets.find(t => t.id === docId) || { entries: {} };
+            
+            const newEntries = { ...existingTs.entries, [dayName]: dayEntries };
+            
+            let newTotalHours = 0;
+            Object.values(newEntries).forEach(dayArr => {
+                const arr = Array.isArray(dayArr) ? dayArr : [dayArr];
+                arr.forEach(e => newTotalHours += parseFloat(e.hours) || 0);
+            });
+
             const payload = {
-                empId: activeUser.empId, name: activeUser.name, week: weekStr, entries: data.entries,
-                totalHours: data.totalHours, status: 'Saved', updatedAt: Date.now()
+                empId: activeUser.empId, 
+                name: activeUser.name, 
+                week: weekStr, 
+                entries: newEntries,
+                totalHours: newTotalHours, 
+                status: (existingTs.status === 'Submitted' || existingTs.status === 'Approved') ? existingTs.status : 'Saved', 
+                updatedAt: Date.now()
             };
+
             try {
-                const docId = `${activeUser.empId}_${weekStr}`;
+                const btn = document.getElementById(`save-btn-${dayIndex}`);
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = 'Saving...'; btn.disabled = true;
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'timesheets', docId), payload, { merge: true });
-                showToast("Progress saved as draft.", "success");
+                showToast(`${dayName} saved.`, "success");
+                btn.innerHTML = origHtml; btn.disabled = false;
             } catch (error) {
                 console.error("Save Error", error);
                 showToast("Failed to save progress.", "error");
@@ -1397,6 +1442,15 @@
             const justBlock = document.getElementById('justificationBlock');
             const justBox = document.getElementById('justification');
             const justificationText = justBox.value.trim();
+
+            let hasBlankCategory = false;
+            document.querySelectorAll('.type-input').forEach(sel => {
+                if (!sel.value && !sel.disabled && !sel.readOnly) hasBlankCategory = true;
+            });
+            if (hasBlankCategory) {
+                showToast("Please ensure a category is selected for all entries.", "error");
+                btn.innerHTML = originalText; btn.disabled = false; return;
+            }
 
             if (data.totalHours !== 48 && justificationText === '') {
                 justBlock.classList.remove('hidden');
