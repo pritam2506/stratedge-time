@@ -432,7 +432,7 @@
                 </div>
                 <div id="reviewJustificationBlock" class="bg-red-50 p-4 rounded-lg mb-6 hidden"><h4 class="text-xs font-bold text-red-800">Justification:</h4><p id="reviewJustificationText" class="text-sm text-red-700 italic"></p></div>
                 <table class="min-w-full divide-y border text-sm rounded-lg overflow-hidden">
-                    <thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Day</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Date</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Project</th><th class="px-4 py-2 text-center text-xs text-gray-500 uppercase">Hours</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Type</th></tr></thead>
+                    <thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Day</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Date</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Project</th><th class="px-4 py-2 text-center text-xs text-gray-500 uppercase">Hours</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Type</th><th class="px-4 py-2 text-left text-xs text-gray-500 uppercase">Timestamp</th></tr></thead>
                     <tbody id="reviewTableBody" class="divide-y"></tbody>
                 </table>
             </div>
@@ -1013,7 +1013,11 @@
                     const dateStr = dates[idx].toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                     const ents = Array.isArray(ts.entries[d]) ? ts.entries[d] : [ts.entries[d]];
                     ents.forEach(e => {
-                        if(e && parseFloat(e.hours)>0) tbody.innerHTML += `<tr><td class="px-4 py-2 font-medium">${d}</td><td class="px-4 py-2 text-gray-500">${dateStr}</td><td class="px-4 py-2">${e.project}</td><td class="px-4 py-2 text-center font-bold text-brand-blue">${e.hours}</td><td class="px-4 py-2 text-gray-500">${e.type}</td></tr>`;
+                        if(e && parseFloat(e.hours)>0) {
+                            const tsTime = e.timestamp || ts.submittedAt || ts.updatedAt;
+                            const timeDisplay = tsTime ? new Date(tsTime).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : '-';
+                            tbody.innerHTML += `<tr><td class="px-4 py-2 font-medium">${d}</td><td class="px-4 py-2 text-gray-500">${dateStr}</td><td class="px-4 py-2">${e.project}</td><td class="px-4 py-2 text-center font-bold text-brand-blue">${e.hours}</td><td class="px-4 py-2 text-gray-500">${e.type}</td><td class="px-4 py-2 text-gray-500 text-[11px] whitespace-nowrap">${timeDisplay}</td></tr>`;
+                        }
                     });
                 }
             });
